@@ -169,6 +169,6 @@ def main(args=None):
 if __name__ == '__main__':
     main()
 
- File "modifiedbaru.py", line 35, in publish_actuator_value
-                                   msg.data = f'{self.mode} {self.pwm_value} {self.steer} {self.mid} {self.corection} {self.correction_value}'
-                                                              AttributeError: 'ActuatorPublisher' object has no attribute 'corection
+# File "modifiedbaru.py", line 35, in publish_actuator_value
+#                                    msg.data = f'{self.mode} {self.pwm_value} {self.steer} {self.mid} {self.correction} {self.correction_value}'
+#                                                               AttributeError: 'ActuatorPublisher' object has no attribute 'correction'
