@@ -1,0 +1,20 @@
+skema percobaan :
+1. error handling
+- pake program lama ,coba jalanin robot pake serial di laptop, lalu cabut (lihat apakah robot tetap berjalan atau tidak)
+	pengecekan :
+	- lihat response serial monitor
+	- lihat respon fisik motor
+
+perbaikan :
+- upload program baru, lalu lakukan seperti skema diatas.
+	pengecekan :
+	- lihat response serial monitor
+	- lihat respon fisik motor
+
+
+//coba skema 2 first
+2. independent motor dari RF
+- kontrol dari rf (koper) , jalanin fungsi independent motor
+	pengecekan :
+	- lihat response serial monitor
+	- lihat respon fisik motor
