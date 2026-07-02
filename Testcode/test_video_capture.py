@@ -40,13 +40,20 @@ def scan_kamera(maks_index=10):
     return ketemu
 
 
-def tampilkan(index, id_backend):
+def tampilkan(index, id_backend, paksa_mjpg=True):
     cap = cv2.VideoCapture(index, id_backend)
     if not cap.isOpened():
         print(f"Gagal buka device index {index}.")
         return
 
+    if paksa_mjpg:
+        # Banyak capture card murah (termasuk ezcap) nampilin gambar item/rusak kalau
+        # OpenCV negotiate format piksel default yang salah - paksa MJPG sering fix ini
+        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+
     print("\nNampilin video. Klik jendelanya lalu tekan 'q' buat keluar.\n")
+    print("Kalau item/garis doang: cek apakah kamera-TX-RX beneran nyala & transmit,")
+    print("bukan cuma capture card-nya doang yang aktif.\n")
     while True:
         ret, frame = cap.read()
         if not ret:
