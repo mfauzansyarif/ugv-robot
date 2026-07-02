@@ -1,0 +1,29 @@
+running egg_info
+creating ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info
+writing ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/PKG-INFO
+writing dependency_links to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/dependency_links.txt
+writing entry points to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/entry_points.txt
+writing requirements to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/requires.txt
+writing top-level names to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/top_level.txt
+writing manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'
+reading manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'
+writing manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build
+creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib
+creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser
+copying twist_ugv_cruiser/cruiser.py -> /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser
+copying twist_ugv_cruiser/__init__.py -> /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser
+running install
+running install_lib
+creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser
+copying /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser/cruiser.py -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser
+copying /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser/__init__.py -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser
+byte-compiling /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser/cruiser.py to cruiser.cpython-38.pyc
+byte-compiling /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser/__init__.py to __init__.cpython-38.pyc
+running install_data
+creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index
+creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index/resource_index
+creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index/resource_index/packages
+error: can't copy 'resource/twist_ugv_cruiser': doesn't exist or not a regular file

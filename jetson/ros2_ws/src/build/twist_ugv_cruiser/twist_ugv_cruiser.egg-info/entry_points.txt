@@ -1,0 +1,3 @@
+[console_scripts]
+cruiser = twist_ugv_cruiser.cruiser:main
+

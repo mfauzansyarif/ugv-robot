@@ -1,0 +1,16 @@
+package.xml
+setup.cfg
+setup.py
+../../build/pwmrelay/pwmrelay.egg-info/PKG-INFO
+../../build/pwmrelay/pwmrelay.egg-info/SOURCES.txt
+../../build/pwmrelay/pwmrelay.egg-info/dependency_links.txt
+../../build/pwmrelay/pwmrelay.egg-info/entry_points.txt
+../../build/pwmrelay/pwmrelay.egg-info/requires.txt
+../../build/pwmrelay/pwmrelay.egg-info/top_level.txt
+../../build/pwmrelay/pwmrelay.egg-info/zip-safe
+pwmrelay/__init__.py
+pwmrelay/pwmrelay.py
+resource/pwmrelay
+test/test_copyright.py
+test/test_flake8.py
+test/test_pep257.py

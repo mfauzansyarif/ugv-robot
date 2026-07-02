@@ -1,0 +1,37 @@
+[7.433s] Invoking command in '/home/jetson/ros2_ws/src/pwmrelay': PYTHONPATH=/home/jetson/ros2_ws/build/pwmrelay/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/pwmrelay build --build-base /home/jetson/ros2_ws/build/pwmrelay/build install --record /home/jetson/ros2_ws/build/pwmrelay/install.log --single-version-externally-managed install_data
+[9.472s] running egg_info
+[9.474s] creating ../../build/pwmrelay/pwmrelay.egg-info
+[9.476s] writing ../../build/pwmrelay/pwmrelay.egg-info/PKG-INFO
+[9.476s] writing dependency_links to ../../build/pwmrelay/pwmrelay.egg-info/dependency_links.txt
+[9.477s] writing entry points to ../../build/pwmrelay/pwmrelay.egg-info/entry_points.txt
+[9.478s] writing requirements to ../../build/pwmrelay/pwmrelay.egg-info/requires.txt
+[9.478s] writing top-level names to ../../build/pwmrelay/pwmrelay.egg-info/top_level.txt
+[9.486s] writing manifest file '../../build/pwmrelay/pwmrelay.egg-info/SOURCES.txt'
+[9.496s] reading manifest file '../../build/pwmrelay/pwmrelay.egg-info/SOURCES.txt'
+[9.501s] writing manifest file '../../build/pwmrelay/pwmrelay.egg-info/SOURCES.txt'
+[9.502s] running build
+[9.503s] running build_py
+[9.503s] creating /home/jetson/ros2_ws/build/pwmrelay/build
+[9.504s] creating /home/jetson/ros2_ws/build/pwmrelay/build/lib
+[9.505s] creating /home/jetson/ros2_ws/build/pwmrelay/build/lib/pwmrelay
+[9.505s] copying pwmrelay/pwmrelay.py -> /home/jetson/ros2_ws/build/pwmrelay/build/lib/pwmrelay
+[9.506s] copying pwmrelay/__init__.py -> /home/jetson/ros2_ws/build/pwmrelay/build/lib/pwmrelay
+[9.506s] running install
+[9.509s] running install_lib
+[9.514s] creating /home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay
+[9.515s] copying /home/jetson/ros2_ws/build/pwmrelay/build/lib/pwmrelay/pwmrelay.py -> /home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay
+[9.516s] copying /home/jetson/ros2_ws/build/pwmrelay/build/lib/pwmrelay/__init__.py -> /home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay
+[9.518s] byte-compiling /home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay/pwmrelay.py to pwmrelay.cpython-38.pyc
+[9.520s] byte-compiling /home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay/__init__.py to __init__.cpython-38.pyc
+[9.521s] running install_data
+[9.523s] creating /home/jetson/ros2_ws/install/pwmrelay/share/ament_index
+[9.523s] creating /home/jetson/ros2_ws/install/pwmrelay/share/ament_index/resource_index
+[9.524s] creating /home/jetson/ros2_ws/install/pwmrelay/share/ament_index/resource_index/packages
+[9.524s] copying resource/pwmrelay -> /home/jetson/ros2_ws/install/pwmrelay/share/ament_index/resource_index/packages
+[9.525s] copying package.xml -> /home/jetson/ros2_ws/install/pwmrelay/share/pwmrelay
+[9.525s] running install_egg_info
+[9.535s] Copying ../../build/pwmrelay/pwmrelay.egg-info to /home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay-0.0.0-py3.8.egg-info
+[9.547s] running install_scripts
+[9.651s] Installing pwmrelay script to /home/jetson/ros2_ws/install/pwmrelay/lib/pwmrelay
+[9.654s] writing list of installed files to '/home/jetson/ros2_ws/build/pwmrelay/install.log'
+[9.788s] Invoked command in '/home/jetson/ros2_ws/src/pwmrelay' returned '0': PYTHONPATH=/home/jetson/ros2_ws/build/pwmrelay/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/pwmrelay build --build-base /home/jetson/ros2_ws/build/pwmrelay/build install --record /home/jetson/ros2_ws/build/pwmrelay/install.log --single-version-externally-managed install_data

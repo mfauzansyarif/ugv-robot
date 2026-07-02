@@ -1,0 +1,19 @@
+[0;1;32m●[0m jetsonrelay.service - My Python Script Service
+     Loaded: loaded (/etc/systemd/system/jetsonrelay.service; enabled; vendor preset: enabled)
+     Active: [0;1;32mactive (running)[0m since Fri 2024-11-29 11:39:19 WIB; 18s ago
+   Main PID: 5614 (python3)
+      Tasks: 3 (limit: 4181)
+     Memory: 5.0M
+     CGroup: /system.slice/jetsonrelay.service
+             └─5614 /usr/bin/python3 /home/jetson/serialcontrol/jetsonrelaysukses.py
+
+Nov 29 11:39:35 nano python3[5614]: Received on /dev/serial/by-id/usb-FTDI_FT231X_USB_UART_DU0D4UER-if00-port0: 0 0 1 1 0 0 0 1 1 0 0 0 0
+Nov 29 11:39:35 nano python3[5614]: Forwarded to /dev/serial/by-id/usb-WCH.CN_USB_Quad_Serial_BC6228ABCD-if00: 0 1 1 0 0 0 0
+Nov 29 11:39:35 nano python3[5614]: Forwarded to /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A5069RR4-if00-port0: 0 0 1 1 0 0 0
+Nov 29 11:39:35 nano python3[5614]: Received on /dev/serial/by-id/usb-FTDI_FT231X_USB_UART_DU0D4UER-if00-port0: 0 0 1 1 0 0 0 1 1 0 0 0 0
+Nov 29 11:39:35 nano python3[5614]: Forwarded to /dev/serial/by-id/usb-WCH.CN_USB_Quad_Serial_BC6228ABCD-if00: 0 1 1 0 0 0 0
+Nov 29 11:39:35 nano python3[5614]: Forwarded to /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A5069RR4-if00-port0: 0 0 1 1 0 0 0
+Nov 29 11:39:35 nano python3[5614]: Received on /dev/serial/by-id/usb-FTDI_FT231X_USB_UART_DU0D4UER-if00-port0: 0 0 1 1 0 0 0 1 1 0 0 0 0
+Nov 29 11:39:35 nano python3[5614]: Forwarded to /dev/serial/by-id/usb-WCH.CN_USB_Quad_Serial_BC6228ABCD-if00: 0 1 1 0 0 0 0
+Nov 29 11:39:35 nano python3[5614]: Forwarded to /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A5069RR4-if00-port0: 0 0 1 1 0 0 0
+Nov 29 11:39:35 nano python3[5614]: Received on /dev/serial/by-id/usb-FTDI_FT231X_USB_UART_DU0D4UER-if00-port0: 0 0 1 1 0 0 0 1 1 0 0 0 0

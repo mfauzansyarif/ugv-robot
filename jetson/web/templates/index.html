@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jetson Nano Control</title>
+</head>
+<body>
+    <h1>Control the Jetson Nano</h1>
+    <label for="slider">Set Value:</label>
+    <input type="range" id="slider" name="slider_value" min="0" max="100" value="50">
+    <span id="sliderValue">50</span>
+    <p>Processed Result: <span id="result">2500</span></p>
+
+    <script>
+        var slider = document.getElementById("slider");
+        var output = document.getElementById("sliderValue");
+        var resultDisplay = document.getElementById("result");
+
+        output.innerHTML = slider.value;
+
+        slider.oninput = function() {
+            output.innerHTML = this.value;
+            fetch('/update_slider', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ slider_value: this.value }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultDisplay.innerHTML = data.result;
+            });
+        }
+    </script>
+</body>
+</html>
+

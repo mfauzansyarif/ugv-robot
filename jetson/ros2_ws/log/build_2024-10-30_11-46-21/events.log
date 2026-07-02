@@ -1,0 +1,154 @@
+[0.000000] (-) TimerEvent: {}
+[0.000400] (pwmrelay) JobQueued: {'identifier': 'pwmrelay', 'dependencies': OrderedDict()}
+[0.000540] (serial_to_ros2) JobQueued: {'identifier': 'serial_to_ros2', 'dependencies': OrderedDict()}
+[0.000665] (twist_ugv_cruiser) JobQueued: {'identifier': 'twist_ugv_cruiser', 'dependencies': OrderedDict()}
+[0.003730] (pwmrelay) JobStarted: {'identifier': 'pwmrelay'}
+[0.068418] (serial_to_ros2) JobStarted: {'identifier': 'serial_to_ros2'}
+[0.098017] (twist_ugv_cruiser) JobStarted: {'identifier': 'twist_ugv_cruiser'}
+[0.099310] (-) TimerEvent: {}
+[0.200915] (-) TimerEvent: {}
+[0.301842] (-) TimerEvent: {}
+[0.402565] (-) TimerEvent: {}
+[0.503337] (-) TimerEvent: {}
+[0.604049] (-) TimerEvent: {}
+[0.704754] (-) TimerEvent: {}
+[0.805433] (-) TimerEvent: {}
+[0.906081] (-) TimerEvent: {}
+[1.006774] (-) TimerEvent: {}
+[1.107413] (-) TimerEvent: {}
+[1.208083] (-) TimerEvent: {}
+[1.308830] (-) TimerEvent: {}
+[1.409666] (-) TimerEvent: {}
+[1.510542] (-) TimerEvent: {}
+[1.611260] (-) TimerEvent: {}
+[1.711916] (-) TimerEvent: {}
+[1.812565] (-) TimerEvent: {}
+[1.913199] (-) TimerEvent: {}
+[2.013834] (-) TimerEvent: {}
+[2.114453] (-) TimerEvent: {}
+[2.215121] (-) TimerEvent: {}
+[2.315771] (-) TimerEvent: {}
+[2.416375] (-) TimerEvent: {}
+[2.517035] (-) TimerEvent: {}
+[2.620091] (-) TimerEvent: {}
+[2.721337] (-) TimerEvent: {}
+[2.822012] (-) TimerEvent: {}
+[2.922742] (-) TimerEvent: {}
+[3.023405] (-) TimerEvent: {}
+[3.124052] (-) TimerEvent: {}
+[3.224692] (-) TimerEvent: {}
+[3.325323] (-) TimerEvent: {}
+[3.427263] (-) TimerEvent: {}
+[3.527861] (-) TimerEvent: {}
+[3.628514] (-) TimerEvent: {}
+[3.729175] (-) TimerEvent: {}
+[3.829880] (-) TimerEvent: {}
+[3.930782] (-) TimerEvent: {}
+[4.031681] (-) TimerEvent: {}
+[4.132691] (-) TimerEvent: {}
+[4.233730] (-) TimerEvent: {}
+[4.334760] (-) TimerEvent: {}
+[4.435695] (-) TimerEvent: {}
+[4.536694] (-) TimerEvent: {}
+[4.637669] (-) TimerEvent: {}
+[4.738627] (-) TimerEvent: {}
+[4.840038] (-) TimerEvent: {}
+[4.941058] (-) TimerEvent: {}
+[5.042132] (-) TimerEvent: {}
+[5.143179] (-) TimerEvent: {}
+[5.244110] (-) TimerEvent: {}
+[5.345022] (-) TimerEvent: {}
+[5.446257] (-) TimerEvent: {}
+[5.546966] (-) TimerEvent: {}
+[5.647964] (-) TimerEvent: {}
+[5.748681] (-) TimerEvent: {}
+[5.849619] (-) TimerEvent: {}
+[5.950850] (-) TimerEvent: {}
+[6.051899] (-) TimerEvent: {}
+[6.150952] (twist_ugv_cruiser) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', 'setup.py', 'egg_info', '--egg-base', '../../build/twist_ugv_cruiser', 'build', '--build-base', '/home/jetson/ros2_ws/build/twist_ugv_cruiser/build', 'install', '--record', '/home/jetson/ros2_ws/build/twist_ugv_cruiser/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/jetson/ros2_ws/src/twist_ugv_cruiser', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'jetson', 'SSH_CLIENT': '192.168.0.129 40442 22', 'LC_TIME': 'nl_NL.UTF-8', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/foxy/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/opt/rviz_ogre_vendor/lib:/opt/ros/foxy/lib/aarch64-linux-gnu:/opt/ros/foxy/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/jetson', 'OLDPWD': '/home/jetson/ros2_ws/src', 'SSH_TTY': '/dev/pts/0', 'JETSON_L4T': '32.6.1', 'ROS_PYTHON_VERSION': '3', 'JETSON_MODEL': 'NVIDIA Jetson Nano Developer Kit', 'LC_MONETARY': 'nl_NL.UTF-8', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLCON_PREFIX_PATH': '/home/jetson/ros2_ws/install', 'ROS_DISTRO': 'foxy', 'LOGNAME': 'jetson', 'JETSON_MODULE': 'NVIDIA Jetson Nano (4 GB ram)', 'JETSON_SERIAL_NUMBER': '1423323016358', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'JETSON_CODENAME': 'Porg', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '5', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/jetson/.local/bin:/opt/ros/foxy/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'LC_ADDRESS': 'nl_NL.UTF-8', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'LC_TELEPHONE': 'nl_NL.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'JETSON_SOC': 'tegra210', 'ROS_DOMAIN_ID': '0', 'AMENT_PREFIX_PATH': '/home/jetson/ros2_ws/install/twist_ugv_cruiser:/home/jetson/ros2_ws/install/serial_to_ros2:/home/jetson/ros2_ws/install/pwmrelay:/opt/ros/foxy', 'SHELL': '/bin/bash', 'LC_NAME': 'nl_NL.UTF-8', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'JETSON_BOARDIDS': 'p3448', 'LC_MEASUREMENT': 'nl_NL.UTF-8', 'LC_IDENTIFICATION': 'nl_NL.UTF-8', 'JETSON_CUDA_ARCH_BIN': '5.3', 'PWD': '/home/jetson/ros2_ws/build/twist_ugv_cruiser', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '192.168.0.129 40442 192.168.0.200 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/jetson/ros2_ws/build/twist_ugv_cruiser/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/install/twist_ugv_cruiser/lib/python3.8/site-packages:/home/jetson/ros2_ws/install/twist_ugv_cruiser/lib/python3.8/site-packages:/home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages:/home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages:/opt/ros/foxy/lib/python3.8/site-packages', 'LC_NUMERIC': 'nl_NL.UTF-8', 'LC_PAPER': 'nl_NL.UTF-8', 'COLCON': '1', 'JETSON_JETPACK': '4.6', 'JETSON_P_NUMBER': 'p3448-0000'}, 'shell': False}
+[6.154536] (-) TimerEvent: {}
+[6.168756] (serial_to_ros2) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', 'setup.py', 'egg_info', '--egg-base', '../../build/serial_to_ros2', 'build', '--build-base', '/home/jetson/ros2_ws/build/serial_to_ros2/build', 'install', '--record', '/home/jetson/ros2_ws/build/serial_to_ros2/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/jetson/ros2_ws/src/serial_to_ros2', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'jetson', 'SSH_CLIENT': '192.168.0.129 40442 22', 'LC_TIME': 'nl_NL.UTF-8', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/foxy/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/opt/rviz_ogre_vendor/lib:/opt/ros/foxy/lib/aarch64-linux-gnu:/opt/ros/foxy/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/jetson', 'OLDPWD': '/home/jetson/ros2_ws/src', 'SSH_TTY': '/dev/pts/0', 'JETSON_L4T': '32.6.1', 'ROS_PYTHON_VERSION': '3', 'JETSON_MODEL': 'NVIDIA Jetson Nano Developer Kit', 'LC_MONETARY': 'nl_NL.UTF-8', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLCON_PREFIX_PATH': '/home/jetson/ros2_ws/install', 'ROS_DISTRO': 'foxy', 'LOGNAME': 'jetson', 'JETSON_MODULE': 'NVIDIA Jetson Nano (4 GB ram)', 'JETSON_SERIAL_NUMBER': '1423323016358', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'JETSON_CODENAME': 'Porg', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '5', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/jetson/.local/bin:/opt/ros/foxy/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'LC_ADDRESS': 'nl_NL.UTF-8', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'LC_TELEPHONE': 'nl_NL.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'JETSON_SOC': 'tegra210', 'ROS_DOMAIN_ID': '0', 'AMENT_PREFIX_PATH': '/home/jetson/ros2_ws/install/twist_ugv_cruiser:/home/jetson/ros2_ws/install/serial_to_ros2:/home/jetson/ros2_ws/install/pwmrelay:/opt/ros/foxy', 'SHELL': '/bin/bash', 'LC_NAME': 'nl_NL.UTF-8', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'JETSON_BOARDIDS': 'p3448', 'LC_MEASUREMENT': 'nl_NL.UTF-8', 'LC_IDENTIFICATION': 'nl_NL.UTF-8', 'JETSON_CUDA_ARCH_BIN': '5.3', 'PWD': '/home/jetson/ros2_ws/build/serial_to_ros2', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '192.168.0.129 40442 192.168.0.200 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/jetson/ros2_ws/build/serial_to_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages:/home/jetson/ros2_ws/install/twist_ugv_cruiser/lib/python3.8/site-packages:/home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages:/home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages:/opt/ros/foxy/lib/python3.8/site-packages', 'LC_NUMERIC': 'nl_NL.UTF-8', 'LC_PAPER': 'nl_NL.UTF-8', 'COLCON': '1', 'JETSON_JETPACK': '4.6', 'JETSON_P_NUMBER': 'p3448-0000'}, 'shell': False}
+[6.184161] (pwmrelay) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', 'setup.py', 'egg_info', '--egg-base', '../../build/pwmrelay', 'build', '--build-base', '/home/jetson/ros2_ws/build/pwmrelay/build', 'install', '--record', '/home/jetson/ros2_ws/build/pwmrelay/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/jetson/ros2_ws/src/pwmrelay', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'jetson', 'SSH_CLIENT': '192.168.0.129 40442 22', 'LC_TIME': 'nl_NL.UTF-8', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/foxy/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/opt/rviz_ogre_vendor/lib:/opt/ros/foxy/lib/aarch64-linux-gnu:/opt/ros/foxy/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/jetson', 'OLDPWD': '/home/jetson/ros2_ws/src', 'SSH_TTY': '/dev/pts/0', 'JETSON_L4T': '32.6.1', 'ROS_PYTHON_VERSION': '3', 'JETSON_MODEL': 'NVIDIA Jetson Nano Developer Kit', 'LC_MONETARY': 'nl_NL.UTF-8', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLCON_PREFIX_PATH': '/home/jetson/ros2_ws/install', 'ROS_DISTRO': 'foxy', 'LOGNAME': 'jetson', 'JETSON_MODULE': 'NVIDIA Jetson Nano (4 GB ram)', 'JETSON_SERIAL_NUMBER': '1423323016358', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'JETSON_CODENAME': 'Porg', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '5', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/jetson/.local/bin:/opt/ros/foxy/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'LC_ADDRESS': 'nl_NL.UTF-8', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'LC_TELEPHONE': 'nl_NL.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'JETSON_SOC': 'tegra210', 'ROS_DOMAIN_ID': '0', 'AMENT_PREFIX_PATH': '/home/jetson/ros2_ws/install/twist_ugv_cruiser:/home/jetson/ros2_ws/install/serial_to_ros2:/home/jetson/ros2_ws/install/pwmrelay:/opt/ros/foxy', 'SHELL': '/bin/bash', 'LC_NAME': 'nl_NL.UTF-8', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'JETSON_BOARDIDS': 'p3448', 'LC_MEASUREMENT': 'nl_NL.UTF-8', 'LC_IDENTIFICATION': 'nl_NL.UTF-8', 'JETSON_CUDA_ARCH_BIN': '5.3', 'PWD': '/home/jetson/ros2_ws/build/pwmrelay', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '192.168.0.129 40442 192.168.0.200 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/jetson/ros2_ws/build/pwmrelay/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages:/home/jetson/ros2_ws/install/twist_ugv_cruiser/lib/python3.8/site-packages:/home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages:/home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages:/opt/ros/foxy/lib/python3.8/site-packages', 'LC_NUMERIC': 'nl_NL.UTF-8', 'LC_PAPER': 'nl_NL.UTF-8', 'COLCON': '1', 'JETSON_JETPACK': '4.6', 'JETSON_P_NUMBER': 'p3448-0000'}, 'shell': False}
+[6.254788] (-) TimerEvent: {}
+[6.355535] (-) TimerEvent: {}
+[6.456720] (-) TimerEvent: {}
+[6.557861] (-) TimerEvent: {}
+[6.659178] (-) TimerEvent: {}
+[6.760214] (-) TimerEvent: {}
+[6.861331] (-) TimerEvent: {}
+[6.962410] (-) TimerEvent: {}
+[7.063526] (-) TimerEvent: {}
+[7.164660] (-) TimerEvent: {}
+[7.265805] (-) TimerEvent: {}
+[7.366831] (-) TimerEvent: {}
+[7.420828] (serial_to_ros2) StdoutLine: {'line': b'running egg_info\n'}
+[7.423723] (serial_to_ros2) StdoutLine: {'line': b'writing ../../build/serial_to_ros2/serial_to_ros2.egg-info/PKG-INFO\n'}
+[7.424653] (twist_ugv_cruiser) StdoutLine: {'line': b'running egg_info\n'}
+[7.427564] (twist_ugv_cruiser) StdoutLine: {'line': b'writing ../../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/PKG-INFO\n'}
+[7.431643] (twist_ugv_cruiser) StdoutLine: {'line': b'writing dependency_links to ../../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/dependency_links.txt\n'}
+[7.432438] (serial_to_ros2) StdoutLine: {'line': b'writing dependency_links to ../../build/serial_to_ros2/serial_to_ros2.egg-info/dependency_links.txt\n'}
+[7.433301] (twist_ugv_cruiser) StdoutLine: {'line': b'writing entry points to ../../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/entry_points.txt\n'}
+[7.433722] (serial_to_ros2) StdoutLine: {'line': b'writing entry points to ../../build/serial_to_ros2/serial_to_ros2.egg-info/entry_points.txt\n'}
+[7.434136] (twist_ugv_cruiser) StdoutLine: {'line': b'writing requirements to ../../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/requires.txt\n'}
+[7.434515] (serial_to_ros2) StdoutLine: {'line': b'writing requirements to ../../build/serial_to_ros2/serial_to_ros2.egg-info/requires.txt\n'}
+[7.435048] (twist_ugv_cruiser) StdoutLine: {'line': b'writing top-level names to ../../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/top_level.txt\n'}
+[7.435420] (serial_to_ros2) StdoutLine: {'line': b'writing top-level names to ../../build/serial_to_ros2/serial_to_ros2.egg-info/top_level.txt\n'}
+[7.451052] (pwmrelay) StdoutLine: {'line': b'running egg_info\n'}
+[7.453787] (pwmrelay) StdoutLine: {'line': b'writing ../../build/pwmrelay/pwmrelay.egg-info/PKG-INFO\n'}
+[7.454733] (twist_ugv_cruiser) StdoutLine: {'line': b"reading manifest file '../../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'\n"}
+[7.455392] (pwmrelay) StdoutLine: {'line': b'writing dependency_links to ../../build/pwmrelay/pwmrelay.egg-info/dependency_links.txt\n'}
+[7.455861] (serial_to_ros2) StdoutLine: {'line': b"reading manifest file '../../build/serial_to_ros2/serial_to_ros2.egg-info/SOURCES.txt'\n"}
+[7.456419] (pwmrelay) StdoutLine: {'line': b'writing entry points to ../../build/pwmrelay/pwmrelay.egg-info/entry_points.txt\n'}
+[7.456982] (pwmrelay) StdoutLine: {'line': b'writing requirements to ../../build/pwmrelay/pwmrelay.egg-info/requires.txt\n'}
+[7.457375] (pwmrelay) StdoutLine: {'line': b'writing top-level names to ../../build/pwmrelay/pwmrelay.egg-info/top_level.txt\n'}
+[7.459763] (twist_ugv_cruiser) StdoutLine: {'line': b"writing manifest file '../../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'\n"}
+[7.460721] (twist_ugv_cruiser) StdoutLine: {'line': b'running build\n'}
+[7.461183] (twist_ugv_cruiser) StdoutLine: {'line': b'running build_py\n'}
+[7.461517] (serial_to_ros2) StdoutLine: {'line': b"writing manifest file '../../build/serial_to_ros2/serial_to_ros2.egg-info/SOURCES.txt'\n"}
+[7.461867] (serial_to_ros2) StdoutLine: {'line': b'running build\n'}
+[7.462203] (serial_to_ros2) StdoutLine: {'line': b'running build_py\n'}
+[7.465514] (serial_to_ros2) StdoutLine: {'line': b'copying serial_to_ros2/serial_publisher.py -> /home/jetson/ros2_ws/build/serial_to_ros2/build/lib/serial_to_ros2\n'}
+[7.466206] (twist_ugv_cruiser) StdoutLine: {'line': b'running install\n'}
+[7.466914] (-) TimerEvent: {}
+[7.467677] (serial_to_ros2) StdoutLine: {'line': b'running install\n'}
+[7.469371] (twist_ugv_cruiser) StdoutLine: {'line': b'running install_lib\n'}
+[7.470210] (serial_to_ros2) StdoutLine: {'line': b'running install_lib\n'}
+[7.471201] (pwmrelay) StdoutLine: {'line': b"reading manifest file '../../build/pwmrelay/pwmrelay.egg-info/SOURCES.txt'\n"}
+[7.474238] (serial_to_ros2) StdoutLine: {'line': b'copying /home/jetson/ros2_ws/build/serial_to_ros2/build/lib/serial_to_ros2/serial_publisher.py -> /home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages/serial_to_ros2\n'}
+[7.475926] (pwmrelay) StdoutLine: {'line': b"writing manifest file '../../build/pwmrelay/pwmrelay.egg-info/SOURCES.txt'\n"}
+[7.476931] (pwmrelay) StdoutLine: {'line': b'running build\n'}
+[7.477470] (pwmrelay) StdoutLine: {'line': b'running build_py\n'}
+[7.477928] (twist_ugv_cruiser) StdoutLine: {'line': b'running install_data\n'}
+[7.478347] (serial_to_ros2) StdoutLine: {'line': b'byte-compiling /home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages/serial_to_ros2/serial_publisher.py to serial_publisher.cpython-38.pyc\n'}
+[7.478910] (twist_ugv_cruiser) StdoutLine: {'line': b'running install_egg_info\n'}
+[7.479633] (serial_to_ros2) StdoutLine: {'line': b'running install_data\n'}
+[7.480198] (pwmrelay) StdoutLine: {'line': b'running install\n'}
+[7.480648] (serial_to_ros2) StdoutLine: {'line': b'running install_egg_info\n'}
+[7.482561] (pwmrelay) StdoutLine: {'line': b'running install_lib\n'}
+[7.484231] (twist_ugv_cruiser) StdoutLine: {'line': b"removing '/home/jetson/ros2_ws/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser-0.0.0-py3.8.egg-info' (and everything under it)\n"}
+[7.487116] (serial_to_ros2) StdoutLine: {'line': b"removing '/home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages/serial_to_ros2-0.0.0-py3.8.egg-info' (and everything under it)\n"}
+[7.491470] (serial_to_ros2) StdoutLine: {'line': b'Copying ../../build/serial_to_ros2/serial_to_ros2.egg-info to /home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages/serial_to_ros2-0.0.0-py3.8.egg-info\n'}
+[7.491962] (twist_ugv_cruiser) StdoutLine: {'line': b'Copying ../../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info to /home/jetson/ros2_ws/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser-0.0.0-py3.8.egg-info\n'}
+[7.494432] (pwmrelay) StdoutLine: {'line': b'running install_data\n'}
+[7.495652] (pwmrelay) StdoutLine: {'line': b'running install_egg_info\n'}
+[7.496386] (serial_to_ros2) StdoutLine: {'line': b'running install_scripts\n'}
+[7.496834] (twist_ugv_cruiser) StdoutLine: {'line': b'running install_scripts\n'}
+[7.502867] (pwmrelay) StdoutLine: {'line': b"removing '/home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay-0.0.0-py3.8.egg-info' (and everything under it)\n"}
+[7.504083] (pwmrelay) StdoutLine: {'line': b'Copying ../../build/pwmrelay/pwmrelay.egg-info to /home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay-0.0.0-py3.8.egg-info\n'}
+[7.513904] (pwmrelay) StdoutLine: {'line': b'running install_scripts\n'}
+[7.567079] (-) TimerEvent: {}
+[7.574120] (twist_ugv_cruiser) StdoutLine: {'line': b'Installing cruiser script to /home/jetson/ros2_ws/install/twist_ugv_cruiser/lib/twist_ugv_cruiser\n'}
+[7.574711] (serial_to_ros2) StdoutLine: {'line': b'Installing serial_to_ros2_node script to /home/jetson/ros2_ws/install/serial_to_ros2/lib/serial_to_ros2\n'}
+[7.575362] (serial_to_ros2) StdoutLine: {'line': b"writing list of installed files to '/home/jetson/ros2_ws/build/serial_to_ros2/install.log'\n"}
+[7.582695] (twist_ugv_cruiser) StdoutLine: {'line': b"writing list of installed files to '/home/jetson/ros2_ws/build/twist_ugv_cruiser/install.log'\n"}
+[7.597197] (pwmrelay) StdoutLine: {'line': b'Installing pwmrelay script to /home/jetson/ros2_ws/install/pwmrelay/lib/pwmrelay\n'}
+[7.605075] (pwmrelay) StdoutLine: {'line': b"writing list of installed files to '/home/jetson/ros2_ws/build/pwmrelay/install.log'\n"}
+[7.667286] (-) TimerEvent: {}
+[7.684661] (serial_to_ros2) CommandEnded: {'returncode': 0}
+[7.764423] (serial_to_ros2) JobEnded: {'identifier': 'serial_to_ros2', 'rc': 0}
+[7.771043] (-) TimerEvent: {}
+[7.771488] (twist_ugv_cruiser) CommandEnded: {'returncode': 0}
+[7.795424] (twist_ugv_cruiser) JobEnded: {'identifier': 'twist_ugv_cruiser', 'rc': 0}
+[7.796943] (pwmrelay) CommandEnded: {'returncode': 0}
+[7.818531] (pwmrelay) JobEnded: {'identifier': 'pwmrelay', 'rc': 0}
+[7.820931] (-) EventReactorShutdown: {}

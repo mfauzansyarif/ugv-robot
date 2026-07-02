@@ -1,0 +1,37 @@
+[3.633s] Invoking command in '/home/jetson/ros2_ws/src/twist_ugv_cruiser': PYTHONPATH=/home/jetson/ros2_ws/src/build/twist_ugv_cruiser/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/twist_ugv_cruiser build --build-base /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build install --record /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/install.log --single-version-externally-managed install_data
+[4.870s] running egg_info
+[4.873s] creating ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info
+[4.873s] writing ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/PKG-INFO
+[4.874s] writing dependency_links to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/dependency_links.txt
+[4.875s] writing entry points to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/entry_points.txt
+[4.875s] writing requirements to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/requires.txt
+[4.875s] writing top-level names to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/top_level.txt
+[4.897s] writing manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'
+[4.904s] reading manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'
+[4.907s] writing manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'
+[4.907s] running build
+[4.908s] running build_py
+[4.909s] creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build
+[4.909s] creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib
+[4.910s] creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser
+[4.910s] copying twist_ugv_cruiser/cruiser.py -> /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser
+[4.910s] copying twist_ugv_cruiser/__init__.py -> /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser
+[4.911s] running install
+[4.912s] running install_lib
+[4.916s] creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser
+[4.916s] copying /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser/cruiser.py -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser
+[4.917s] copying /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser/__init__.py -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser
+[4.918s] byte-compiling /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser/cruiser.py to cruiser.cpython-38.pyc
+[4.921s] byte-compiling /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser/__init__.py to __init__.cpython-38.pyc
+[4.923s] running install_data
+[4.923s] creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index
+[4.924s] creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index/resource_index
+[4.924s] creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index/resource_index/packages
+[4.924s] copying resource/twist_ugv_cruiser -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index/resource_index/packages
+[4.925s] copying package.xml -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/twist_ugv_cruiser
+[4.925s] running install_egg_info
+[4.930s] Copying ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info to /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser-0.0.0-py3.8.egg-info
+[4.933s] running install_scripts
+[5.004s] Installing cruiser script to /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/twist_ugv_cruiser
+[5.005s] writing list of installed files to '/home/jetson/ros2_ws/src/build/twist_ugv_cruiser/install.log'
+[5.098s] Invoked command in '/home/jetson/ros2_ws/src/twist_ugv_cruiser' returned '0': PYTHONPATH=/home/jetson/ros2_ws/src/build/twist_ugv_cruiser/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/twist_ugv_cruiser build --build-base /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build install --record /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/install.log --single-version-externally-managed install_data

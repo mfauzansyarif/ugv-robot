@@ -1,0 +1,4 @@
+- [x] add switch on for powering up the slip ring load
+- [x] change bps and port for LRF when back in office with actual pantilg
+- [ ] put serial dev and baud rate to .env
+- [ ] refactor serial as separate lib

@@ -1,0 +1,19 @@
+running egg_info
+writing ../../build/pwmrelay/pwmrelay.egg-info/PKG-INFO
+writing dependency_links to ../../build/pwmrelay/pwmrelay.egg-info/dependency_links.txt
+writing entry points to ../../build/pwmrelay/pwmrelay.egg-info/entry_points.txt
+writing requirements to ../../build/pwmrelay/pwmrelay.egg-info/requires.txt
+writing top-level names to ../../build/pwmrelay/pwmrelay.egg-info/top_level.txt
+reading manifest file '../../build/pwmrelay/pwmrelay.egg-info/SOURCES.txt'
+writing manifest file '../../build/pwmrelay/pwmrelay.egg-info/SOURCES.txt'
+running build
+running build_py
+running install
+running install_lib
+running install_data
+running install_egg_info
+removing '/home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay-0.0.0-py3.8.egg-info' (and everything under it)
+Copying ../../build/pwmrelay/pwmrelay.egg-info to /home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay-0.0.0-py3.8.egg-info
+running install_scripts
+Installing pwmrelay script to /home/jetson/ros2_ws/install/pwmrelay/lib/pwmrelay
+writing list of installed files to '/home/jetson/ros2_ws/build/pwmrelay/install.log'

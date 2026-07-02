@@ -1,0 +1,6 @@
+source;share/pwmrelay/hook/pythonpath.ps1
+source;share/pwmrelay/hook/pythonpath.dsv
+source;share/pwmrelay/hook/pythonpath.sh
+source;share/pwmrelay/hook/ament_prefix_path.ps1
+source;share/pwmrelay/hook/ament_prefix_path.dsv
+source;share/pwmrelay/hook/ament_prefix_path.sh

@@ -1,0 +1,21 @@
+[7.624s] Invoking command in '/home/jetson/ros2_ws/src/pwmrelay': PYTHONPATH=/home/jetson/ros2_ws/build/pwmrelay/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/pwmrelay build --build-base /home/jetson/ros2_ws/build/pwmrelay/build install --record /home/jetson/ros2_ws/build/pwmrelay/install.log --single-version-externally-managed install_data
+[9.843s] running egg_info
+[9.846s] writing ../../build/pwmrelay/pwmrelay.egg-info/PKG-INFO
+[9.850s] writing dependency_links to ../../build/pwmrelay/pwmrelay.egg-info/dependency_links.txt
+[9.852s] writing entry points to ../../build/pwmrelay/pwmrelay.egg-info/entry_points.txt
+[9.853s] writing requirements to ../../build/pwmrelay/pwmrelay.egg-info/requires.txt
+[9.855s] writing top-level names to ../../build/pwmrelay/pwmrelay.egg-info/top_level.txt
+[9.875s] reading manifest file '../../build/pwmrelay/pwmrelay.egg-info/SOURCES.txt'
+[9.881s] writing manifest file '../../build/pwmrelay/pwmrelay.egg-info/SOURCES.txt'
+[9.883s] running build
+[9.884s] running build_py
+[9.887s] running install
+[9.891s] running install_lib
+[9.904s] running install_data
+[9.905s] running install_egg_info
+[9.916s] removing '/home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay-0.0.0-py3.8.egg-info' (and everything under it)
+[9.919s] Copying ../../build/pwmrelay/pwmrelay.egg-info to /home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages/pwmrelay-0.0.0-py3.8.egg-info
+[9.923s] running install_scripts
+[10.046s] Installing pwmrelay script to /home/jetson/ros2_ws/install/pwmrelay/lib/pwmrelay
+[10.050s] writing list of installed files to '/home/jetson/ros2_ws/build/pwmrelay/install.log'
+[10.182s] Invoked command in '/home/jetson/ros2_ws/src/pwmrelay' returned '0': PYTHONPATH=/home/jetson/ros2_ws/build/pwmrelay/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/install/pwmrelay/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/pwmrelay build --build-base /home/jetson/ros2_ws/build/pwmrelay/build install --record /home/jetson/ros2_ws/build/pwmrelay/install.log --single-version-externally-managed install_data

@@ -1,0 +1,87 @@
+[0.000000] (-) TimerEvent: {}
+[0.000804] (twist_ugv_cruiser) JobQueued: {'identifier': 'twist_ugv_cruiser', 'dependencies': OrderedDict()}
+[0.000955] (twist_ugv_cruiser) JobStarted: {'identifier': 'twist_ugv_cruiser'}
+[0.098245] (-) TimerEvent: {}
+[0.199078] (-) TimerEvent: {}
+[0.299755] (-) TimerEvent: {}
+[0.400422] (-) TimerEvent: {}
+[0.501065] (-) TimerEvent: {}
+[0.601723] (-) TimerEvent: {}
+[0.702640] (-) TimerEvent: {}
+[0.803217] (-) TimerEvent: {}
+[0.903806] (-) TimerEvent: {}
+[1.004437] (-) TimerEvent: {}
+[1.105072] (-) TimerEvent: {}
+[1.207006] (-) TimerEvent: {}
+[1.307671] (-) TimerEvent: {}
+[1.408465] (-) TimerEvent: {}
+[1.509255] (-) TimerEvent: {}
+[1.609935] (-) TimerEvent: {}
+[1.710503] (-) TimerEvent: {}
+[1.811111] (-) TimerEvent: {}
+[1.911726] (-) TimerEvent: {}
+[2.012334] (-) TimerEvent: {}
+[2.112867] (-) TimerEvent: {}
+[2.213456] (-) TimerEvent: {}
+[2.314050] (-) TimerEvent: {}
+[2.414629] (-) TimerEvent: {}
+[2.515244] (-) TimerEvent: {}
+[2.615813] (-) TimerEvent: {}
+[2.716404] (-) TimerEvent: {}
+[2.817050] (-) TimerEvent: {}
+[2.917677] (-) TimerEvent: {}
+[3.018294] (-) TimerEvent: {}
+[3.106599] (twist_ugv_cruiser) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', 'setup.py', 'egg_info', '--egg-base', '../build/twist_ugv_cruiser', 'build', '--build-base', '/home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build', 'install', '--record', '/home/jetson/ros2_ws/src/build/twist_ugv_cruiser/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/jetson/ros2_ws/src/twist_ugv_cruiser', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'jetson', 'SSH_CLIENT': '192.168.3.212 52886 22', 'LC_TIME': 'nl_NL.UTF-8', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/jetson', 'OLDPWD': '/home/jetson/ros2_ws/src/twist_ugv_cruiser/twist_ugv_cruiser', 'SSH_TTY': '/dev/pts/0', 'JETSON_L4T': '32.6.1', 'ROS_PYTHON_VERSION': '3', 'JETSON_MODEL': 'NVIDIA Jetson Nano Developer Kit', 'LC_MONETARY': 'nl_NL.UTF-8', 'LC_CTYPE': 'UTF-8', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLCON_PREFIX_PATH': '/home/jetson/ros2_ws/src/install', 'ROS_DISTRO': 'humble', 'LOGNAME': 'jetson', 'JETSON_MODULE': 'NVIDIA Jetson Nano (4 GB ram)', 'JETSON_SERIAL_NUMBER': '1423323016358', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'JETSON_CODENAME': 'Porg', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '7', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/jetson/.local/bin:/opt/ros/humble/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'LC_ADDRESS': 'nl_NL.UTF-8', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'LC_TELEPHONE': 'nl_NL.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'JETSON_SOC': 'tegra210', 'AMENT_PREFIX_PATH': '/home/jetson/ros2_ws/src/install/twist_ugv_cruiser:/opt/ros/humble', 'SHELL': '/bin/bash', 'LC_NAME': 'nl_NL.UTF-8', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'JETSON_BOARDIDS': 'p3448', 'LC_MEASUREMENT': 'nl_NL.UTF-8', 'LC_IDENTIFICATION': 'nl_NL.UTF-8', 'JETSON_CUDA_ARCH_BIN': '5.3', 'PWD': '/home/jetson/ros2_ws/src/build/twist_ugv_cruiser', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '192.168.3.212 52886 192.168.3.200 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/jetson/ros2_ws/src/build/twist_ugv_cruiser/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages:/home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages:/opt/ros/humble/lib/python3.8/site-packages', 'LC_NUMERIC': 'nl_NL.UTF-8', 'LC_PAPER': 'nl_NL.UTF-8', 'COLCON': '1', 'JETSON_JETPACK': '4.6', 'JETSON_P_NUMBER': 'p3448-0000'}, 'shell': False}
+[3.118556] (-) TimerEvent: {}
+[3.221484] (-) TimerEvent: {}
+[3.322136] (-) TimerEvent: {}
+[3.422766] (-) TimerEvent: {}
+[3.523381] (-) TimerEvent: {}
+[3.623996] (-) TimerEvent: {}
+[3.724607] (-) TimerEvent: {}
+[3.825205] (-) TimerEvent: {}
+[3.925827] (-) TimerEvent: {}
+[4.026435] (-) TimerEvent: {}
+[4.127006] (-) TimerEvent: {}
+[4.227646] (-) TimerEvent: {}
+[4.328283] (-) TimerEvent: {}
+[4.343883] (twist_ugv_cruiser) StdoutLine: {'line': b'running egg_info\n'}
+[4.346085] (twist_ugv_cruiser) StdoutLine: {'line': b'creating ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info\n'}
+[4.346820] (twist_ugv_cruiser) StdoutLine: {'line': b'writing ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/PKG-INFO\n'}
+[4.347546] (twist_ugv_cruiser) StdoutLine: {'line': b'writing dependency_links to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/dependency_links.txt\n'}
+[4.348138] (twist_ugv_cruiser) StdoutLine: {'line': b'writing entry points to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/entry_points.txt\n'}
+[4.348658] (twist_ugv_cruiser) StdoutLine: {'line': b'writing requirements to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/requires.txt\n'}
+[4.349013] (twist_ugv_cruiser) StdoutLine: {'line': b'writing top-level names to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/top_level.txt\n'}
+[4.353688] (twist_ugv_cruiser) StdoutLine: {'line': b"writing manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'\n"}
+[4.360314] (twist_ugv_cruiser) StdoutLine: {'line': b"reading manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'\n"}
+[4.363178] (twist_ugv_cruiser) StdoutLine: {'line': b"writing manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'\n"}
+[4.364090] (twist_ugv_cruiser) StdoutLine: {'line': b'running build\n'}
+[4.364671] (twist_ugv_cruiser) StdoutLine: {'line': b'running build_py\n'}
+[4.365187] (twist_ugv_cruiser) StdoutLine: {'line': b'creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build\n'}
+[4.365538] (twist_ugv_cruiser) StdoutLine: {'line': b'creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib\n'}
+[4.366111] (twist_ugv_cruiser) StdoutLine: {'line': b'creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser\n'}
+[4.366477] (twist_ugv_cruiser) StdoutLine: {'line': b'copying twist_ugv_cruiser/cruiser.py -> /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser\n'}
+[4.366859] (twist_ugv_cruiser) StdoutLine: {'line': b'copying twist_ugv_cruiser/__init__.py -> /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser\n'}
+[4.367208] (twist_ugv_cruiser) StdoutLine: {'line': b'running install\n'}
+[4.368376] (twist_ugv_cruiser) StdoutLine: {'line': b'running install_lib\n'}
+[4.371859] (twist_ugv_cruiser) StdoutLine: {'line': b'creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser\n'}
+[4.372409] (twist_ugv_cruiser) StdoutLine: {'line': b'copying /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser/cruiser.py -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser\n'}
+[4.373058] (twist_ugv_cruiser) StdoutLine: {'line': b'copying /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser/__init__.py -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser\n'}
+[4.374609] (twist_ugv_cruiser) StdoutLine: {'line': b'byte-compiling /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser/cruiser.py to cruiser.cpython-38.pyc\n'}
+[4.376842] (twist_ugv_cruiser) StdoutLine: {'line': b'byte-compiling /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser/__init__.py to __init__.cpython-38.pyc\n'}
+[4.377476] (twist_ugv_cruiser) StdoutLine: {'line': b'running install_data\n'}
+[4.378134] (twist_ugv_cruiser) StdoutLine: {'line': b'creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index\n'}
+[4.378550] (twist_ugv_cruiser) StdoutLine: {'line': b'creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index/resource_index\n'}
+[4.378993] (twist_ugv_cruiser) StdoutLine: {'line': b'creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index/resource_index/packages\n'}
+[4.379333] (twist_ugv_cruiser) StdoutLine: {'line': b'copying resource/twist_ugv_cruiser -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index/resource_index/packages\n'}
+[4.379679] (twist_ugv_cruiser) StdoutLine: {'line': b'copying package.xml -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/twist_ugv_cruiser\n'}
+[4.380019] (twist_ugv_cruiser) StdoutLine: {'line': b'running install_egg_info\n'}
+[4.384691] (twist_ugv_cruiser) StdoutLine: {'line': b'Copying ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info to /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser-0.0.0-py3.8.egg-info\n'}
+[4.388005] (twist_ugv_cruiser) StdoutLine: {'line': b'running install_scripts\n'}
+[4.428475] (-) TimerEvent: {}
+[4.458470] (twist_ugv_cruiser) StdoutLine: {'line': b'Installing cruiser script to /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/twist_ugv_cruiser\n'}
+[4.459581] (twist_ugv_cruiser) StdoutLine: {'line': b"writing list of installed files to '/home/jetson/ros2_ws/src/build/twist_ugv_cruiser/install.log'\n"}
+[4.528723] (-) TimerEvent: {}
+[4.552187] (twist_ugv_cruiser) CommandEnded: {'returncode': 0}
+[4.590506] (twist_ugv_cruiser) JobEnded: {'identifier': 'twist_ugv_cruiser', 'rc': 0}
+[4.592547] (-) EventReactorShutdown: {}

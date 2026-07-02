@@ -1,0 +1,16 @@
+● jetsonrelay.service - My Python Script Service
+     Loaded: loaded (/etc/systemd/system/jetsonrelay.service; enabled; vendor preset: enabled)
+     Active: inactive (dead) since Fri 2024-11-29 11:47:48 WIB; 3min 13s ago
+    Process: 8651 ExecStart=/usr/bin/python3 /home/jetson/serialcontrol/jetsonrelaysukses.py (code=killed, signal=TERM)
+   Main PID: 8651 (code=killed, signal=TERM)
+
+Nov 29 11:47:42 nano python3[8651]: Received on /dev/serial/by-id/usb-FTDI_FT231X_USB_UART_DU0D4UER-if00-port0: 0 0 1 1 0 0 0 1 1 0 0 0 0
+Nov 29 11:47:42 nano python3[8651]: Forwarded to /dev/serial/by-id/usb-WCH.CN_USB_Quad_Serial_BC6228ABCD-if00: 0 1 1 0 0 0 0
+Nov 29 11:47:42 nano python3[8651]: Forwarded to /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A5069RR4-if00-port0: 0 0 1 1 0 0 0
+Nov 29 11:47:42 nano python3[8651]: Response payload: 00 00 59 1D BB
+Nov 29 11:47:42 nano python3[8651]: Checksum valid.
+Nov 29 11:47:42 nano python3[8651]: azim: -2.9548383864768653
+Nov 29 11:47:42 nano python3[8651]: Received on /dev/serial/by-id/usb-FTDI_FT231X_USB_UART_DU0D4UER-if00-port0: 0 0 1 1 0 0 0 1 1 0 0 0 0
+Nov 29 11:47:48 nano systemd[1]: Stopping My Python Script Service...
+Nov 29 11:47:48 nano systemd[1]: jetsonrelay.service: Succeeded.
+Nov 29 11:47:48 nano systemd[1]: Stopped My Python Script Service.

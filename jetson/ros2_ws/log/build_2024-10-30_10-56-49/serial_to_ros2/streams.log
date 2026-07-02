@@ -1,0 +1,24 @@
+[5.708s] Invoking command in '/home/jetson/ros2_ws/src/serial_to_ros2': PYTHONPATH=/home/jetson/ros2_ws/build/serial_to_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/serial_to_ros2 build --build-base /home/jetson/ros2_ws/build/serial_to_ros2/build install --record /home/jetson/ros2_ws/build/serial_to_ros2/install.log --single-version-externally-managed install_data
+[6.991s] running egg_info
+[6.995s] writing ../../build/serial_to_ros2/serial_to_ros2.egg-info/PKG-INFO
+[6.996s] writing dependency_links to ../../build/serial_to_ros2/serial_to_ros2.egg-info/dependency_links.txt
+[6.996s] writing entry points to ../../build/serial_to_ros2/serial_to_ros2.egg-info/entry_points.txt
+[6.997s] writing requirements to ../../build/serial_to_ros2/serial_to_ros2.egg-info/requires.txt
+[6.997s] writing top-level names to ../../build/serial_to_ros2/serial_to_ros2.egg-info/top_level.txt
+[7.009s] reading manifest file '../../build/serial_to_ros2/serial_to_ros2.egg-info/SOURCES.txt'
+[7.013s] writing manifest file '../../build/serial_to_ros2/serial_to_ros2.egg-info/SOURCES.txt'
+[7.013s] running build
+[7.014s] running build_py
+[7.014s] copying serial_to_ros2/serial_publisher.py -> /home/jetson/ros2_ws/build/serial_to_ros2/build/lib/serial_to_ros2
+[7.015s] running install
+[7.018s] running install_lib
+[7.022s] copying /home/jetson/ros2_ws/build/serial_to_ros2/build/lib/serial_to_ros2/serial_publisher.py -> /home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages/serial_to_ros2
+[7.024s] byte-compiling /home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages/serial_to_ros2/serial_publisher.py to serial_publisher.cpython-38.pyc
+[7.026s] running install_data
+[7.027s] running install_egg_info
+[7.034s] removing '/home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages/serial_to_ros2-0.0.0-py3.8.egg-info' (and everything under it)
+[7.036s] Copying ../../build/serial_to_ros2/serial_to_ros2.egg-info to /home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages/serial_to_ros2-0.0.0-py3.8.egg-info
+[7.043s] running install_scripts
+[7.121s] Installing serial_to_ros2_node script to /home/jetson/ros2_ws/install/serial_to_ros2/lib/serial_to_ros2
+[7.122s] writing list of installed files to '/home/jetson/ros2_ws/build/serial_to_ros2/install.log'
+[7.232s] Invoked command in '/home/jetson/ros2_ws/src/serial_to_ros2' returned '0': PYTHONPATH=/home/jetson/ros2_ws/build/serial_to_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/install/serial_to_ros2/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/serial_to_ros2 build --build-base /home/jetson/ros2_ws/build/serial_to_ros2/build install --record /home/jetson/ros2_ws/build/serial_to_ros2/install.log --single-version-externally-managed install_data

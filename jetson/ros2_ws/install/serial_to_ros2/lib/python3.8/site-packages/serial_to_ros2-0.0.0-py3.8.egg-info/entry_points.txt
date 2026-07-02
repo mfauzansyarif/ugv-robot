@@ -1,0 +1,3 @@
+[console_scripts]
+serial_to_ros2_node = serial_to_ros2.serial_publisher:main
+

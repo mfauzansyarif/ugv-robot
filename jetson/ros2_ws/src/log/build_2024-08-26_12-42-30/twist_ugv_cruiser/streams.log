@@ -1,0 +1,31 @@
+[3.341s] Invoking command in '/home/jetson/ros2_ws/src/twist_ugv_cruiser': PYTHONPATH=/home/jetson/ros2_ws/src/build/twist_ugv_cruiser/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/twist_ugv_cruiser build --build-base /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build install --record /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/install.log --single-version-externally-managed install_data
+[4.563s] running egg_info
+[4.565s] creating ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info
+[4.566s] writing ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/PKG-INFO
+[4.567s] writing dependency_links to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/dependency_links.txt
+[4.568s] writing entry points to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/entry_points.txt
+[4.568s] writing requirements to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/requires.txt
+[4.568s] writing top-level names to ../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/top_level.txt
+[4.583s] writing manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'
+[4.590s] reading manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'
+[4.593s] writing manifest file '../build/twist_ugv_cruiser/twist_ugv_cruiser.egg-info/SOURCES.txt'
+[4.593s] running build
+[4.594s] running build_py
+[4.595s] creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build
+[4.595s] creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib
+[4.595s] creating /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser
+[4.596s] copying twist_ugv_cruiser/cruiser.py -> /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser
+[4.596s] copying twist_ugv_cruiser/__init__.py -> /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser
+[4.596s] running install
+[4.598s] running install_lib
+[4.602s] creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser
+[4.602s] copying /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser/cruiser.py -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser
+[4.603s] copying /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build/lib/twist_ugv_cruiser/__init__.py -> /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser
+[4.604s] byte-compiling /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser/cruiser.py to cruiser.cpython-38.pyc
+[4.606s] byte-compiling /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages/twist_ugv_cruiser/__init__.py to __init__.cpython-38.pyc
+[4.607s] running install_data
+[4.607s] creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index
+[4.608s] creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index/resource_index
+[4.608s] creating /home/jetson/ros2_ws/src/install/twist_ugv_cruiser/share/ament_index/resource_index/packages
+[4.609s] error: can't copy 'resource/twist_ugv_cruiser': doesn't exist or not a regular file
+[4.688s] Invoked command in '/home/jetson/ros2_ws/src/twist_ugv_cruiser' returned '1': PYTHONPATH=/home/jetson/ros2_ws/src/build/twist_ugv_cruiser/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/ros2_ws/src/install/twist_ugv_cruiser/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/twist_ugv_cruiser build --build-base /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/build install --record /home/jetson/ros2_ws/src/build/twist_ugv_cruiser/install.log --single-version-externally-managed install_data
