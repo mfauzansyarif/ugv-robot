@@ -20,6 +20,11 @@ BACKENDS = [
     ("ANY (default)", cv2.CAP_ANY),
 ]
 
+# Sisa blanking interval sinyal PAL suka nongol jadi garis warna solid di baris paling
+# bawah frame - capture card & resolusi ini fix di 4px. Kalau ganti capture card/resolusi
+# lain, tes ulang manual (kasih 0 dulu, lihat berapa px garisnya, baru sesuaikan angka ini).
+CROP_BAWAH_PIXEL = 4
+
 
 def scan_kamera(maks_index=10):
     print(f"Nyari device video index 0-{maks_index - 1}, coba tiap backend ({[b[0] for b in BACKENDS]})...")
@@ -54,11 +59,14 @@ def tampilkan(index, id_backend, paksa_mjpg=True):
     print("\nNampilin video. Klik jendelanya lalu tekan 'q' buat keluar.\n")
     print("Kalau item/garis doang: cek apakah kamera-TX-RX beneran nyala & transmit,")
     print("bukan cuma capture card-nya doang yang aktif.\n")
+
     while True:
         ret, frame = cap.read()
         if not ret:
             print("Gagal baca frame (device putus / gak ada sinyal masuk?).")
             break
+        if CROP_BAWAH_PIXEL > 0:
+            frame = frame[:-CROP_BAWAH_PIXEL, :]
         cv2.imshow("Video Capture Test", frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
