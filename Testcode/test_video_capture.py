@@ -23,7 +23,7 @@ BACKENDS = [
 # Sisa blanking interval sinyal PAL suka nongol jadi garis warna solid di baris paling
 # bawah frame - capture card & resolusi ini fix di 4px. Kalau ganti capture card/resolusi
 # lain, tes ulang manual (kasih 0 dulu, lihat berapa px garisnya, baru sesuaikan angka ini).
-CROP_BAWAH_PIXEL = 4
+CROP_BAWAH_PIXEL = 100
 
 
 def scan_kamera(maks_index=10):
