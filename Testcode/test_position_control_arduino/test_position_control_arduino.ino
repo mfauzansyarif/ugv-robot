@@ -51,7 +51,7 @@ const uint8_t PIN_SIGN = 7;
 
 bool arahCW = true;
 bool motorJalan = false;
-unsigned int frekuensiPulsa = 1000;  // Hz - kecepatan awal (lihat catatan di bawah)
+unsigned int frekuensiPulsa = 5000;  // Hz - kecepatan awal (lihat catatan di bawah)
 
 void tampilkanMenu() {
   Serial.println();
@@ -112,12 +112,12 @@ void loop() {
       }
       break;
     case '+':
-      frekuensiPulsa += 100;
+      frekuensiPulsa += 5000;
       if (motorJalan) tone(PIN_PULS, frekuensiPulsa);
       Serial.print(F("Freq sekarang: ")); Serial.println(frekuensiPulsa);
       break;
     case '-':
-      if (frekuensiPulsa > 100) frekuensiPulsa -= 100;
+      if (frekuensiPulsa > 100) frekuensiPulsa -= 5000;
       if (motorJalan) tone(PIN_PULS, frekuensiPulsa);
       Serial.print(F("Freq sekarang: ")); Serial.println(frekuensiPulsa);
       break;
