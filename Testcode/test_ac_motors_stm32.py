@@ -89,6 +89,7 @@ class PengirimMotorAC:
         self.speed = [0] * JUMLAH_MOTOR
         self.lock = threading.Lock()
         self.jalan = True
+        self.baris_terakhir_dicetak = None
         self.thread = threading.Thread(target=self._loop, daemon=True)
 
     def start(self):
@@ -120,6 +121,9 @@ class PengirimMotorAC:
         while self.jalan:
             baris = self._buat_baris()
             self.ser.write(baris.encode("utf-8"))
+            if baris != self.baris_terakhir_dicetak:
+                print(f"[TX -> STM32] {baris!r}")
+                self.baris_terakhir_dicetak = baris
             time.sleep(interval)
 
 
@@ -182,6 +186,20 @@ def proses_perintah(pengirim, teks):
         print(f"Motor {nomor}: {aksi} @ speed {speed_tampil}")
         return True
 
+    if perintah == "manual":
+        if len(bagian) != 1 + JUMLAH_MOTOR:
+            print(f"Format: manual <speed1> <speed2> <speed3> <speed4> (4 angka, -100..100)")
+            return True
+        try:
+            speeds = [int(x) for x in bagian[1 : 1 + JUMLAH_MOTOR]]
+        except ValueError:
+            print("Semua speed harus angka")
+            return True
+        for i, s in enumerate(speeds):
+            pengirim.set_motor(i, s)
+        print(f"Manual set speed 4 motor: {speeds}")
+        return True
+
     print("Perintah gak dikenali. Ketik '?' buat lihat menu.")
     return True
 
@@ -195,6 +213,7 @@ def tampilkan_menu():
         "  motor <1-4> maju [speed]   -> 1 motor spesifik maju\n"
         "  motor <1-4> mundur [speed] -> 1 motor spesifik mundur\n"
         "  motor <1-4> stop           -> 1 motor spesifik stop\n"
+        "  manual <s1> <s2> <s3> <s4> -> set speed ke-4 motor langsung sekaligus (beda-beda boleh)\n"
         "  status                     -> lihat speed semua motor saat ini\n"
         "  ?                          -> tampilkan menu ini lagi\n"
         "  keluar                     -> keluar (otomatis stop semua dulu)\n"
