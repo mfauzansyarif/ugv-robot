@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -123,12 +123,12 @@ static void setMotor(uint8_t index, int32_t speedWheelSpace) {
 
     switch (index) {
         case 0: // Kiri Depan
-           // HAL_GPIO_WritePin(SING_KIRI_DEPAN_GPIO_Port, SING_KIRI_DEPAN_Pin, levelSign);
-            //setPulseFreq(&htim4, TIM_CHANNEL_3, speedWheelSpace);
+           HAL_GPIO_WritePin(SING_KIRI_DEPAN_GPIO_Port, SING_KIRI_DEPAN_Pin, levelSign);
+           setPulseFreq(&htim4, TIM_CHANNEL_3, speedWheelSpace);
             break;
         case 1: // Kanan Depan
-            //HAL_GPIO_WritePin(SIGN_KANAN_DEPAN_GPIO_Port, SIGN_KANAN_DEPAN_Pin, levelSign);
-            //setPulseFreq(&htim8, TIM_CHANNEL_1, speedWheelSpace);
+            HAL_GPIO_WritePin(SIGN_KANAN_DEPAN_GPIO_Port, SIGN_KANAN_DEPAN_Pin, levelSign);
+            setPulseFreq(&htim8, TIM_CHANNEL_1, speedWheelSpace);
             break;
         case 2: // Kiri Belakang
             HAL_GPIO_WritePin(SIGN_KIRI_BELAKANG_GPIO_Port, SIGN_KIRI_BELAKANG_Pin, levelSign);
@@ -179,12 +179,15 @@ static uint8_t prosesFrame(char *baris) {
 
     for (uint8_t i = 0; i < JUMLAH_MOTOR; i++) {
         setMotor(i, speed[i]);
+
     }
+    printf("Frame OK: %ld %ld %ld %ld\r\n", speed[0], speed[1], speed[2], speed[3]);
     return 1;
 }
 
 // Callback ini otomatis dipanggil HAL tiap 1 byte UART diterima (interrupt)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	printf("RX: %c\r\n", (char)rxByte);
     if (huart->Instance != USART3) return;
 
     char c = (char)rxByte;
@@ -205,7 +208,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         }
     }
 
-    HAL_UART_Receive_IT(&huart3, &rxByte, 1);  // wajib re-arm tiap kali
+    HAL_UART_Receive_IT(&huart3, &rxByte, 1);  //  wajib re-arm tiap kali
+}
+
+int _write(int file, char *ptr, int len) {
+    for (int i = 0; i < len; i++) {
+        ITM_SendChar(*ptr++);
+    }
+    return len;
 }
 /* USER CODE END 0 */
 
@@ -249,6 +259,7 @@ int main(void)
   waktuFrameValidTerakhir = HAL_GetTick();
 
   HAL_UART_Receive_IT(&huart3, &rxByte, 1);
+  printf("Boot OK\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
