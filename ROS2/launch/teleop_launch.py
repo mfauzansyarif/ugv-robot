@@ -23,7 +23,7 @@ def generate_launch_description():
         'serial_port', default_value='/dev/ttyACM0',
         description='Serial device ke STM32')
     baud_rate_arg = DeclareLaunchArgument(
-        'baud_rate', default_value='115200',
+        'baud_rate', default_value='57600',
         description='Baudrate serial ke STM32')
 
     stm32_bridge_node = Node(

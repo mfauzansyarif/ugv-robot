@@ -5,10 +5,11 @@ Jetson), disatukan ke package ugv_robot dan diparameterisasi (port/baud lewat RO
 parameter, bukan hardcode) supaya bisa dites langsung dari laptop lalu tinggal
 di-override pas dipindah ke Jetson.
 
-Format pesan (dibaca STM32 di codeModeROS/main_code_ros.cpp, JANGAN diubah di sisi
-firmware): 6 field dipisah spasi -> "mode pwm_value mode_fbw_steer mode_mid_elv
-init_motor dir_motor". mode 0-3 = motor roda (stop/maju/mundur/rem), mode 4 = kontrol
-independen salah satu dari 8 linear actuator (steering/elevasi) lewat init_motor+dir_motor.
+Format pesan (dibaca STM32 di Testcode/kodestm32tes.c, sistem BARU 4 motor AC -
+JANGAN diubah di sisi firmware tanpa update firmware juga): "M <speed1> <speed2>
+<speed3> <speed4>", tiap speed integer -100..100. Detail protokol lengkap ada di
+Testcode/test_ac_motors_stm32.py (test tool yang sudah tervalidasi jalan ke firmware
+ini sebelum bridge ini dimigrasikan ke protokol yang sama).
 """
 
 import time
@@ -18,7 +19,7 @@ import serial
 from rclpy.node import Node
 from std_msgs.msg import String
 
-DEFAULT_BRAKE_MESSAGE = '3 0 0 0 0 0'  # mode=3 -> rem
+DEFAULT_BRAKE_MESSAGE = 'M 0 0 0 0'  # semua motor AC stop
 
 
 class Stm32Bridge(Node):
