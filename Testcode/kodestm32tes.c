@@ -217,7 +217,7 @@ int _write(int file, char *ptr, int len) {
     }
     return len;
 }
-/* USER CODE END 0 */
+/* USER CODE END 0 */ 
 
 /**
   * @brief  The application entry point.
