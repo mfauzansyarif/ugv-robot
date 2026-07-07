@@ -63,7 +63,7 @@ import time
 import serial
 import serial.tools.list_ports
 
-BAUDRATE = 115200
+BAUDRATE = 57600
 KIRIM_HZ = 20  # frekuensi kirim frame per detik (20Hz = tiap 50ms)
 JUMLAH_MOTOR = 4
 
