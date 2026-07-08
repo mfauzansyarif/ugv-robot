@@ -17,20 +17,17 @@ dalam 1 bus 2-kabel, dibedakan lewat address byte):
 =====================================================================
 PROTOKOL PELCO-D
 =====================================================================
-Ini protokol standar publik CCTV/PTZ, BEDA dari protokol custom pantilt/LRF
-yang sebelumnya di-reverse-engineer di project ini (itu protokol tertutup
-device lain, bukan Pelco-D beneran - lihat riwayat di test_rs485.py). Modul
-zoom/focus kamera ini device terpisah, jadi masuk akal kalau dia beneran
-pakai Pelco-D standar seperti kata orang yang kasih tau.
-
-CATATAN: karena project ini sebelumnya PERNAH salah nebak protokol buat
-device lain, tetap WAJIB divalidasi ke hardware asli - kalau percobaan
-pertama gak ada respons fisik, coba baudrate/address lain dulu (lihat
-coba_semua_baudrate()) sebelum menyimpulkan Pelco-D salah.
+Ini protokol standar publik CCTV/PTZ. Catatan penting dari hasil debugging:
+kamera Sony FCB-EV7520 sendiri protokol native-nya VISCA (dikonfirmasi dari
+datasheet resmi), TAPI modul joystick+RS485 yang nempel di kamera ini
+kemungkinan besar terima Pelco-D di sisi RS485-nya lalu translate ke VISCA
+secara internal buat "ngomong" ke kamera - jadi kita tetap kirim Pelco-D ke
+MODUL ini (bukan VISCA), modul yang urus translasi ke kamera.
 
 Frame 7 byte:
   [0] Sync       = 0xFF (selalu)
-  [1] Address    = ID kamera (1-255, umumnya default 1)
+  [1] Address    = ID kamera/modul (1-255, umumnya default 1 - TAPI BELUM
+                   DIKONFIRMASI, makanya ada fitur scan address di bawah)
   [2] Command 1  = bit flags (focus near, iris, camera on/off, dst)
   [3] Command 2  = bit flags (zoom tele/wide, pan/tilt kanan-kiri-atas-bawah)
   [4] Data 1     = pan speed (0x00-0x3F) - 0x00 kalau bukan perintah pan
@@ -46,6 +43,7 @@ sini karena itu sudah ditangani unit pan-tilt terpisah):
   Stop (semua)    : byte[2] = 0x00, byte[3] = 0x00
 
 Baudrate Pelco-D yang umum: 2400, 4800, 9600, 19200 (beda merek beda default).
+Address juga belum diketahui, jadi scan gabungan baudrate x address.
 
 Requirement: pip install pyserial
 """
@@ -57,6 +55,7 @@ import serial.tools.list_ports
 
 BAUDRATES_UMUM = [9600, 2400, 4800, 19200]
 ALAMAT_DEFAULT = 1
+ALAMAT_COBA = list(range(1, 9))  # 1-8, address Pelco-D yang paling umum dipakai
 
 PERINTAH = {
     "zoom_in": (0x00, 0x20),   # zoom tele
@@ -99,18 +98,42 @@ def kirim_perintah(ser, alamat, nama):
     kirim(ser, frame, nama)
 
 
-def coba_semua_baudrate(port, alamat):
-    """Kalau belum tau baudrate yang bener, kirim 'stop' ke tiap baudrate umum
-    satu-satu. Pelco-D gak ada respons balik data - validasinya dari GERAKAN
-    FISIK/reaksi kamera, bukan dari data yang diterima serial."""
-    print(f"\nCoba kirim command 'stop' di tiap baudrate umum: {BAUDRATES_UMUM}")
-    print("Perhatikan kamera - kalau ada baudrate yang bikin sesuatu kejadian")
-    print("(lampu kedip/dengung motor internal), itu kandidat baudrate yang benar.\n")
+def buka_serial(port, baudrate):
+    ser = serial.Serial(port, baudrate, timeout=1)
+    ser.dtr = False
+    ser.rts = False
+    return ser
+
+
+def scan_baudrate_dan_address(port):
+    """Scan GABUNGAN baudrate x address - kirim zoom-in singkat lalu stop di
+    tiap kombinasi, TUNGGU JAWABAN KAMU (y/n) sebelum lanjut ke kombinasi
+    berikutnya. Pelco-D gak ada respons balik data, jadi validasinya murni
+    dari REAKSI FISIK lensa kamera yang kamu amati - bukan dari data yang
+    diterima serial.
+
+    Ketik 'y' begitu lensa kelihatan gerak - scan langsung berhenti dan
+    kasih tau kombinasi yang benar. Ketik 'q' kapan aja buat berhenti scan
+    tanpa nemuin apa-apa."""
+    print(f"\nScan gabungan: {len(BAUDRATES_UMUM)} baudrate x {len(ALAMAT_COBA)} address")
+    print("= total", len(BAUDRATES_UMUM) * len(ALAMAT_COBA), "kombinasi. Amati lensa tiap kali.\n")
     for baud in BAUDRATES_UMUM:
-        print(f"--- @ {baud} bps ---")
-        with serial.Serial(port, baud, timeout=1) as ser:
-            kirim_perintah(ser, alamat, "stop")
-        time.sleep(0.5)
+        for alamat in ALAMAT_COBA:
+            print(f"--- @ {baud} bps, address {alamat} ---")
+            with buka_serial(port, baud) as ser:
+                kirim_perintah(ser, alamat, "zoom_in")
+                time.sleep(0.8)
+                kirim_perintah(ser, alamat, "stop")
+            jawaban = input("  Lensa gerak? (y/n, q=berhenti scan): ").strip().lower()
+            if jawaban == "y":
+                print(f"\nKETEMU! baudrate={baud}, address={alamat}")
+                return baud, alamat
+            if jawaban == "q":
+                print("\nScan dihentikan manual.")
+                return None, None
+    print("\nGak ada kombinasi yang bikin lensa gerak dari semua baudrate x address yang dicoba.")
+    print("Kemungkinan bukan soal baudrate/address - cek lagi wiring TX/RX & short Ain-Bin.")
+    return None, None
 
 
 def mode_manual(ser, alamat):
@@ -149,23 +172,23 @@ def mode_manual(ser, alamat):
 def main():
     port = pilih_port()
 
-    alamat_input = input(f"Address kamera (kosongkan buat default {ALAMAT_DEFAULT}): ").strip()
-    alamat = int(alamat_input) if alamat_input else ALAMAT_DEFAULT
-
-    print("\nPilih:\n  1. Coba semua baudrate umum dulu (device belum pernah dites)")
-    print("  2. Langsung connect (baudrate udah tau)")
+    print("\nPilih:")
+    print("  1. Scan gabungan baudrate x address (belum tau dua-duanya)")
+    print("  2. Langsung connect (baudrate & address udah tau)")
     pilihan = input("Pilihan: ").strip()
 
     if pilihan == "1":
-        coba_semua_baudrate(port, alamat)
-        baud_input = input(f"\nBaudrate mana yang kepilih (kosongkan buat {BAUDRATES_UMUM[0]}): ").strip()
-        baudrate = int(baud_input) if baud_input else BAUDRATES_UMUM[0]
+        baudrate, alamat = scan_baudrate_dan_address(port)
+        if baudrate is None:
+            return
     else:
         baud_input = input(f"Baudrate (kosongkan buat default {BAUDRATES_UMUM[0]}): ").strip()
         baudrate = int(baud_input) if baud_input else BAUDRATES_UMUM[0]
+        alamat_input = input(f"Address kamera (kosongkan buat default {ALAMAT_DEFAULT}): ").strip()
+        alamat = int(alamat_input) if alamat_input else ALAMAT_DEFAULT
 
     print(f"\nMembuka {port} @ {baudrate} baud, address {alamat}...")
-    with serial.Serial(port, baudrate, timeout=1) as ser:
+    with buka_serial(port, baudrate) as ser:
         print("Terhubung.")
         mode_manual(ser, alamat)
 

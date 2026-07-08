@@ -2,14 +2,13 @@
 sama, lewat 1 USB-to-RS485 adapter di laptop.
 
 =====================================================================
-KOREKSI PENTING (dari baca datasheet asli, bukan kata orang)
+RIWAYAT DEBUGGING PROTOKOL KAMERA (penting buat konteks kode di bawah)
 =====================================================================
-KAMERA (Sony FCB-EV7520) BUKAN Pelco-D. Datasheet resmi bilang protokolnya
-VISCA (CMOS 5V level, baudrate 9600/19200/38400/115200). File
-test_camera_zoom_focus.py & test_camera_lrf_arduino.ino yang pakai Pelco-D
-SALAH buat kamera ini - itu tebakan "kata orang" yang gak tervalidasi.
-VISCA strukturnya beda total dari Pelco-D: gak pakai checksum, tapi
-terminator 0xFF di akhir frame.
+Kamera (Sony FCB-EV7520) sendiri protokol native chip-nya VISCA (dikonfirmasi
+dari datasheet resmi). TAPI modul joystick+RS485 yang nempel di kamera
+ternyata terima Pelco-D di sisi RS485-nya dan translate ke VISCA secara
+internal - jadi kode di file ini TETAP kirim Pelco-D (bukan VISCA) ke modul
+itu, CONFIRMED jalan hasil scan manual: baudrate 9600, address 1.
 
 LRF (Noptel LRF127) protokolnya CONFIRMED BENAR - checksum & frame
 structure di file ini sudah dicocokkan persis dengan datasheet resmi
@@ -25,8 +24,8 @@ RS485 itu cuma sinyal listrik - semua device yang nempel di 1 bus HARUS
 di-set decode di baudrate yang SAMA, gak bisa beda-beda. Default masingmasing device:
   - Pantilt : 9600  (hasil reverse-engineer, gak ada cara ganti - device
               gak ada dokumentasi resmi)
-  - Kamera  : umumnya default 9600 buat VISCA (cek betul ke kamera fisik,
-              beberapa unit VISCA bisa disetel lewat DIP switch/menu)
+  - Kamera  : CONFIRMED 9600 (hasil scan manual - kebetulan sama persis
+              dengan pantilt, gak perlu penyesuaian apapun)
   - LRF     : default 115200 (WAJIB diubah ke 9600 dulu SEBELUM dipasang
               permanen ke bus bersama - pakai fungsi lrf_set_baudrate() di
               bawah, sambil LRF masih tersambung sendirian/terpisah)
@@ -121,48 +120,61 @@ def pantilt_power_slipring(ser, nyala):
     pantilt_kirim(ser, payload, f"slip ring {'ON' if nyala else 'OFF'}")
 
 
-# ============================= KAMERA (VISCA) =============================
+# ============================= KAMERA (PELCO-D, CONFIRMED 9600 baud, address 1) =============================
+# Modul joystick+RS485 di kamera terima Pelco-D di sisi RS485-nya (translate
+# ke VISCA secara internal buat "ngomong" ke chip kamera Sony). Confirmed
+# jalan di 9600 baud, address 1 - lihat riwayat debugging di chat & di
+# test_camera_zoom_focus.py.
 
 ALAMAT_KAMERA_DEFAULT = 1
-SPEED_ZOOM_FOCUS_DEFAULT = 4  # 0-7, kecepatan zoom/focus VISCA
+
+PERINTAH_KAMERA = {
+    "zoom_in": (0x00, 0x20),   # zoom tele
+    "zoom_out": (0x00, 0x40),  # zoom wide
+    "focus_near": (0x01, 0x00),
+    "focus_far": (0x00, 0x80),
+    "stop": (0x00, 0x00),
+}
 
 
-def visca_header(alamat):
-    return 0x80 | (alamat & 0x0F)
+def pelco_checksum(alamat, cmd1, cmd2, data1, data2):
+    return (alamat + cmd1 + cmd2 + data1 + data2) % 256
 
 
-def visca_frame(alamat, *command_bytes):
-    return bytes([visca_header(alamat), *command_bytes, 0xFF])
+def pelco_frame(alamat, cmd1, cmd2, data1=0x00, data2=0x00):
+    checksum = pelco_checksum(alamat, cmd1, cmd2, data1, data2)
+    return bytes([0xFF, alamat, cmd1, cmd2, data1, data2, checksum])
 
 
-def visca_kirim(ser, alamat, command_bytes, label=""):
-    frame = visca_frame(alamat, *command_bytes)
+def kamera_kirim(ser, nama, alamat=ALAMAT_KAMERA_DEFAULT):
+    cmd1, cmd2 = PERINTAH_KAMERA[nama]
+    frame = pelco_frame(alamat, cmd1, cmd2)
     ser.write(frame)
-    print(f"[TX kamera VISCA] {label}: {frame.hex(' ').upper()}")
+    print(f"[TX kamera Pelco-D] {nama}: {frame.hex(' ').upper()}")
 
 
-def kamera_zoom_in(ser, alamat=ALAMAT_KAMERA_DEFAULT, speed=SPEED_ZOOM_FOCUS_DEFAULT):
-    visca_kirim(ser, alamat, [0x01, 0x04, 0x07, 0x20 | (speed & 0x07)], "zoom in (tele)")
+def kamera_zoom_in(ser, alamat=ALAMAT_KAMERA_DEFAULT):
+    kamera_kirim(ser, "zoom_in", alamat)
 
 
-def kamera_zoom_out(ser, alamat=ALAMAT_KAMERA_DEFAULT, speed=SPEED_ZOOM_FOCUS_DEFAULT):
-    visca_kirim(ser, alamat, [0x01, 0x04, 0x07, 0x30 | (speed & 0x07)], "zoom out (wide)")
+def kamera_zoom_out(ser, alamat=ALAMAT_KAMERA_DEFAULT):
+    kamera_kirim(ser, "zoom_out", alamat)
 
 
 def kamera_zoom_stop(ser, alamat=ALAMAT_KAMERA_DEFAULT):
-    visca_kirim(ser, alamat, [0x01, 0x04, 0x07, 0x00], "zoom stop")
+    kamera_kirim(ser, "stop", alamat)
 
 
-def kamera_focus_near(ser, alamat=ALAMAT_KAMERA_DEFAULT, speed=SPEED_ZOOM_FOCUS_DEFAULT):
-    visca_kirim(ser, alamat, [0x01, 0x04, 0x08, 0x30 | (speed & 0x07)], "focus near")
+def kamera_focus_near(ser, alamat=ALAMAT_KAMERA_DEFAULT):
+    kamera_kirim(ser, "focus_near", alamat)
 
 
-def kamera_focus_far(ser, alamat=ALAMAT_KAMERA_DEFAULT, speed=SPEED_ZOOM_FOCUS_DEFAULT):
-    visca_kirim(ser, alamat, [0x01, 0x04, 0x08, 0x20 | (speed & 0x07)], "focus far")
+def kamera_focus_far(ser, alamat=ALAMAT_KAMERA_DEFAULT):
+    kamera_kirim(ser, "focus_far", alamat)
 
 
 def kamera_focus_stop(ser, alamat=ALAMAT_KAMERA_DEFAULT):
-    visca_kirim(ser, alamat, [0x01, 0x04, 0x08, 0x00], "focus stop")
+    kamera_kirim(ser, "stop", alamat)
 
 
 # ============================= LRF (Noptel, confirmed sesuai datasheet) =============================
@@ -240,63 +252,6 @@ def lrf_simpan_baudrate_permanen(ser):
     ok = lrf_baca_standard_ack(ser, "simpan baudrate")
     time.sleep(0.02)
     return ok
-
-
-ALAMAT_BROADCAST_VISCA = 0x08
-BAUDRATE_VISCA_UMUM = [9600, 19200, 38400, 115200]
-
-
-def scan_visca_broadcast(port):
-    """Coba address BROADCAST (0x08 -> header 0x88) di semua baudrate umum
-    VISCA. Broadcast WAJIB direspons/dieksekusi semua kamera VISCA apapun
-    address individu yang ke-set di kameranya - jadi ini cara tercepat buat
-    validasi baudrate doang, tanpa perlu tau/nebak address individu dulu.
-
-    Kirim zoom-in singkat lalu stop tiap baudrate, minta user amati fisik
-    lensa kamera (VISCA gak selalu balikin respons serial buat command
-    biasa, jadi validasinya dari REAKSI FISIK, bukan dari data yang
-    diterima)."""
-    for baud in BAUDRATE_VISCA_UMUM:
-        print(f"\n--- @ {baud} bps, address BROADCAST (header 0x88) ---")
-        with serial.Serial(port, baud, timeout=0.3) as ser:
-            ser.dtr = False
-            ser.rts = False
-            kamera_zoom_in(ser, alamat=ALAMAT_BROADCAST_VISCA)
-            time.sleep(0.8)
-            kamera_zoom_stop(ser, alamat=ALAMAT_BROADCAST_VISCA)
-        lanjut = input("  Lensa/kamera ada reaksi apapun? (y/n, q=stop scan): ").strip().lower()
-        if lanjut == "y":
-            print(f"\nKETEMU! Baudrate yang benar: {baud} (broadcast address)")
-            return baud
-        if lanjut == "q":
-            return None
-    print("\nGak ada baudrate yang bikin kamera bereaksi walau pakai broadcast.")
-    print("Kemungkinan bukan soal baudrate/address - cek lagi wiring TX/RX cross antara")
-    print("modul & kamera, power modul/kamera, atau short Ain-Bin (pastikan itu beneran")
-    print("cuma resistor terminasi ~120 ohm, bukan short 0 ohm).")
-    return None
-
-
-def scan_visca_address(port, baud):
-    """Setelah baudrate ketemu (dari scan_visca_broadcast), cari address
-    individu kamera yang benar - berguna kalau nanti mau kontrol per-kamera
-    spesifik (bukan broadcast terus). Kamera umumnya address 1-7."""
-    for alamat in range(1, 8):
-        print(f"\n--- address individu {alamat} (header 0x{0x80 | alamat:02X}) ---")
-        with serial.Serial(port, baud, timeout=0.3) as ser:
-            ser.dtr = False
-            ser.rts = False
-            kamera_zoom_in(ser, alamat=alamat)
-            time.sleep(0.8)
-            kamera_zoom_stop(ser, alamat=alamat)
-        lanjut = input("  Lensa gerak? (y/n, q=stop scan): ").strip().lower()
-        if lanjut == "y":
-            print(f"\nKETEMU! Address kamera: {alamat}")
-            return alamat
-        if lanjut == "q":
-            return None
-    print("\nGak ada address individu 1-7 yang bikin lensa gerak.")
-    return None
 
 
 def lrf_dengarkan_identifikasi(port, baudrate, durasi_detik=5):
@@ -410,7 +365,7 @@ def menu_pantilt(ser):
 
 def menu_kamera(ser):
     print(
-        "\n--- Kamera (VISCA) ---\n"
+        "\n--- Kamera (Pelco-D) ---\n"
         "  i/o = zoom in/out   n/f = focus near/far\n"
         "  s   = stop zoom & focus\n"
         "  q   = balik ke menu utama\n"
@@ -461,8 +416,6 @@ def main():
     print("  1. Konfigurasi LRF ke 9600 baud permanen (jalankan SEKALI, LRF sendirian dulu)")
     print("  2. Kontrol gabungan (pantilt + kamera + LRF) di 1 bus")
     print("  3. DIAGNOSTIK: dengerin pasif LRF (cek ada tanda hidup atau nggak)")
-    print("  4. DIAGNOSTIK: scan baudrate kamera (VISCA broadcast)")
-    print("  5. DIAGNOSTIK: scan address individu kamera (VISCA, setelah baudrate ketemu)")
     pilihan_awal = input("Pilihan: ").strip()
 
     port = pilih_port()
@@ -477,16 +430,6 @@ def main():
         lrf_dengarkan_identifikasi(port, baud)
         return
 
-    if pilihan_awal == "4":
-        scan_visca_broadcast(port)
-        return
-
-    if pilihan_awal == "5":
-        baud_input = input("Baudrate yang sudah ketemu bekerja: ").strip()
-        baud = int(baud_input) if baud_input else 9600
-        scan_visca_address(port, baud)
-        return
-
     print(f"\nMembuka {port} @ {BAUDRATE_BUS} baud (bus bersama)...")
     with serial.Serial(port, BAUDRATE_BUS, timeout=1) as ser:
         ser.dtr = False
@@ -496,7 +439,7 @@ def main():
             print(
                 "\n=== Menu utama ===\n"
                 "  1 = Pantilt\n"
-                "  2 = Kamera (VISCA)\n"
+                "  2 = Kamera (Pelco-D)\n"
                 "  3 = LRF\n"
                 "  q = keluar\n"
             )
