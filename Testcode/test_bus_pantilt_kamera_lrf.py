@@ -364,10 +364,16 @@ def menu_pantilt(ser):
 
 
 def menu_kamera(ser):
+    # Focus near/far SENGAJA gak ada di menu ini - sudah dikonfirmasi lewat
+    # tes joystick fisik modul bahwa focus gak bisa dikontrol manual sama
+    # sekali (bukan bug protokol/kode kita, murni keterbatasan hardware/
+    # firmware modul joystick+RS485 ini - kamera cuma jalan full auto-focus).
+    # Fungsi kamera_focus_near/far/stop tetap disimpan di kode kalau-kalau
+    # modul diganti nanti dengan yang support override manual focus.
     print(
         "\n--- Kamera (Pelco-D) ---\n"
-        "  i/o = zoom in/out   n/f = focus near/far\n"
-        "  s   = stop zoom & focus\n"
+        "  i/o = zoom in/out (focus: auto-only, gak bisa dikontrol manual - hardware limit)\n"
+        "  s   = stop zoom\n"
         "  q   = balik ke menu utama\n"
     )
     while True:
@@ -376,19 +382,13 @@ def menu_kamera(ser):
             kamera_zoom_in(ser)
         elif key == "o":
             kamera_zoom_out(ser)
-        elif key == "n":
-            kamera_focus_near(ser)
-        elif key == "f":
-            kamera_focus_far(ser)
         elif key == "s":
             kamera_zoom_stop(ser)
-            kamera_focus_stop(ser)
         elif key == "q":
             kamera_zoom_stop(ser)
-            kamera_focus_stop(ser)
             return
         else:
-            print("Gak dikenali (i/o/n/f/s/q)")
+            print("Gak dikenali (i/o/s/q)")
 
 
 def menu_lrf(ser):
@@ -449,7 +449,7 @@ def main():
             elif pilihan == "2":
                 menu_kamera(ser)
             elif pilihan == "3":
-                menu_lrf(ser)
+                menu_lrf(ser) 
             elif pilihan == "q":
                 pantilt_gerak(ser, "stop")
                 kamera_zoom_stop(ser)
