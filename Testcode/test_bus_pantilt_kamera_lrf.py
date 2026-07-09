@@ -120,6 +120,47 @@ def pantilt_power_slipring(ser, nyala):
     pantilt_kirim(ser, payload, f"slip ring {'ON' if nyala else 'OFF'}")
 
 
+def tes_pantilt_validasi_address(ser):
+    """DIAGNOSTIK KESELAMATAN BUS BERSAMA: pantilt & Pelco-D (kamera)
+    SAMA-SAMA pakai sync byte 0xFF. Kalau pantilt gak validasi byte1
+    (posisi 'address' di Pelco-D, yang pantilt selalu expect 0x00), maka
+    command Pelco-D buat kamera (address=1) yang KEBETULAN checksum-nya
+    cocok bisa aja ke-eksekusi pantilt juga - itu resiko yang perlu
+    dipastikan dulu sebelum gabung 1 bus.
+
+    Kirim command 'kiri' berulang dengan byte1 (posisi address) di-custom
+    ke beberapa nilai berbeda - amati fisik pantilt tiap kali."""
+    nilai_dicoba = [0x00, 0x01, 0x02, 0xFF]
+    print("\n=== Tes validasi address byte pantilt ===")
+    print("Kirim command 'kiri' berulang, byte1 (posisi address Pelco-D) di-custom.")
+    print("AMATI FISIK PANTILT tiap kali - gerak atau diam?\n")
+    hasil = {}
+    for nilai in nilai_dicoba:
+        payload = [nilai, 0x00, 0x04, 0x3F, 0x00]  # "kiri" tapi byte1 di-custom
+        pantilt_kirim(ser, payload, f"kiri (byte1={nilai:#04x})")
+        time.sleep(0.6)
+        pantilt_gerak(ser, "stop")
+        jawaban = input(f"  byte1={nilai:#04x}: pantilt gerak? (y/n): ").strip().lower()
+        hasil[nilai] = jawaban == "y"
+        time.sleep(0.3)
+
+    print("\n=== Hasil ===")
+    for nilai, gerak in hasil.items():
+        print(f"  byte1={nilai:#04x}: {'GERAK' if gerak else 'diam'}")
+
+    if hasil.get(0x00) and not any(v for k, v in hasil.items() if k != 0x00):
+        print("\nKESIMPULAN: pantilt VALIDASI byte1 (cuma gerak kalau 0x00).")
+        print("-> AMAN digabung 1 bus dengan kamera (Pelco-D address 1 gak akan")
+        print("   ke-eksekusi pantilt).")
+    elif any(v for k, v in hasil.items() if k != 0x00):
+        print("\nKESIMPULAN: pantilt TIDAK validasi byte1 (tetap gerak walau byte1 != 0x00).")
+        print("-> BERISIKO digabung 1 bus dengan kamera - command Pelco-D address 1")
+        print("   berpotensi ke-eksekusi pantilt juga. Sarankan pantilt di channel terpisah.")
+    else:
+        print("\nHasil ambigu (byte1=0x00 juga gak gerak) - cek koneksi dulu.")
+    return hasil
+
+
 # ============================= KAMERA (PELCO-D, CONFIRMED 9600 baud, address 1) =============================
 # Modul joystick+RS485 di kamera terima Pelco-D di sisi RS485-nya (translate
 # ke VISCA secara internal buat "ngomong" ke chip kamera Sony). Confirmed
@@ -177,6 +218,40 @@ def kamera_focus_stop(ser, alamat=ALAMAT_KAMERA_DEFAULT):
     kamera_kirim(ser, "stop", alamat)
 
 
+def tes_kamera_validasi_address(ser):
+    """DIAGNOSTIK KESELAMATAN BUS BERSAMA (kebalikan dari tes pantilt):
+    pastikan modul kamera CUMA bereaksi ke address=1 (address dia sendiri),
+    dan MENGABAIKAN address lain - termasuk address=0 yang notabene value
+    default byte1 di frame pantilt. Kalau kamera ternyata bereaksi ke
+    address selain 1, ada resiko frame pantilt (byte1=0x00) ke-eksekusi
+    kamera juga."""
+    alamat_dicoba = [0, 1, 2]
+    print("\n=== Tes validasi address kamera (Pelco-D) ===")
+    print("Kirim 'zoom in' ke beberapa address berbeda - AMATI FISIK LENSA tiap kali.\n")
+    hasil = {}
+    for alamat in alamat_dicoba:
+        kamera_zoom_in(ser, alamat=alamat)
+        time.sleep(0.8)
+        kamera_zoom_stop(ser, alamat=alamat)
+        jawaban = input(f"  address={alamat}: lensa gerak? (y/n): ").strip().lower()
+        hasil[alamat] = jawaban == "y"
+        time.sleep(0.3)
+
+    print("\n=== Hasil ===")
+    for alamat, gerak in hasil.items():
+        print(f"  address={alamat}: {'GERAK' if gerak else 'diam'}")
+
+    if hasil.get(1) and not any(v for k, v in hasil.items() if k != 1):
+        print("\nKESIMPULAN: kamera VALIDASI address dengan benar (cuma gerak di address=1).")
+        print("-> AMAN, frame pantilt (byte1=0x00) gak akan ke-eksekusi kamera.")
+    elif any(v for k, v in hasil.items() if k != 1):
+        print("\nKESIMPULAN: kamera BEREAKSI ke address selain 1 juga.")
+        print("-> BERISIKO - frame pantilt bisa ke-eksekusi kamera. Perlu waspada/pisahkan bus.")
+    else:
+        print("\nHasil ambigu (address=1 juga gak gerak) - cek koneksi dulu.")
+    return hasil
+
+
 # ============================= LRF (Noptel, confirmed sesuai datasheet) =============================
 
 def lrf_checksum(payload):
@@ -206,7 +281,7 @@ def lrf_baca_standard_ack(ser, label=""):
 
 def lrf_baca_jarak(ser, mode=0x10):
     """mode default 0x10 = Quick SMM 1 (lebih cepat dari SMM biasa 0x00)."""
-    payload = [0xCC, mode, 0x00, 0x00]
+    payload= [0xCC, mode, 0x00, 0x00]
     lrf_kirim(ser, payload, "baca jarak")
     respons = ser.read(22)
     if len(respons) != 22:
@@ -343,6 +418,8 @@ def menu_pantilt(ser):
         "\n--- Pantilt ---\n"
         "  w/s = atas/bawah   a/d = kiri/kanan   x = stop\n"
         "  e/z = baca sudut elevasi/azimuth (DIAGNOSTIK - cek bus sehat/nggak)\n"
+        "  p/o = slip ring ON/OFF\n"
+        "  v   = tes validasi address byte (DIAGNOSTIK keselamatan bus bersama)\n"
         "  q = balik ke menu utama\n"
     )
     while True:
@@ -356,11 +433,17 @@ def menu_pantilt(ser):
         elif key == "z":
             hasil = pantilt_baca_sudut(ser, "azimuth")
             print(f"Sudut azimuth: {hasil}")
+        elif key == "p":
+            pantilt_power_slipring(ser, True)
+        elif key == "o":
+            pantilt_power_slipring(ser, False)
+        elif key == "v":
+            tes_pantilt_validasi_address(ser)
         elif key == "q":
             pantilt_gerak(ser, "stop")
             return
         else:
-            print("Gak dikenali (w/s/a/d/x/e/z/q)")
+            print("Gak dikenali (w/s/a/d/x/e/z/p/o/v/q)")
 
 
 def menu_kamera(ser):
@@ -374,6 +457,7 @@ def menu_kamera(ser):
         "\n--- Kamera (Pelco-D) ---\n"
         "  i/o = zoom in/out (focus: auto-only, gak bisa dikontrol manual - hardware limit)\n"
         "  s   = stop zoom\n"
+        "  v   = tes validasi address (DIAGNOSTIK keselamatan bus bersama)\n"
         "  q   = balik ke menu utama\n"
     )
     while True:
@@ -384,11 +468,13 @@ def menu_kamera(ser):
             kamera_zoom_out(ser)
         elif key == "s":
             kamera_zoom_stop(ser)
+        elif key == "v":
+            tes_kamera_validasi_address(ser)
         elif key == "q":
             kamera_zoom_stop(ser)
             return
         else:
-            print("Gak dikenali (i/o/s/q)")
+            print("Gak dikenali (i/o/s/v/q)")
 
 
 def menu_lrf(ser):
