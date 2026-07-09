@@ -411,11 +411,22 @@
     "reuse_designators": true,
     "subpart_first_id": 65,
     "subpart_id_separator": 0,
-    "top_level_sheets": [],
-    "used_designators": "BT1",
+    "top_level_sheets": [
+      {
+        "filename": "ugv-robot.kicad_sch",
+        "name": "Root",
+        "uuid": "cb717689-3fed-4997-90cb-ca2068d6c570"
+      }
+    ],
+    "used_designators": "#PWR1-4,BT1,U1-2",
     "variants": []
   },
-  "sheets": [],
+  "sheets": [
+    [
+      "cb717689-3fed-4997-90cb-ca2068d6c570",
+      "Root"
+    ]
+  ],
   "text_variables": {},
   "tuning_profiles": {
     "meta": {
