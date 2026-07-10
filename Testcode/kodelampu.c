@@ -55,6 +55,11 @@ char frameKerja[32];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
+#define BLINK_INTERVAL_MS   250   // 250ms toggle = 2Hz kedip penuh
+volatile uint8_t sedangMundur = 0;
+uint32_t waktuBlinkTerakhir = 0;
+uint8_t statusBlinkSekarang = 0;
+
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM15_Init(void);
@@ -81,6 +86,14 @@ static void Lamp_SetBrightness(uint8_t percent)
     __HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_1, ccr);
 }
 
+static void setLampuBelakang(uint8_t mundur) {
+    sedangMundur = mundur;
+    if (!mundur) {
+        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_8, GPIO_PIN_SET);  // nyala terus kalau gak mundur
+    }
+    // kalau mundur=1, biarin while(1) yang urus kedipnya
+}
+
 static void prosesFrame(char *baris) {
     char *token[2];
     uint8_t jumlahToken = 0;
@@ -90,14 +103,22 @@ static void prosesFrame(char *baris) {
         tok = strtok(NULL, " ");
     }
     if (jumlahToken != 2) return;
-    if (strcmp(token[0], "L") != 0) return;
+    if (tok != NULL) return;
 
     char *endptr;
     long val = strtol(token[1], &endptr, 10);
     if (endptr == token[1] || *endptr != '\0') return;
-    if (val < 0) val = 0;
-    if (val > 100) val = 100;
-    Lamp_SetBrightness((uint8_t)val);
+
+    if (strcmp(token[0], "L") == 0) {
+        if (val < 0) val = 0;
+        if (val > 100) val = 100;
+        Lamp_SetBrightness((uint8_t)val);
+        printf("Lamp OK: %ld%%\r\n", val);
+    } else if (strcmp(token[0], "R") == 0) {
+        setLampuBelakang(val != 0 ? 1 : 0);
+        printf("Reverse OK: %ld\r\n", val);
+    }
+    // tag lain diabaikan
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
@@ -119,6 +140,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         }
     }
     HAL_UART_Receive_IT(&huart3, &rxByte, 1);
+}
+
+int _write(int file, char *ptr, int len) {
+    for (int i = 0; i < len; i++) {
+        ITM_SendChar(*ptr++);
+    }
+    return len;
 }
 /* USER CODE END 0 */
 
@@ -182,6 +210,14 @@ int main(void)
 	      prosesFrame(salinanLokal);
 	  }
 
+	  if (sedangMundur) {
+	      if (HAL_GetTick() - waktuBlinkTerakhir >= BLINK_INTERVAL_MS) {
+	          statusBlinkSekarang = !statusBlinkSekarang;
+	          HAL_GPIO_WritePin(GPIOF, GPIO_PIN_8,
+	              statusBlinkSekarang ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	          waktuBlinkTerakhir = HAL_GetTick();
+	      }
+	  }
   }
   /* USER CODE END 3 */
 }
@@ -352,6 +388,7 @@ static void MX_USART3_UART_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
 
   /* USER CODE END MX_GPIO_Init_1 */
@@ -359,6 +396,16 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_8, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PF8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
