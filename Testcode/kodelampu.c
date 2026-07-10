@@ -52,6 +52,15 @@ char rxBuffer[32];
 volatile uint8_t rxIndex = 0;
 volatile uint8_t frameSiap = 0;
 char frameKerja[32];
+
+#define BLINK_INTERVAL_MS   250
+#define LAMPU_MATI    0
+#define LAMPU_NYALA   1
+#define LAMPU_KEDIP   2
+
+volatile uint8_t statusLampuBelakang = LAMPU_NYALA;  // default nyala pas boot
+uint32_t waktuBlinkTerakhir = 0;
+uint8_t statusBlinkSekarang = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -87,9 +96,17 @@ static void Lamp_SetBrightness(uint8_t percent)
 }
 
 static void setLampuBelakang(uint8_t mundur) {
-    sedangMundur = mundur;
-    if (!mundur) {
-        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_8, GPIO_PIN_SET);  // nyala terus kalau gak mundur
+	static void setLampuBelakang(uint8_t state) {
+	    if (state > LAMPU_KEDIP) state = LAMPU_KEDIP;  // clamp, jaga-jaga input aneh
+	    statusLampuBelakang = state;
+
+	    if (state == LAMPU_MATI) {
+	        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_8, GPIO_PIN_RESET);
+	    } else if (state == LAMPU_NYALA) {
+	        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_8, GPIO_PIN_SET);
+	    }
+	    // kalau LAMPU_KEDIP: gak set pin di sini, biar while(1) yang toggle terus
+	}
     }
     // kalau mundur=1, biarin while(1) yang urus kedipnya
 }
@@ -115,10 +132,10 @@ static void prosesFrame(char *baris) {
         Lamp_SetBrightness((uint8_t)val);
         printf("Lamp OK: %ld%%\r\n", val);
     } else if (strcmp(token[0], "R") == 0) {
-        setLampuBelakang(val != 0 ? 1 : 0);
-        printf("Reverse OK: %ld\r\n", val);
+        setLampuBelakang((uint8_t)val);
+        printf("Lampu belakang: %ld\r\n", val);
     }
-    // tag lain diabaikan
+
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
@@ -190,7 +207,9 @@ int main(void)
   /* Default aman saat boot: lampu OFF dulu, jangan langsung nyala full
    * sebelum ada command eksplisit dari GCS */
   Lamp_SetBrightness(0);
+  setLampuBelakang(LAMPU_NYALA);   // <- tambahin ini: default nyala (mundur=0)
   HAL_UART_Receive_IT(&huart3, &rxByte, 1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -210,7 +229,7 @@ int main(void)
 	      prosesFrame(salinanLokal);
 	  }
 
-	  if (sedangMundur) {
+	  if (statusLampuBelakang == LAMPU_KEDIP) {
 	      if (HAL_GetTick() - waktuBlinkTerakhir >= BLINK_INTERVAL_MS) {
 	          statusBlinkSekarang = !statusBlinkSekarang;
 	          HAL_GPIO_WritePin(GPIOF, GPIO_PIN_8,
