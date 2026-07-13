@@ -260,163 +260,68 @@ def tes_kamera_validasi_address(ser):
     return hasil
 
 
-# ============================= LRF (Noptel, confirmed sesuai datasheet) =============================
+# ============================= LRF (via STM32 BRIDGE, address 2 di bus RS485) =============================
+# LRF gak langsung di bus RS485 lagi - dia nyambung TTL langsung ke USART2
+# STM32 (lihat Testcode/lrfinterface.c). Bridge STM32 yang nempel di bus
+# bersama sebagai address=2, terima command Pelco-D-style di bawah ini,
+# translate ke protokol native LRF, baca hasilnya, lalu BUNGKUS ULANG jadi
+# frame Pelco-D 7-byte sebelum kirim balik ke bus - byte mentah LRF gak
+# pernah nongol di bus bersama. CONFIRMED jalan end-to-end (lihat riwayat
+# debug bridge STM32 di chat - tes pakai emulasi LRF palsu, hasilnya cocok).
+#
+# Checksum & bentuk frame SAMA PERSIS kayak Pelco-D kamera (reuse
+# pelco_checksum/pelco_frame di atas) - bedanya cuma 'cmd2' isinya opcode
+# custom bikinan kita sendiri (bridge ini BUKAN Pelco-D asli, cuma
+# KEBETULAN pakai bungkus frame yang sama biar seragam di bus).
 
-def lrf_checksum(payload):
-    return (sum(payload) % 256) ^ 0x50
+ALAMAT_BRIDGE_LRF = 2
+CMD2_BACA_JARAK = 0x01
+CMD2_POINTER = 0x02
 
 
-def lrf_kirim(ser, payload, label=""):
-    checksum = lrf_checksum(payload)
-    frame = bytes(payload + [checksum])
-    print(f"[TX LRF] {label}: {frame.hex(' ').upper()}")
+def bridge_lrf_kirim(ser, cmd2, data1=0x00, data2=0x00, label=""):
+    frame = pelco_frame(ALAMAT_BRIDGE_LRF, 0x00, cmd2, data1, data2)
     ser.write(frame)
+    print(f"[TX bridge-LRF] {label}: {frame.hex(' ').upper()}")
 
 
-def lrf_baca_standard_ack(ser, label=""):
-    """Baca 'standard acknowledgement frame' (4 byte) - dipakai buat command
-    yang gak ngembaliin data (misal set pointer, set baudrate)."""
-    respons = ser.read(4)
-    if len(respons) != 4:
-        print(f"[RX LRF] {label}: ack gak lengkap ({len(respons)} byte, harusnya 4)")
+def bridge_lrf_baca_respons(ser, label=""):
+    """Kalau bridge gagal baca LRF (LRF timeout di sisi STM32), bridge
+    SENGAJA gak kirim apa-apa balik (lihat ProsesFramePelcoD di
+    lrfinterface.c) - jadi respons kosong di sini itu NORMAL, bukan
+    berarti bus/wiring rusak. Coba ulang aja."""
+    respons = ser.read(7)
+    if len(respons) != 7:
+        print(f"[RX bridge-LRF] {label}: gak ada respons ({len(respons)} byte) - "
+              f"LRF mungkin gagal baca/timeout di sisi bridge, coba ulang")
+        return None
+    alamat, cmd1, cmd2, data1, data2, checksum = respons[1:7]
+    if pelco_checksum(alamat, cmd1, cmd2, data1, data2) != checksum:
+        print(f"[RX bridge-LRF] {label}: checksum mismatch")
+        return None
+    return cmd2, data1, data2
+
+
+def bridge_lrf_baca_jarak(ser):
+    bridge_lrf_kirim(ser, CMD2_BACA_JARAK, label="baca jarak")
+    hasil = bridge_lrf_baca_respons(ser, "baca jarak")
+    if hasil is None:
+        return None
+    _, data1, data2 = hasil
+    jarak_desimeter = data1 | (data2 << 8)  # data1=LSB, data2=MSB, satuan 0.1m
+    jarak_meter = jarak_desimeter / 10.0
+    print(f"[RX bridge-LRF] Jarak: {jarak_meter:.1f} meter")
+    return jarak_meter
+
+
+def bridge_lrf_pointer(ser, nyala):
+    bridge_lrf_kirim(ser, CMD2_POINTER, data1=(1 if nyala else 0),
+                      label=f"pointer {'ON' if nyala else 'OFF'}")
+    hasil = bridge_lrf_baca_respons(ser, "pointer")
+    if hasil is None:
         return False
-    if respons[0] != 0x59 or respons[2] != 0x3C:
-        print(f"[RX LRF] {label}: format ack gak sesuai")
-        return False
-    print(f"[RX LRF] {label}: ack OK")
+    print(f"[RX bridge-LRF] pointer {'ON' if nyala else 'OFF'} OK")
     return True
-
-
-def lrf_baca_jarak(ser, mode=0x10):
-    """mode default 0x10 = Quick SMM 1 (lebih cepat dari SMM biasa 0x00)."""
-    payload= [0xCC, mode, 0x00, 0x00]
-    lrf_kirim(ser, payload, "baca jarak")
-    respons = ser.read(22)
-    if len(respons) != 22:
-        print(f"[RX LRF] Respons gak lengkap ({len(respons)} byte, harusnya 22)")
-        return None
-    if respons[:2] != bytes([0x59, 0xCC]):
-        print(f"[RX LRF] Header salah (harusnya 59 CC): {respons[:2].hex(' ').upper()}")
-        return None
-    if lrf_checksum(list(respons[:-1])) != respons[21]:
-        print("[RX LRF] Checksum mismatch")
-        return None
-    import struct
-    jarak = struct.unpack("<f", respons[2:6])[0]
-    print(f"[RX LRF] Jarak: {jarak:.2f} meter")
-    time.sleep(0.02)  # datasheet: wajib jeda >=20ms sebelum kirim command berikutnya
-    return jarak
-
-
-def lrf_lampu(ser, nyala):
-    payload = [0xC5, 0x02 if nyala else 0x00]
-    lrf_kirim(ser, payload, f"pointer {'ON' if nyala else 'OFF'}")
-    lrf_baca_standard_ack(ser, "set pointer")
-    time.sleep(0.02)
-
-
-def lrf_set_baudrate_sementara(ser, pilihan):
-    """pilihan: 1=9600 2=19200 3=38400 4=57600 5=115200 6=230400 7=460800.
-    Ganti baudrate LANGSUNG (gak permanen sampai lrf_simpan_baudrate
-    dipanggil di baudrate yang baru)."""
-    payload = [0xC8, pilihan]
-    lrf_kirim(ser, payload, f"set baudrate sementara -> pilihan {pilihan}")
-    ok = lrf_baca_standard_ack(ser, "set baudrate")
-    time.sleep(0.02)
-    return ok
-
-
-def lrf_simpan_baudrate_permanen(ser):
-    """Simpan baudrate yang LAGI AKTIF sekarang ke memori permanen LRF.
-    WAJIB dipanggil di koneksi serial yang baudrate-nya SUDAH sesuai target
-    (bukan baudrate lama) - lihat alur di menu_konfigurasi_lrf()."""
-    payload = [0xC8, 0x00]
-    lrf_kirim(ser, payload, "simpan baudrate permanen")
-    ok = lrf_baca_standard_ack(ser, "simpan baudrate")
-    time.sleep(0.02)
-    return ok
-
-
-def lrf_dengarkan_identifikasi(port, baudrate, durasi_detik=5):
-    """DIAGNOSTIK MURNI PASIF - gak kirim apa-apa, cuma dengerin.
-
-    Datasheet LRF127 bilang modul otomatis kirim string identifikasi
-    ("LRF127 x.x.x") ~50ms setelah power-on, TANPA diminta. Kalau gak ada
-    byte apapun yang masuk selama didengerin, itu indikasi kuat LRF
-    memang gak dapat power sama sekali (bukan soal protokol/checksum/
-    baudrate kita yang salah) - coba nyalain ulang slip ring/LRF sambil
-    fungsi ini jalan, atau cek dulu kontinuitas kabel power ke LRF
-    (pin 4/5 = supply, 6/7 = GND, TERPISAH dari kabel RS485/data)."""
-    print(f"\nDengerin pasif di {port} @ {baudrate} baud selama {durasi_detik} detik...")
-    print("(Gak kirim apa-apa - kalau LRF power-on, harusnya ada string identifikasi masuk sendiri)")
-    with serial.Serial(port, baudrate, timeout=1) as ser:
-        ser.dtr = False
-        ser.rts = False
-        akhir = time.time() + durasi_detik
-        total_byte = bytearray()
-        while time.time() < akhir:
-            data = ser.read(64)
-            if data:
-                total_byte.extend(data)
-    if not total_byte:
-        print("HASIL: NIHIL, gak ada byte apapun masuk.")
-        print("-> Indikasi kuat LRF gak dapat power. Cek kabel power (pin 4/5 & 6/7)")
-        print("   terpisah dari kabel RS485/data, dan pastikan itu beneran kesambung")
-        print("   ke rail yang di-ON-kan slip ring (bukan cuma rail buat pantilt/kamera).")
-    else:
-        print(f"HASIL: {len(total_byte)} byte masuk:")
-        print("  hex :", total_byte.hex(' ').upper())
-        try:
-            print("  teks:", total_byte.decode('ascii', errors='replace'))
-        except Exception:
-            pass
-    return bytes(total_byte)
-
-
-def konfigurasi_lrf_ke_9600(port):
-    """Alur lengkap: nyalain slip ring dulu lewat pantilt (LRF butuh ini buat
-    power - normalnya OFF), tunggu LRF boot, baru ganti baudrate LRF dari
-    115200 (default pabrik) ke 9600 PERMANEN - supaya bisa gabung di bus
-    bersama 9600.
-
-    Semua device (pantilt, kamera, LRF) BOLEH tetap tersambung PARALEL selama
-    proses ini - gak perlu dipisah kabelnya. Mismatch baudrate sementara
-    antara pantilt (9600) dan LRF (masih 115200 di awal) aman karena device
-    yang gak nyambung baudrate-nya cuma "dengar" noise/framing error, bukan
-    salah eksekusi command (lihat diskusi lengkap soal ini di chat)."""
-    print("\n=== Konfigurasi LRF: nyalain slip ring, lalu ganti baudrate ke 9600 permanen ===\n")
-
-    print("Langkah 1: buka koneksi di 9600 (baudrate pantilt), nyalain slip ring...")
-    with serial.Serial(port, 9600, timeout=1) as ser:
-        ser.dtr = False
-        ser.rts = False
-        pantilt_power_slipring(ser, True)
-        respons = pantilt_baca_respons(ser)
-        if respons is None:
-            print("(Gak ada respons terbaca dari pantilt untuk command ini - mungkin memang")
-            print(" normal/gak semua command pantilt balas respons. Lanjut, tapi pastikan")
-            print(" slip ring beneran nyala secara fisik/LED indikator sebelum lanjut.)")
-    print("Slip ring diperintah ON. Tunggu LRF boot...")
-    time.sleep(0.5)  # datasheet: LRF siap ~50ms setelah power, kasih jeda lebih buat aman
-
-    print("\nLangkah 2: buka koneksi di 115200 (baudrate default pabrik LRF)...")
-    with serial.Serial(port, 115200, timeout=1) as ser:
-        ser.dtr = False
-        ser.rts = False
-        if not lrf_set_baudrate_sementara(ser, 1):  # 1 = pilih 9600
-            print("Gagal set baudrate sementara. Cek apakah LRF beneran sudah power-on (slip ring ON).")
-            return
-    print("Baudrate LRF sudah pindah ke 9600 (tapi belum permanen).")
-
-    print("\nLangkah 3: buka ulang koneksi di 9600, simpan permanen...")
-    time.sleep(0.5)
-    with serial.Serial(port, 9600, timeout=1) as ser:
-        ser.dtr = False
-        ser.rts = False
-        if lrf_simpan_baudrate_permanen(ser):
-            print("BERHASIL - LRF sekarang permanen di 9600 baud. Slip ring tetap menyala.")
-        else:
-            print("Gagal simpan permanen. LRF mungkin balik ke 115200 kalau di-power-cycle.")
 
 
 # ============================= MENU GABUNGAN =============================
@@ -487,18 +392,18 @@ def menu_kamera(ser):
 
 def menu_lrf(ser):
     print(
-        "\n--- LRF ---\n"
+        "\n--- LRF (lewat STM32 bridge, address 2) ---\n"
         "  r = baca jarak   l/k = pointer ON/OFF\n"
         "  q = balik ke menu utama\n"
     )
     while True:
         key = input("lrf> ").strip().lower()
         if key == "r":
-            lrf_baca_jarak(ser)
+            bridge_lrf_baca_jarak(ser)
         elif key == "l":
-            lrf_lampu(ser, True)
+            bridge_lrf_pointer(ser, True)
         elif key == "k":
-            lrf_lampu(ser, False)
+            bridge_lrf_pointer(ser, False)
         elif key == "q":
             return
         else:
@@ -506,23 +411,7 @@ def menu_lrf(ser):
 
 
 def main():
-    print("Pilih:")
-    print("  1. Konfigurasi LRF ke 9600 baud permanen (jalankan SEKALI, LRF sendirian dulu)")
-    print("  2. Kontrol gabungan (pantilt + kamera + LRF) di 1 bus")
-    print("  3. DIAGNOSTIK: dengerin pasif LRF (cek ada tanda hidup atau nggak)")
-    pilihan_awal = input("Pilihan: ").strip()
-
     port = pilih_port()
-
-    if pilihan_awal == "1":
-        konfigurasi_lrf_ke_9600(port)
-        return
-
-    if pilihan_awal == "3":
-        baud_input = input("Baudrate buat didengerin (kosongkan buat 115200): ").strip()
-        baud = int(baud_input) if baud_input else 115200
-        lrf_dengarkan_identifikasi(port, baud)
-        return
 
     print(f"\nMembuka {port} @ {BAUDRATE_BUS} baud (bus bersama)...")
     with serial.Serial(port, BAUDRATE_BUS, timeout=1) as ser:
@@ -534,7 +423,7 @@ def main():
                 "\n=== Menu utama ===\n"
                 "  1 = Pantilt\n"
                 "  2 = Kamera (Pelco-D)\n"
-                "  3 = LRF\n"
+                "  3 = LRF (lewat STM32 bridge)\n"
                 "  q = keluar\n"
             )
             pilihan = input("> ").strip().lower()

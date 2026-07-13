@@ -3,7 +3,9 @@
   ******************************************************************************
   * @file           : main.c
   * @brief          : Main program body - LRF Bridge (RS485 Pelco-D <-> LRF native)
-  *                    VERSI DEBUG - nambah log ASCII lewat LPUART1 (PA2=TX/PA3=RX)
+  *                    Wiring USART1 (bus) sudah terbukti sehat via tes echo -
+  *                    ternyata salah satu "PB7" di pinout board Nucleo-32
+  *                    gak beneran ke-connect, sudah dipindah ke PB7 yang benar.
   ******************************************************************************
   * @attention
   *
@@ -46,13 +48,13 @@
  *   buat flashing). Semua log dikirim ke sini, TIDAK PERNAH nyentuh USART1
  *   atau USART2 supaya gak ganggu protokol asli.
  *
- * PENTING soal timing debug: JANGAN print di dalam HAL_UART_RxCpltCallback
- * (ISR) per-byte - bus jalan di 9600 baud, jarak antar byte cuma ~1ms,
- * sedangkan kirim 1 baris debug text di 115200 baud bisa >2ms -> bisa bikin
- * byte berikutnya di bus KELEWAT (bug baru muncul gara-gara debug-nya
- * sendiri). Makanya ISR cuma NGITUNG (counter), print teksnya dilakuin di
- * main loop (BUKAN interrupt) secara periodik + tiap kali 1 frame lengkap
- * selesai diproses.
+ * PENTING soal timing debug: JANGAN print / JANGAN transmit blocking di
+ * dalam HAL_UART_RxCpltCallback (ISR) - bus jalan di 9600 baud (~1ms per
+ * byte). Kalau ISR sibuk >1ms (misal lagi ngeprint atau ngirim blocking),
+ * byte berikutnya bisa KELEWAT atau malah bikin OVERRUN ERROR (pernah
+ * kejadian pas versi diagnostik echo - fix-nya ada di HAL_UART_ErrorCallback
+ * di bawah). Makanya ISR di sini CUMA nyusun frame buffer (murah & cepat),
+ * semua print & proses berat dilakuin di main loop.
  * ===================================================================== */
 #define ALAMAT_BRIDGE_LRF     0x02U   /* address Pelco-D milik bridge ini di bus bersama */
 #define CMD2_BACA_JARAK       0x01U
@@ -68,12 +70,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef hlpuart1;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
-/* NOTE: hlpuart1 (LPUART1) HARUS sudah otomatis ke-declare di sini oleh
- * CubeMX setelah kamu enable LPUART1 (PA2/PA3) & generate code. JANGAN
- * tulis ulang manual "UART_HandleTypeDef hlpuart1;" di sini - kalau CubeMX
- * sudah nulis baris itu duluan, bikin kamu punya dobel deklarasi. */
 
 /* USER CODE BEGIN PV */
 /* ---- penerima frame Pelco-D dari bus bersama (USART1), fixed 7 byte ---- */
@@ -86,6 +85,7 @@ static uint8_t frameKerjaBus[7];
 /* ---- counter buat debug, cuma di-increment di ISR, dibaca di main loop ---- */
 static volatile uint32_t totalByteMasukBus = 0;
 static volatile uint32_t totalFrameLengkapBus = 0;
+static volatile uint32_t totalErrorBus = 0;
 static uint32_t waktuDebugTerakhir = 0;
 /* USER CODE END PV */
 
@@ -94,8 +94,10 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_LPUART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 static void DebugPrint(const char *format, ...);
+static void DebugPrintFrame(const char *label, const uint8_t *frame, uint8_t panjang);
 static uint8_t PelcoD_Checksum(uint8_t alamat, uint8_t cmd1, uint8_t cmd2, uint8_t data1, uint8_t data2);
 static void KirimResponsPelcoD(uint8_t cmd2, uint8_t data1, uint8_t data2);
 static uint8_t LRF_Checksum(const uint8_t *payload, uint8_t panjang);
@@ -291,12 +293,8 @@ static void ProsesFramePelcoD(const uint8_t *frame)
 /**
  * @brief Callback interrupt UART - dipanggil tiap 1 byte diterima.
  *        USART1 (bus bersama) : kumpulin 7 byte fixed-length mulai dari
- *        sync 0xFF, baru proses.
- *        SENGAJA GAK ADA DebugPrint/HAL_UART_Transmit APAPUN DI SINI -
- *        ini ISR, dan bus jalan di 9600 baud (~1ms per byte). Kirim debug
- *        text di 115200 baud butuh beberapa ms, cukup buat bikin byte
- *        berikutnya di bus KELEWAT kalau dipanggil di sini. Makanya cuma
- *        counter yang di-increment (murah, aman), print-nya di main loop.
+ *        sync 0xFF, baru proses. SENGAJA GAK ADA DebugPrint/HAL_UART_Transmit
+ *        di sini - ISR harus cepat, semua print/proses berat di main loop.
  */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
@@ -315,6 +313,22 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                 frameIndexBus = 0U;
             }
         }
+        HAL_UART_Receive_IT(&huart1, &rxByteBus, 1U);
+    }
+}
+
+/**
+ * @brief Dipanggil kalau ada error UART (overrun/framing/noise/parity) di
+ *        USART1. WAJIB re-arm HAL_UART_Receive_IT lagi di sini - kalau
+ *        enggak, USART1 bakal diam PERMANEN setelah error pertama (bug
+ *        ini yang bikin versi diagnostik sebelumnya macet di "byte=1").
+ */
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1) {
+        totalErrorBus++;
+        __HAL_UART_CLEAR_OREFLAG(huart);
+        frameIndexBus = 0U; /* reset akumulasi frame yang mungkin lagi setengah jalan */
         HAL_UART_Receive_IT(&huart1, &rxByteBus, 1U);
     }
 }
@@ -351,10 +365,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  /* NOTE: panggilan MX_LPUART1_UART_Init(); HARUS sudah otomatis ada di
-   * sini (ditambahin CubeMX di antara init lain di atas) setelah kamu
-   * enable LPUART1 & generate code. Kalau belum ada, berarti kamu belum
-   * generate ulang dari CubeMX - balik dulu ke CubeMX sebelum lanjut. */
+  MX_LPUART1_UART_Init();
   /* USER CODE BEGIN 2 */
   DebugPrint("\r\n\r\n=== BRIDGE LRF STM32 - BOOT ===\r\n");
   DebugPrint("Alamat bridge di bus = 0x%02X, baudrate USART1/USART2 = 9600\r\n", ALAMAT_BRIDGE_LRF);
@@ -386,16 +397,11 @@ int main(void)
         ProsesFramePelcoD(salinanLokal);
     }
 
-    /* Heartbeat status tiap 1 detik - PALING PENTING buat diagnosa awal:
-     * kalau "byte" gak pernah nambah sama sekali, artinya USART1 gak
-     * nerima APA-APA dari bus (cek wiring PB6/PB7 & GND & baudrate).
-     * Kalau "byte" nambah tapi "frame" gak pernah nambah, artinya ada
-     * data masuk tapi gak pernah sinkron ke sync byte 0xFF dengan benar
-     * (cek TX/RX kesilang atau kebalik, atau noise). */
+    /* Heartbeat status tiap 1 detik. */
     if (HAL_GetTick() - waktuDebugTerakhir >= DEBUG_STATUS_INTERVAL_MS) {
         waktuDebugTerakhir = HAL_GetTick();
-        DebugPrint("[STATUS] total byte masuk bus=%lu, total frame lengkap=%lu\r\n",
-                   totalByteMasukBus, totalFrameLengkapBus);
+        DebugPrint("[STATUS] byte masuk=%lu frame lengkap=%lu error=%lu\r\n",
+                   totalByteMasukBus, totalFrameLengkapBus, totalErrorBus);
     }
   }
   /* USER CODE END 3 */
@@ -448,12 +454,67 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief USART1 Initialization Function (ke modul RS485-to-TTL, bus bersama)
+  * @brief LPUART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_LPUART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN LPUART1_Init 0 */
+
+  /* USER CODE END LPUART1_Init 0 */
+
+  /* USER CODE BEGIN LPUART1_Init 1 */
+
+  /* USER CODE END LPUART1_Init 1 */
+  hlpuart1.Instance = LPUART1;
+  hlpuart1.Init.BaudRate = 115200;
+  hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
+  hlpuart1.Init.StopBits = UART_STOPBITS_1;
+  hlpuart1.Init.Parity = UART_PARITY_NONE;
+  hlpuart1.Init.Mode = UART_MODE_TX_RX;
+  hlpuart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  hlpuart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  hlpuart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  hlpuart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&hlpuart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&hlpuart1, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&hlpuart1, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&hlpuart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN LPUART1_Init 2 */
+
+  /* USER CODE END LPUART1_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
   * @param None
   * @retval None
   */
 static void MX_USART1_UART_Init(void)
 {
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
   huart1.Init.BaudRate = 9600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
@@ -469,15 +530,39 @@ static void MX_USART1_UART_Init(void)
   {
     Error_Handler();
   }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart1, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart1, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
 }
 
 /**
-  * @brief USART2 Initialization Function (langsung ke LRF127)
+  * @brief USART2 Initialization Function
   * @param None
   * @retval None
   */
 static void MX_USART2_UART_Init(void)
 {
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
   huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
@@ -493,13 +578,23 @@ static void MX_USART2_UART_Init(void)
   {
     Error_Handler();
   }
-}
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart2, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart2, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
 
-/* NOTE: MX_LPUART1_UART_Init() SENGAJA GAK saya tulis di sini - biarkan
- * versi yang di-generate CubeMX yang dipakai (dia yang tau kalkulasi
- * clock/prescaler LPUART1 yang benar). Kalau kamu copy-paste file ini,
- * JANGAN timpa fungsi MX_LPUART1_UART_Init() versi CubeMX kamu dengan
- * ketiadaan fungsi ini - biarkan tetap ada punya CubeMX. */
+  /* USER CODE END USART2_Init 2 */
+
+}
 
 /**
   * @brief GPIO Initialization Function
@@ -508,7 +603,6 @@ static void MX_USART2_UART_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
 
   /* USER CODE END MX_GPIO_Init_1 */
@@ -516,26 +610,6 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-
-  /*Configure GPIO pins : PB3 PB4 (USART2 - ke LRF) */
-  GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PB6 PB7 (USART1 - ke modul RS485-to-TTL) */
-  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* PA2/PA3 (LPUART1 - debug) dikonfigurasi otomatis oleh
-   * MX_LPUART1_UART_Init() versi CubeMX kamu - gak perlu ditambah manual
-   * di sini. */
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
