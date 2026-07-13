@@ -10,9 +10,16 @@ ternyata terima Pelco-D di sisi RS485-nya dan translate ke VISCA secara
 internal - jadi kode di file ini TETAP kirim Pelco-D (bukan VISCA) ke modul
 itu, CONFIRMED jalan hasil scan manual: baudrate 9600, address 1.
 
-LRF (Noptel LRF127) protokolnya CONFIRMED BENAR - checksum & frame
-structure di file ini sudah dicocokkan persis dengan datasheet resmi
-(Datasheet/LRF127.pdf).
+LRF (Noptel LRF127) SEKARANG GAK LANGSUNG DI BUS RS485 LAGI. Mentor
+khawatir byte mentah respons LRF (yang bisa aja ngandung 0xFF di tengah
+data float-nya) bisa numpang/nabrak protokol Pelco-D yang dipakai
+pantilt & kamera di bus yang sama. Solusinya: LRF sekarang di belakang
+BRIDGE STM32 (lihat Testcode/lrfinterface.c, jalan di NUCLEO-G431KB) -
+bridge ini nempel di bus RS485 bersama sebagai device address=2, terima
+command Pelco-D-style, translate ke protokol native LRF lewat TTL
+langsung (USART2 STM32, tanpa modul RS485), lalu BUNGKUS ULANG hasilnya
+jadi frame Pelco-D 7-byte sebelum dikirim balik ke bus. Byte mentah LRF
+gak pernah nongol di bus bersama.
 
 Pantilt tetap pakai protokol custom hasil reverse-engineer sebelumnya
 (lihat test_rs485.py) - device ini gak ada datasheet resminya.
@@ -21,17 +28,18 @@ Pantilt tetap pakai protokol custom hasil reverse-engineer sebelumnya
 SOAL BAUDRATE - WAJIB DISAMAKAN SEBELUM DIPASANG KE 1 BUS BERSAMA
 =====================================================================
 RS485 itu cuma sinyal listrik - semua device yang nempel di 1 bus HARUS
-di-set decode di baudrate yang SAMA, gak bisa beda-beda. Default masingmasing device:
-  - Pantilt : 9600  (hasil reverse-engineer, gak ada cara ganti - device
-              gak ada dokumentasi resmi)
-  - Kamera  : CONFIRMED 9600 (hasil scan manual - kebetulan sama persis
-              dengan pantilt, gak perlu penyesuaian apapun)
-  - LRF     : default 115200 (WAJIB diubah ke 9600 dulu SEBELUM dipasang
-              permanen ke bus bersama - pakai fungsi lrf_set_baudrate() di
-              bawah, sambil LRF masih tersambung sendirian/terpisah)
-
-Jangan pasang LRF ke bus bersama sebelum baudrate-nya di-set 9600 dan
-tersimpan permanen (perhatikan urutan di fungsi lrf_set_baudrate_permanen).
+di-set decode di baudrate yang SAMA, gak bisa beda-beda.
+  - Pantilt        : 9600 (hasil reverse-engineer, gak ada cara ganti)
+  - Kamera         : CONFIRMED 9600 (hasil scan manual)
+  - Bridge STM32   : 9600 di USART1 (di-hardcode di lrfinterface.c,
+                      MX_USART1_UART_Init) - ini yang "ngomong" ke bus
+                      bersama, alamat Pelco-D-nya 0x02.
+  - LRF (di balik bridge, USART2 STM32) : harus SUDAH permanen di 9600
+                      SEBELUM dikabelin ke bridge - kalau LRF-mu masih
+                      default pabrik 115200, set dulu SEKALI pakai
+                      test_lrf_cp2102_direct.py (LRF nyambung sendirian
+                      ke CP2102, terpisah dari bridge) baru pasang ke
+                      bridge.
 
 Requirement: pip install pyserial
 """
