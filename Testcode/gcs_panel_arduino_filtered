@@ -1,0 +1,111 @@
+/* ============================================================================
+ * GCS Panel - baca input fisik, kirim ke NUC via Serial (USB)
+ * VERSI dengan filter noise buat joystick analog:
+ *   1. Averaging 8 sample per baca - reduce noise ADC random
+ *   2. Exponential smoothing - reduce jitter antar siklus baca
+ *   3. Deadzone di sekitar titik tengah (512) - biar netral gak goyang
+ * ==========================================================================*/
+
+const int PIN_JOY_VRX = A0;
+const int PIN_JOY_VRY = A1;
+
+const int PIN_LRF        = 3;
+const int PIN_ZOOM_NAIK  = 5;
+const int PIN_ZOOM_TURUN = 7;
+const int PIN_FOKUS_NAIK  = 9;
+const int PIN_FOKUS_TURUN = 11;
+const int PIN_LAMPU_UTAMA = 25;
+const int PIN_KAM_ATAS   = 15;
+const int PIN_KAM_BAWAH  = 17;
+const int PIN_KAM_KIRI   = 19;
+const int PIN_KAM_KANAN  = 23;
+
+const unsigned long KIRIM_INTERVAL_MS = 50;  // 20Hz
+unsigned long waktuKirimTerakhir = 0;
+
+/* ---- Filter joystick ---- */
+const int JUMLAH_SAMPLE   = 8;      // berapa kali analogRead per baca
+const int TITIK_TENGAH    = 512;    // nilai idle joystick (0-1023, sesuaikan
+                                     // kalau ternyata joystick kamu idle-nya
+                                     // gak persis di 512 - lihat catatan di bawah)
+const int LEBAR_DEADZONE  = 15;     // +-15 di sekitar titik tengah dianggap "diam"
+const float ALPHA_SMOOTH  = 0.3f;   // 0.0-1.0, makin kecil makin smooth (tapi makin lambat respon)
+
+float vrxSmooth = TITIK_TENGAH;
+float vrySmooth = TITIK_TENGAH;
+
+int bacaAnalogSmooth(int pin, float *nilaiSmooth) {
+    long total = 0;
+    for (int i = 0; i < JUMLAH_SAMPLE; i++) {
+        total += analogRead(pin);
+        delayMicroseconds(50);  // jeda kecil antar sample, biar ADC settle
+    }
+    int rataRata = total / JUMLAH_SAMPLE;
+
+    // exponential smoothing
+    *nilaiSmooth = (ALPHA_SMOOTH * rataRata) + ((1.0f - ALPHA_SMOOTH) * (*nilaiSmooth));
+    int hasil = (int)(*nilaiSmooth);
+
+    // deadzone - kalau masih deket titik tengah, paksa jadi persis TITIK_TENGAH
+    if (abs(hasil - TITIK_TENGAH) < LEBAR_DEADZONE) {
+        hasil = TITIK_TENGAH;
+        *nilaiSmooth = TITIK_TENGAH;  // reset smoothing state juga, biar gak "nyangkut"
+    }
+
+    return hasil;
+}
+
+void setup() {
+  Serial.begin(57600);
+
+  pinMode(PIN_LRF, INPUT_PULLUP);
+  pinMode(PIN_ZOOM_NAIK, INPUT_PULLUP);
+  pinMode(PIN_ZOOM_TURUN, INPUT_PULLUP);
+  pinMode(PIN_FOKUS_NAIK, INPUT_PULLUP);
+  pinMode(PIN_FOKUS_TURUN, INPUT_PULLUP);
+  pinMode(PIN_LAMPU_UTAMA, INPUT_PULLUP);
+  pinMode(PIN_KAM_ATAS, INPUT_PULLUP);
+  pinMode(PIN_KAM_BAWAH, INPUT_PULLUP);
+  pinMode(PIN_KAM_KIRI, INPUT_PULLUP);
+  pinMode(PIN_KAM_KANAN, INPUT_PULLUP);
+}
+
+int bacaTombol(int pin) {
+  return (digitalRead(pin) == LOW) ? 1 : 0;
+}
+
+void loop() {
+  if (millis() - waktuKirimTerakhir >= KIRIM_INTERVAL_MS) {
+    waktuKirimTerakhir = millis();
+
+    int vrx = bacaAnalogSmooth(PIN_JOY_VRX, &vrxSmooth);
+    int vry = bacaAnalogSmooth(PIN_JOY_VRY, &vrySmooth);
+
+    int lrf        = bacaTombol(PIN_LRF);
+    int zoomNaik   = bacaTombol(PIN_ZOOM_NAIK);
+    int zoomTurun  = bacaTombol(PIN_ZOOM_TURUN);
+    int fokusNaik  = bacaTombol(PIN_FOKUS_NAIK);
+    int fokusTurun = bacaTombol(PIN_FOKUS_TURUN);
+    int lampu      = bacaTombol(PIN_LAMPU_UTAMA);
+    int kamAtas    = bacaTombol(PIN_KAM_ATAS);
+    int kamBawah   = bacaTombol(PIN_KAM_BAWAH);
+    int kamKiri    = bacaTombol(PIN_KAM_KIRI);
+    int kamKanan   = bacaTombol(PIN_KAM_KANAN);
+
+    Serial.print("JOY ");
+    Serial.print(vrx);
+    Serial.print(" ");
+    Serial.print(vry);
+    Serial.print(" BTN ");
+    Serial.print(lrf);        Serial.print(" ");
+    Serial.print(zoomNaik);   Serial.print(" ");
+    Serial.print(zoomTurun);  Serial.print(" ");
+    Serial.print(fokusNaik);  Serial.print(" ");
+    Serial.print(fokusTurun); Serial.print(" ");
+    Serial.print(lampu);      Serial.print(" ");
+    Serial.print(kamAtas);    Serial.print(" ");
+    Serial.print(kamBawah);   Serial.print(" ");
+    Serial.print(kamKiri);    Serial.print(" ");
+    Serial.println(kamKanan);
+  }
+}
