@@ -1,0 +1,12 @@
+# Artefak build PyInstaller - jangan di-commit, selalu bisa di-generate ulang
+# dari source pakai: python -m PyInstaller --noconfirm --name GCS_Lidikzi main.py
+build/
+dist/
+*.spec
+
+# Config lokal tiap mesin (port COM/nama kamera beda-beda per device) -
+# jangan di-commit, biar tiap orang/mesin punya config sendiri
+config.json
+
+__pycache__/
+*.pyc

@@ -168,7 +168,7 @@ tombol jog - bukan proporsional kayak speed). Jangan disamakan rangenya.
   yang sudah ada) - TIDAK perlu beli radio tambahan.
 - Modul kemungkinan besar **half-duplex di level fisik** (gak bisa
   kirim+terima bersamaan persis), jadi didesain pola **gantian**:
-  1. GCS kirim 1 frame command (10-byte, lihat di bawah)
+  1. GCS kirim 1 frame command (13-byte, lihat di bawah)
   2. GCS dengerin sebentar (timeout pendek, misal puluhan ms)
   3. Jetson, begitu terima command valid, LANGSUNG balas 4-byte telemetry
      (lihat di bawah) - **pakai status YANG SUDAH DI-CACHE, JANGAN query
@@ -178,14 +178,35 @@ tombol jog - bukan proporsional kayak speed). Jangan disamakan rangenya.
   4. Ulangi terus (rate disaranin mulai dari 20Hz, sama kayak konvensi
      protokol lain di project ini - boleh disesuaikan hasil testing nanti)
 
-**GCS → Jetson**, biner 10 byte:
+**GCS → Jetson**, biner **13 byte** (DIPERLUAS 2026-07-16 dari 10-byte awal
+- SlipRing/BodyUpDown/ArmWidenNarrow ditambahkan karena sebelumnya gak
+punya field tujuan sama sekali, padahal widget-nya udah ada di app NUC.
+SUDAH diimplementasi di `gcs_app/serial_workers.py` `FORMAT_FRAME_GCS`
+dan `gcs_app/main_window.py` `_bangun_frame_gcs()`):
 ```
-[Estop][Mode][XJoystick1][YJoystick1][XJoystick2][YJoystick2][Zoom][LRF][FLamp][BLamp]
+[Estop][Mode][XJoystick1][YJoystick1][XJoystick2][YJoystick2][Zoom][LRF][FLamp][BLamp][SlipRing][BodyUpDown][ArmWidenNarrow]
 ```
-Detail per-field (tipe data exact tiap byte, encoding Estop/Mode/dll)
-**belum saya konfirmasi presisi di sesi ini** - cek `dokumentasi/ARDUINO_GCS_BRIEF.md`
-buat konteks asal field-field ini (dari panel Arduino Mega Pro + widget
-touchscreen app GCS).
+| # | Field | Tipe | Range | Arti |
+|---|---|---|---|---|
+| 1 | `Estop` | uint8 (B) | 0/1 | **TODO placeholder 0** - belum ada sumber tombol fisik, belum dikonfirmasi |
+| 2 | `Mode` | uint8 (B) | 0/1 | **TODO placeholder 0** - kemungkinan VESTIGIAL, lihat section 3.7 |
+| 3 | `XJoystick1` | int8 (b) | -100..100 | steering, dari Arduino field `X` (0-1000) di-remap |
+| 4 | `YJoystick1` | int8 (b) | -100..100 | speed, dari Arduino field `Y` (0-1000) di-remap |
+| 5 | `XJoystick2` | int8 (b) | -100/0/100 | pantilt horizontal, dari 2 tombol digital `cam_kanan`/`cam_kiri` (BUKAN analog asli) |
+| 6 | `YJoystick2` | int8 (b) | -100/0/100 | pantilt vertikal, dari `cam_atas`/`cam_bawah` |
+| 7 | `Zoom` | int8 (b) | -1/0/1 | dari `zoomin`/`zoomout` Arduino |
+| 8 | `LRF` | uint8 (B) | 0/1 | passthrough dari Arduino, 1=hold(laser ON)/lepas=request jarak |
+| 9 | `FLamp` | uint8 (B) | 0..100 | brightness lampu depan (slider app NUC), 0 kalau `lampu` switch Arduino OFF |
+| 10 | `BLamp` | uint8 (B) | 0/1/2 | 0=mati (switch OFF), 1=nyala steady, 2=kedip (switch ON + `YJoystick1`<0/mundur) |
+| 11 | `SlipRing` | uint8 (B) | 0/1 | dari tombol Slip Ring di app NUC (touchscreen, BUKAN tombol fisik Arduino) |
+| 12 | `BodyUpDown` | int8 (b) | -1/0/1 | AGGREGATE Raise/Lower (gabungan tombol fisik Body Up/Down Arduino + tombol Raise/Lower touchscreen, touchscreen menang kalau dua-duanya aktif) - Jetson yang nerjemahin ke fbody+bbody |
+| 13 | `ArmWidenNarrow` | int8 (b) | -1/0/1 | AGGREGATE Widen/Narrow (CUMA dari touchscreen, gak ada tombol fisik Arduino) - Jetson yang nerjemahin ke rarm+larm |
+
+struct format Python: `"=BBbbbbbBBBBbb"` (13 byte, lihat `gcs_app/serial_workers.py`).
+
+**Field yang MASIH placeholder/belum firm**: `Estop`, `Mode` (poin 1-2 di
+tabel), dan konvensi tanda `XJoystick2`/`YJoystick2` (asumsi kanan=+X,
+atas=+Y, belum dikonfirmasi user).
 
 **Jetson → GCS**, biner 4 byte (telemetry balik, BARU didesain hari ini,
 BELUM diimplementasi di kode manapun):
@@ -203,20 +224,37 @@ BELUM diimplementasi di kode manapun):
   `test_gcs_forwarder.py` - **saya (Claude sisi Windows) belum sempat
   review detail isinya di sesi ini**, cek langsung filenya buat tau
   status implementasi RF yang sebenarnya (apakah sudah match protokol
-  10-byte + telemetry 4-byte di atas, atau masih versi eksplorasi lama/
+  13-byte + telemetry 4-byte di atas, atau masih versi eksplorasi lama/
   simplex "panel koper" v1 - lihat komentar di `test_rf_link.py` soal
   format 13-field lama, itu SISTEM LAMA, bukan yang dipakai sekarang).
 - Protokol gantian request-response (3.5) BELUM diimplementasi - baru
   desain di sesi ini, perlu ditulis dari nol di `gcs_interface_node`
   (sisi Jetson) dan aplikasi GCS (sisi NUC, lihat bagian 7).
 
-### 3.7. Desain kontrol GCS (joystick/tombol) - konsep sudah dibahas, DETAIL EXACT BELUM saya rangkum
-Ada diskusi panjang soal skema kontrol GCS: 2 joystick, 2 mode ("Drive"
-buat gerak+pantilt, mode kedua buat naik-turun chassis+lebar/sempit arm -
-namanya masih dicari, "Drive" dipakai user tapi nama mode 2 masih belum
-fix - kemungkinan ini yang jadi field `Mode` di protokol 3.5). Detail
-lengkap kemungkinan ada di `dokumentasi/GCS/GCS.drawio` atau gambar-gambar
-di folder `dokumentasi/` - **cek langsung isinya**.
+### 3.7. Desain kontrol GCS (joystick/tombol) - konsep lama vs panel fisik final
+Ada diskusi panjang soal skema kontrol GCS DULU: 2 joystick, 2 mode
+("Drive" buat gerak+pantilt, mode kedua buat naik-turun chassis+lebar/
+sempit arm). **TAPI panel fisik yang beneran dirakit (per 2026-07-16,
+lihat `dokumentasi/ARDUINO_GCS_BRIEF.md`) TERNYATA cuma 1 joystick
+analog** (gerak/steering) **+ 4 tombol digital D-pad buat pantilt**
+(bukan joystick analog kedua) - konsep "2 mode gonta-ganti fungsi 2
+joystick" kelihatannya SUDAH DITINGGALKAN/gak dipakai di desain final.
+Field `Mode` di protokol 13-byte (3.5) kemungkinan besar VESTIGIAL
+(sisa desain lama) - masih belum dikonfirmasi ke user apa masih
+dipakai atau bisa dihapus dari frame.
+
+**Gap arsitektur SUDAH DISELESAIKAN (2026-07-16)**: frame GCS->Jetson
+diperluas dari 10-byte jadi **13-byte** buat nampung SlipRing,
+BodyUpDown, ArmWidenNarrow (lihat 3.5) - SUDAH diimplementasi di
+`gcs_app/`. Keputusan arsitekturnya: NUC kirim command AGGREGATE (1
+nilai diskrit -1/0/1 per `BodyUpDown`/`ArmWidenNarrow`), **BUKAN kirim
+nilai per-motor individual (12 angka)** - alasannya: (a) konsisten
+sama prinsip "gcs_interface_node harus bodoh, semua logic termasuk
+grouping motor mana gerak bareng itu tugas vehicle_control_node", dan
+(b) lebih hemat bandwidth di RF yang udah sempit. Kontrol Motor Linear
+INDIVIDUAL (halaman detail/kalibrasi di app NUC) tetap butuh
+protokol/mode terpisah sendiri (dipakai jarang, gak perlu di frame
+utama 20Hz).
 
 ## 4. Rencana ROS2
 
@@ -312,16 +350,24 @@ kalau firmware STM32 sudah siap.
 | `Testcode/test_rf_link.py`, `test_rf_tx.py`, `test_rf_rx.py`, `test_gcs_forwarder.py` | Eksplorasi RF link, belum di-review detail |
 | `Testcode/test_linear_motors.py` | Test 12 motor linear, status integrasi ke firmware belum jelas |
 | `dokumentasi/STM32_BRIEF.md` | Brief lama motor AC - SEBAGIAN SUDAH OUTDATED (baudrate beda dari test tool aktual) |
-| `dokumentasi/ARDUINO_GCS_BRIEF.md` | Brief protokol panel Arduino Mega Pro → NUC (BARU, desain belum diimplementasi) |
+| `dokumentasi/ARDUINO_GCS_BRIEF.md` | Brief protokol panel Arduino Mega Pro → NUC - FINAL, panel fisik sudah dirakit & protokol sudah diimplementasi di `gcs_app/` |
+| `gcs_app/` | Aplikasi GCS (PySide6) - main_window.py, serial_workers.py (ArduinoReader+RFLink), camera_viewer.py, console_log.py, config.py, settings_dialog.py, motor_linear_dialog.py |
 | `dokumentasi/GCS/GCS.drawio`, folder `dokumentasi/` lainnya | Kemungkinan berisi detail skema kontrol GCS |
 | `Datasheet/LRF127.pdf` | Datasheet resmi LRF Noptel |
 | `Datasheet/SP-09732-001_v1.1.pdf` | Datasheet carrier board Jetson Orin Nano Dev Kit (pinout J41/J50) |
 
 ## 7. Aplikasi GCS (NUC, Windows 11, layar touchscreen)
 
-Selain ROS2 di Jetson, user juga lagi mulai bangun **aplikasi GCS** yang
-jalan di NUC (Windows 11) di sisi operator. Framework belum dipilih
-(kandidat: PyQt/Kivy Python, atau WPF/.NET).
+Selain ROS2 di Jetson, user juga bangun **aplikasi GCS** yang jalan di
+NUC (Windows 11) di sisi operator. **Framework: PySide6** (CONFIRMED,
+lihat `gcs_app/`). Status per 2026-07-16: layout utama, `ArduinoReader`
+(parsing frame 12-field Arduino), `RFLink` (kirim 13-byte + terima
+telemetry 4-byte), Camera Viewer (OpenCV + pygrabber by-name lookup),
+Console Log, config.json + Settings dialog terpisah (biar port/nama
+kamera gak gampang ke-ubah gak sengaja di touchscreen) - SEMUA SUDAH
+DIIMPLEMENTASI. Yang BELUM: lawan bicara di sisi Jetson
+(`gcs_interface_node`) dan protokol Kontrol Motor Linear Individual
+(section 7.3).
 
 ### 7.1. Alur data
 ```
@@ -343,27 +389,54 @@ Detail protokol Arduino Mega Pro → NUC: lihat `dokumentasi/ARDUINO_GCS_BRIEF.m
 - Tombol "buka detail" dari kontrol motor linear sederhana → buka
   halaman **Kontrol Motor Linear Individual**
 
-### 7.3. Halaman Kontrol Motor Linear Individual
+### 7.3. Halaman Kontrol Motor Linear Individual - protokol FINAL (2026-07-16)
 - Kontrol **ke-12 motor linear SATU-SATU** (extend/retract independen).
 - Tombol **Kalibrasi**: maksa SEMUA motor linear extend penuh + steering
   full kiri (posisi referensi/homing).
 
-**⚠️ GAP ARSITEKTUR YANG PERLU DISELESAIKAN**: protokol Jetson→STM32
-8-field yang sudah final (section 3.4) cuma punya field
-`steer/fbody/bbody/rarm/larm` (masing-masing -1/0/1, MENGGERAKKAN
-GRUP motor bareng - steer=4 motor, fbody/bbody/rarm/larm=2 motor tiap
-grup, total 12). **Field-field ini TIDAK BISA menggerakkan 1 motor
-individual secara independen dari motor pasangannya dalam 1 grup yang
-sama.** Kalau "Kontrol Motor Linear Individual" ini beneran perlu
-menggerakkan tiap 1 dari 12 motor secara independen (misal 2 motor
-dalam 1 grup `fbody` bergerak arah BEDA saat kalibrasi), protokol
-8-field yang ada SEKARANG TIDAK CUKUP - butuh salah satu dari:
-  (a) protokol/mode TERPISAH ke STM32 khusus buat mode kalibrasi/individual
-      (misal command ASCII beda, bukan frame 8-field biasa), atau
-  (b) firmware STM32 didesain ulang supaya grouping-nya bisa dipecah
-      per-motor (bukan cuma per-grup).
-**Ini WAJIB dikonfirmasi ke user sebelum implementasi fitur Individual
-Control** - jangan asumsikan salah satu solusi tanpa nanya dulu.
+**Kenapa ini butuh protokol terpisah dari frame 8-field STM32**: protokol
+Jetson→STM32 8-field yang final (section 3.4) cuma punya field
+`steer/fbody/bbody/rarm/larm` (masing-masing -1/0/1, MENGGERAKKAN GRUP
+motor bareng - steer=4 motor, fbody/bbody/rarm/larm=2 motor tiap grup,
+total 12) - field ini TIDAK BISA menggerakkan 1 motor independen dari
+pasangannya dalam grup yang sama.
+
+**Solusi yang DIPILIH (opsi (a) dari draft sebelumnya)**: command ASCII
+terpisah ke STM32, dibedain dari frame 8-field normal lewat token
+pertama (frame normal SELALU 8 angka tanpa tag, command individual/
+kalibrasi PAKAI tag huruf):
+```
+"I <motor_id> <arah>\n"   - motor_id 1-12 (urutan: Steer1-4, FBody1-2,
+                            BBody1-2, RArm1-2, LArm1-2), arah -1/0/1
+"K\n"                     - jalankan sequence kalibrasi (STM32 sendiri
+                            yang tau motor mana aja yang perlu gerak,
+                            Jetson/NUC gak perlu enumerasi manual)
+```
+STM32 bedain: kalau token pertama huruf `I`/`K` → command individual/
+kalibrasi; kalau bukan → coba parse sebagai frame 8-field normal.
+
+**Wire format di RF link (GCS↔Jetson, biner)**: pakai marker byte biar
+beda dari frame 13-byte normal (byte pertama frame normal, `Estop`, cuma
+0/1, jadi gak akan ketuker):
+```
+[0xEE][motor_id][arah]   - 3 byte, command individual
+[0xEF]                   - 1 byte, kalibrasi
+```
+Jetson balas 1 byte ack (1=sukses, 0=gagal) - beda panjang dari telemetry
+4-byte normal, jadi NUC juga bisa bedain jenis respons dari panjangnya.
+
+**Penting - kenapa gak tabrakan sama frame 13-byte normal**: selama
+dialog Individual dibuka, NUC **PAUSE** pengiriman frame 13-byte biasa
+(`RFLink.pause()`), CUMA kirim command individual/kalibrasi. Begitu
+dialog ditutup, `RFLink.resume()` balik ke frame normal. Ini
+menghindari kebutuhan logic prioritas/arbitrase di firmware kalau
+2 sumber command masuk barengan.
+
+**SUDAH DIIMPLEMENTASI** di sisi NUC (`gcs_app/serial_workers.py` -
+`RFLink.pause/resume/kirim_command_individual/kirim_kalibrasi`,
+`gcs_app/motor_linear_dialog.py`). **BELUM diimplementasi** di sisi
+Jetson (`gcs_interface_node`, belum ada) maupun firmware STM32 (belum
+ada logic buat bedain tag "I"/"K" vs frame 8-field).
 
 ### 7.4. Console Log - didesain buat 2 sumber info
 1. **Status LOKAL** (diketahui GCS sendiri, gak butuh RF balik):
@@ -384,26 +457,34 @@ kalau nyala lama.
 
 ## 6. Hal yang masih terbuka / perlu dicek lebih lanjut
 Semua pertanyaan besar (versi ROS2, baudrate, gabung firmware, protokol
-8-field) SUDAH DIJAWAB user per 2026-07-16 dan sudah tercermin di bagian
-3 & 4 di atas. Sisa yang masih perlu dicek/diputuskan:
-1. **Detail exact tiap byte protokol GCS→Jetson (10-byte, section 3.5)** -
-   tipe data persis (misal Estop 1 byte gimana encoding-nya, XJoystick
-   range berapa, dll) belum dikonfirmasi presisi di sesi ini.
-2. **Status implementasi RF** (`test_rf_link.py` dkk, section 3.6) - apa
-   sudah sesuai protokol 10-byte + telemetry 4-byte final atau masih
-   versi eksplorasi lama.
-3. **Nama mode kedua GCS** (section 3.7) - "Drive" sudah fix buat mode 1,
-   mode 2 (naik-turun chassis + lebar/sempit arm) namanya masih dicari.
-   **KEMUNGKINAN JUGA SUDAH GAK RELEVAN** - lihat poin 5 di bawah, layout
-   panel terbaru (section 7, `ARDUINO_GCS_BRIEF.md`) kelihatannya per-fungsi
-   fixed (Joystick1=gerak, DJoystick=pantilt, Body Up/Down=tombol
-   terpisah), BUKAN 2 joystick yang gonta-ganti fungsi per mode kayak
-   konsep lama. Perlu dikonfirmasi apa field `Mode` di protokol 10-byte
-   masih dipakai atau sisa dari desain lama.
+8-field STM32, framework GCS, ekstensi frame RF 13-byte) SUDAH DIJAWAB/
+DISELESAIKAN user per 2026-07-16 dan sudah tercermin di bagian 3, 4, & 7
+di atas. Sisa yang masih perlu dicek/diputuskan:
+1. **Field `Estop` dan `Mode` di protokol GCS→Jetson 13-byte (section 3.5)**
+   - masih placeholder 0, belum ada sumber tombol fisik buat Estop, dan
+   `Mode` kemungkinan besar VESTIGIAL (sisa konsep "2 mode gonta-ganti
+   fungsi 2 joystick" yang kelihatannya sudah ditinggalkan - panel fisik
+   final cuma 1 joystick analog + tombol digital fixed-function, lihat
+   3.7). Perlu dikonfirmasi ke user apa `Mode` masih dipakai atau bisa
+   dihapus dari frame.
+2. **Konvensi tanda pantilt** (`XJoystick2`/`YJoystick2` di 3.5) - asumsi
+   kanan=+X, atas=+Y, belum dikonfirmasi ke user.
+3. **Status implementasi RF FISIK** (`Testcode/test_rf_link.py` dkk,
+   section 3.6) - kode RF di sisi `gcs_app/` (NUC) sudah lengkap
+   (`RFLink` di `serial_workers.py`), TAPI **belum ada apapun di sisi
+   Jetson** (`gcs_interface_node` belum ditulis) dan belum pernah dites
+   end-to-end pakai hardware radio asli.
 4. **Logic detail 12 motor linear** di firmware gabungan (section 3.4) -
-   gimana persis sinyal -1/0/1 diterjemahkan jadi gerakan fisik tiap motor
-   (durasi jalan, limit switch kalau ada, dll) - belum dibahas detail.
-5. **GAP protokol "Kontrol Motor Linear Individual"** (section 7.3) - lihat
-   penjelasan lengkap di situ, protokol 8-field yang ada TIDAK BISA
-   menggerakkan 12 motor linear secara independen satu-satu, cuma per-grup.
-6. Framework aplikasi GCS (section 7) belum dipilih (PyQt/Kivy/WPF).
+   gimana persis sinyal -1/0/1 (`steer`/`fbody`/`bbody`/`rarm`/`larm` dari
+   STM32, atau `BodyUpDown`/`ArmWidenNarrow` dari GCS) diterjemahkan jadi
+   gerakan fisik tiap motor (durasi jalan, limit switch kalau ada, dll) -
+   belum dibahas detail, DAN belum ada yang nulis logic terjemahan
+   `BodyUpDown`/`ArmWidenNarrow` (GCS, aggregate) → `fbody/bbody/rarm/larm`
+   (STM32, per-grup) di `vehicle_control_node` (belum ada kode-nya sama
+   sekali, node ini belum ditulis).
+5. **Protokol "Kontrol Motor Linear Individual"** (section 7.3) - DESAIN
+   SUDAH FINAL & SUDAH DIIMPLEMENTASI di sisi NUC (2026-07-16, command
+   `"I <motor_id> <arah>"`/`"K"` lewat marker byte 0xEE/0xEF di RF link,
+   NUC pause frame normal selama dialog dibuka). **BELUM diimplementasi**
+   di `gcs_interface_node` (Jetson, belum ada) maupun firmware STM32
+   (belum ada logic bedain tag "I"/"K" dari frame 8-field biasa).

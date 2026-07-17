@@ -1,116 +1,123 @@
 # Brief: Firmware Arduino Mega Pro - Panel GCS (UGV Lidikzi v2)
 
-Dokumen ini rangkuman kebutuhan buat nulis firmware Arduino Mega Pro yang
-baca panel fisik GCS (tombol/joystick) dan kirim ke aplikasi NUC (Windows
-11, layar touchscreen) lewat USB serial. Ini BUKAN protokol RF (itu beda
-lapisan, lihat `dokumentasi/ROS2_BRIEF.md` section 3.5) - Arduino ini
-cuma "penerjemah" panel fisik → serial USB, aplikasi NUC yang nanti
-gabungin data ini + widget touchscreen jadi 1 frame RF ke Jetson.
+Dokumen ini rangkuman protokol Arduino Mega Pro (baca panel fisik GCS) ke
+aplikasi NUC (Windows 11, PySide6, lihat `gcs_app/`) lewat USB serial. Ini
+BUKAN protokol RF (itu beda lapisan, lihat `dokumentasi/ROS2_BRIEF.md`
+section 3.5) - Arduino ini cuma "penerjemah" panel fisik → serial USB,
+aplikasi NUC yang gabungin data ini + widget touchscreen jadi 1 frame RF
+ke Jetson.
 
-**PENTING**: dokumen ini BELUM diimplementasi sama sekali (baik firmware
-Arduino maupun parsing di sisi NUC) - ini masih tahap desain protokol,
-per 2026-07-16.
+**STATUS per 2026-07-16: panel fisik + Arduino SUDAH SELESAI DIRAKIT oleh
+user, protokol di bawah FINAL (bukan usulan lagi). Parsing di sisi NUC
+(`gcs_app/serial_workers.py`) sudah diupdate match dokumen ini.**
 
-## 1. Kenapa Arduino yang urus kalibrasi joystick, bukan NUC
+## 1. Kenapa Arduino yang urus kalibrasi & noise-filtering joystick, bukan NUC
 
 Arduino Mega Pro yang LANGSUNG terwiring ke potensiometer joystick fisik,
 jadi kalibrasi (titik tengah, dead-zone, mapping ADC mentah ke rentang
-abstrak) HARUS jadi tanggung jawab Arduino - konsisten sama prinsip yang
-sudah dipakai di desain protokol STM32 (`dokumentasi/STM32_BRIEF.md` &
-`ROS2_BRIEF.md` 3.4): kalibrasi hardware-specific dipegang SATU tempat
-yang paling dekat sama hardware-nya, supaya konsumen di lapisan atas
-(NUC app, nanti Jetson) gak perlu tau detail ADC mentah/quirks fisik
-joystick tertentu.
+target) DAN noise-filtering HARUS jadi tanggung jawab Arduino - konsisten
+sama prinsip yang sudah dipakai di desain protokol STM32
+(`dokumentasi/STM32_BRIEF.md` & `ROS2_BRIEF.md` 3.4): kalibrasi
+hardware-specific dipegang SATU tempat yang paling dekat sama
+hardware-nya, supaya konsumen di lapisan atas (NUC app, nanti Jetson)
+gak perlu tau detail ADC mentah/quirks fisik joystick tertentu.
 
-Jadi Arduino OUTPUT-nya sudah dalam rentang ABSTRAK -100..100 (bukan ADC
-mentah 0-1023), sama seperti konvensi `speed` di protokol STM32.
+**Catatan dari user (2026-07-16)**: joystick fisik yang dipakai ternyata
+(1) noisy dan (2) rentang mentahnya cuma ~100-900 (bukan 0-1000/1023
+penuh, karena potensiometer gak mentok secara mekanis). Fix yang
+disarankan (dilakukan di Arduino, BUKAN di-forward mentah ke NUC):
+- **Range**: `map(nilaiMentah, MIN_TERUKUR, MAX_TERUKUR, 0, 1000)` +
+  `constrain()` - `MIN_TERUKUR`/`MAX_TERUKUR` harus diukur manual per unit
+  joystick (gerakin ke ekstrem, catat `analogRead()`-nya).
+- **Noise**: moving average (rata-ratakan beberapa sampel `analogRead()`
+  berturut-turut) sebelum di-map.
+- **Dead-zone** di titik tengah supaya joystick yang dilepas ngasih nilai
+  tengah (500) PERSIS, bukan nilai goyang kecil di sekitar situ.
 
-## 2. Input fisik panel (dari diskusi GCS)
+## 2. Protokol Arduino → NUC (FINAL, 12 field)
 
-| Input | Tipe | Keterangan |
-|---|---|---|
-| Joystick 1 [X,Y] | analog x2 | Gerak: X=steering, Y=speed (asumsi - konfirmasi ke user urutan sumbu yang benar) |
-| DJoystick [X,Y] | analog x2 | Kontrol pan-tilt |
-| LRF | digital, EDGE-SENSITIVE | HOLD = laser nyala, LEPAS = request baca jarak (device LRF sendiri auto-matiin laser begitu ngirim hasil jarak) |
-| Zoom in | digital, momentary | - |
-| Zoom out | digital, momentary | - |
-| Body Up | digital, momentary | Kontrol motor linear sederhana (grup fbody/bbody, lihat gap protokol di `ROS2_BRIEF.md` 7.3) |
-| Body Down | digital, momentary | sama seperti Body Up, arah kebalikan |
-| Lampu Switch | digital, TOGGLE (bukan momentary) | Nyalain/matiin lampu depan+belakang sekaligus. Depan ikutin slider brightness di app NUC (di luar scope Arduino), belakang digital ON/OFF (kedip-nya kalau mundur itu logic yang dihitung firmware STM32, BUKAN Arduino) |
-| Power | digital, switch | Power GCS sendiri (BUKAN slip ring mobil - itu switch terpisah di touchscreen app, gak ada di panel Arduino) |
-
-**Catatan**: "Slip Ring" (switch power kamera+LRF mobil) dan slider
-brightness lampu depan itu **widget di touchscreen app NUC**, BUKAN
-tombol fisik di panel Arduino - jangan bingung sama daftar di atas.
-
-## 3. Protokol Arduino → NUC (USULAN, BELUM final/dikonfirmasi user)
-
-ASCII, dipisah spasi, `\n`-terminated - konsisten sama gaya protokol lain
-di project ini (gampang debug manual lewat Serial Monitor tanpa perlu
-Python):
+ASCII, dipisah spasi, `\n`-terminated:
 
 ```
-"<x1> <y1> <x2> <y2> <lrf> <zoomin> <zoomout> <bodyup> <bodydown> <lampu> <power>\n"
+"<X> <Y> <lrf> <zoomin> <zoomout> <bodyup> <bodydown> <lampu> <cam_atas> <cam_kanan> <cam_bawah> <cam_kiri>\n"
 ```
 
 | # | Field | Range | Arti |
 |---|---|---|---|
-| 1 | `x1` | -100..100 (signed) | Joystick 1 X (steering) |
-| 2 | `y1` | -100..100 (signed) | Joystick 1 Y (speed) |
-| 3 | `x2` | -100..100 (signed) | DJoystick X (pantilt horizontal) |
-| 4 | `y2` | -100..100 (signed) | DJoystick Y (pantilt vertikal) |
-| 5 | `lrf` | 0/1 | 1 = tombol LRF lagi ditahan |
-| 6 | `zoomin` | 0/1 | 1 = tombol zoom in lagi ditekan |
-| 7 | `zoomout` | 0/1 | 1 = tombol zoom out lagi ditekan |
-| 8 | `bodyup` | 0/1 | 1 = tombol body up lagi ditekan |
-| 9 | `bodydown` | 0/1 | 1 = tombol body down lagi ditekan |
-| 10 | `lampu` | 0/1 | state toggle switch lampu (bukan momentary) |
-| 11 | `power` | 0/1 | state switch power GCS |
+| 1 | `X` | 0..1000 (SUDAH dikalibrasi+difilter noise di Arduino) | Joystick gerak, sumbu X (steering) |
+| 2 | `Y` | 0..1000 | Joystick gerak, sumbu Y (speed) |
+| 3 | `lrf` | 0/1 | 1 = tombol LRF lagi ditahan (hold=laser ON, lepas=request jarak) |
+| 4 | `zoomin` | 0/1 | 1 = tombol zoom in lagi ditekan |
+| 5 | `zoomout` | 0/1 | 1 = tombol zoom out lagi ditekan |
+| 6 | `bodyup` | 0/1 | 1 = tombol body up lagi ditekan |
+| 7 | `bodydown` | 0/1 | 1 = tombol body down lagi ditekan |
+| 8 | `lampu` | 0/1 | state TOGGLE switch lampu (bukan momentary) - nyalain depan+belakang sekaligus |
+| 9 | `cam_atas` | 0/1 | pantilt arah atas - tombol digital, BUKAN joystick analog |
+| 10 | `cam_kanan` | 0/1 | pantilt arah kanan |
+| 11 | `cam_bawah` | 0/1 | pantilt arah bawah |
+| 12 | `cam_kiri` | 0/1 | pantilt arah kiri |
 
-**11 field total.** Baudrate diusulkan **57600** (konsisten sama
-konvensi lain di project), boleh disesuaikan.
+**PENTING - koreksi dari draft sebelumnya**: pantilt TERNYATA pakai **4
+tombol digital arah** (kayak D-pad), **BUKAN joystick analog kedua**
+seperti asumsi draft awal dokumen ini. Cuma ada **1 joystick analog**
+(field X/Y di atas, buat gerak/steering).
+
+**Field yang DIHAPUS dari draft sebelumnya**: `power` (switch power GCS
+sendiri) - ternyata gak perlu jadi bagian frame data ini, karena kalau
+GCS/NUC mati ya gak ada software yang jalan buat baca frame apapun -
+power itu urusan hardware murni, bukan data yang perlu dikirim/dibaca.
+
+**Baudrate: 57600** (konsisten sama konvensi lain di project).
+
+Aplikasi NUC (`gcs_app/serial_workers.py`, class `ArduinoReader`) parsing
+frame ini, hasilnya dict dengan key: `x`, `y`, `lrf`, `zoomin`, `zoomout`,
+`bodyup`, `bodydown`, `lampu`, `cam_atas`, `cam_kanan`, `cam_bawah`,
+`cam_kiri`.
 
 ### Kenapa ASCII + kirim terus-menerus (heartbeat), bukan event-driven
 Sama alasannya kayak protokol STM32 (`STM32_BRIEF.md` bagian 4): gampang
 didebug manual, dan kalau 1 baris nyasar/rusak di serial USB, baris
-berikutnya (dikirim ~50ms kemudian kalau rate 20Hz) otomatis
-"membetulkan" - gak perlu ack/retry logic rumit.
+berikutnya otomatis "membetulkan" - gak perlu ack/retry logic rumit.
 
-### Dead-zone joystick
-Arduino WAJIB terapkan dead-zone di titik tengah tiap sumbu analog
-(misal ±5 dari titik tengah kalibrasi) sebelum di-map ke -100..100 -
-biar joystick yang dilepas beneran ngasih 0 persis, bukan nilai kecil
-random akibat ketidaksempurnaan mekanik/listrik potensiometer.
+## 3. Cara NUC terjemahin frame ini jadi frame 10-byte GCS→Jetson
 
-## 4. Yang PERLU dikonfirmasi ke user sebelum implementasi
+Lihat `gcs_app/main_window.py` fungsi `_bangun_frame_gcs()`:
+- `X`/`Y` (0-1000) di-remap ke -100..100 buat field `XJoystick1`/`YJoystick1`.
+- `cam_atas/kanan/bawah/kiri` (4 digital) diterjemahin jadi 2 field
+  `XJoystick2`/`YJoystick2` versi diskrit (-100/0/100) - TODO: konfirmasi
+  konvensi tanda (+/-) ke user, ini masih asumsi (kanan=+X, atas=+Y).
+- `zoomin`/`zoomout` digabung jadi 1 field `Zoom` (-1/0/1).
+- `lrf` passthrough langsung.
+- `lampu` dikombinasikan sama slider brightness (widget NUC) buat
+  `FLamp`, dan sama arah gerak (`Y`) buat nentuin `BLamp` kedip/nggak.
+- **`Estop` dan `Mode` MASIH placeholder 0** - field ini gak ada
+  sumbernya di frame 12-field Arduino, belum dikonfirmasi ke user asalnya
+  dari mana (lihat `ROS2_BRIEF.md` section 6).
+- **Raise/Lower/Widen/Narrow (`bodyup`/`bodydown` + tombol Widen/Narrow
+  touchscreen) BELUM ada field tujuan di frame 10-byte** - gap ini
+  masih terbuka, lihat `ROS2_BRIEF.md` section 7.3. Keputusan
+  arsitektur (2026-07-16): kalau/ketika field ini ditambahkan, NUC
+  HARUS kirim command AGGREGATE (misal 1 field "body_updown" -1/0/1),
+  BUKAN nilai per-motor individual - biar logic "grup mana gerak
+  bareng" tetap terpusat di `vehicle_control_node` (Jetson), bukan
+  tersebar ke NUC juga.
 
-1. **Urutan sumbu Joystick 1** - X=steering & Y=speed itu asumsi saya,
-   perlu dikonfirmasi mana yang benar secara fisik.
-2. **Rate kirim** - diusulkan 20Hz (samain protokol lain), tapi joystick
-   gerak/pantilt mungkin butuh rate lebih tinggi buat terasa responsif -
-   perlu dites langsung.
-3. **Tombol LRF, Zoom, Body Up/Down** - saya asumsikan MOMENTARY (aktif
-   selama ditekan, 0 kalau lepas) KECUALI Lampu Switch & Power yang saya
-   asumsikan TOGGLE (state tersimpan). Perlu dikonfirmasi asumsi ini benar.
-4. **Bagaimana relasi frame ini dengan protokol GCS→Jetson 10-byte**
-   (`ROS2_BRIEF.md` 3.5, field `[Estop][Mode][XJoystick1][YJoystick1]
-   [XJoystick2][YJoystick2][Zoom][LRF][FLamp][BLamp]`) - aplikasi NUC
-   yang tugasnya GABUNGIN frame 11-field dari Arduino ATAU dengan widget
-   touchscreen (slip ring switch, slider lampu depan, dll) jadi 1 frame
-   10-byte itu. Perlu dipetakan persis field mana ketemu field mana
-   (misal `zoomin`+`zoomout` Arduino → gimana jadi 1 field `Zoom` di
-   protokol 10-byte - mungkin encoding -1/0/1 kayak pola `steer` di
-   protokol STM32?). **Field `Estop` dan `Mode` di protokol 10-byte
-   TIDAK ADA sumbernya di frame Arduino ini** - dari mana asalnya? (Estop
-   mungkin tombol fisik terpisah yang belum masuk daftar? Mode mungkin
-   udah gak relevan - lihat `ROS2_BRIEF.md` section 6 poin 3.)
+## 4. Yang masih perlu dikonfirmasi
+
+1. **Konvensi tanda pantilt** (`cam_kanan`=+X, `cam_atas`=+Y) - asumsi
+   saya, perlu dikonfirmasi ke user.
+2. **Rate kirim** - saat ini 20Hz (mengikuti RFLink di `serial_workers.py`),
+   belum dites apa cukup responsif buat joystick gerak.
+3. **Asal field `Estop` dan `Mode`** di protokol 10-byte - lihat poin di
+   atas.
+4. **Field tujuan buat Raise/Lower/Widen/Narrow** di frame 10-byte -
+   perlu diperluas jadi berapa byte, atau ada rencana lain.
 
 ## 5. Referensi terkait
 
 - `dokumentasi/ROS2_BRIEF.md` - brief utama, section 3.5 (protokol RF),
-  3.7 & section 6 (konteks mode/GCS lama), section 7 (arsitektur app NUC)
+  section 7 (arsitektur app NUC, termasuk gap Raise/Lower/Widen/Narrow)
+- `gcs_app/serial_workers.py` - implementasi parsing frame ini (`ArduinoReader`)
+- `gcs_app/main_window.py` - implementasi penerjemahan ke frame 10-byte (`_bangun_frame_gcs`)
 - `Testcode/test_rf_link.py` - format 13-field SISTEM LAMA ("panel
-  koper"), BUKAN protokol yang dipakai sekarang, tapi berguna sebagai
-  referensi gaya/konvensi kalau perlu
-- `dokumentasi/GCS/GCS.drawio` - kemungkinan ada detail skema kontrol GCS
-  yang lebih visual
+  koper"), BUKAN protokol yang dipakai sekarang
