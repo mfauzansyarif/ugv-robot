@@ -160,21 +160,55 @@ tombol jog - bukan proporsional kayak speed). Jangan disamakan rangenya.
   berguna sebagai REFERENSI cara pakai timer PWM/GPIO di board yang sama,
   cuma parsing protokol & penggabungannya yang perlu ditulis ulang.
 
-### 3.5. GCS → Jetson (RF) - protokol biner 10 byte, FINAL
+### 3.5. GCS ↔ Jetson (RF) - BIDIRECTIONAL, protokol gantian (request-response)
+- **Modul RF CONFIRMED bisa 2 arah** (dites: 2 laptop + 2 dongle, tiap
+  dongle dicoba jalanin kode TX MAUPUN kode RX bergantian, dua-duanya
+  jalan - artinya dongle-nya transceiver transparan serial↔radio, BUKAN
+  chip TX-only/RX-only tetap). **Cukup 2 dongle** (1 di GCS, 1 di Jetson,
+  yang sudah ada) - TIDAK perlu beli radio tambahan.
+- Modul kemungkinan besar **half-duplex di level fisik** (gak bisa
+  kirim+terima bersamaan persis), jadi didesain pola **gantian**:
+  1. GCS kirim 1 frame command (10-byte, lihat di bawah)
+  2. GCS dengerin sebentar (timeout pendek, misal puluhan ms)
+  3. Jetson, begitu terima command valid, LANGSUNG balas 4-byte telemetry
+     (lihat di bawah) - **pakai status YANG SUDAH DI-CACHE, JANGAN query
+     fresh ke LRF/STM32 secara blocking** (baca LRF bisa nunggu sampai
+     500ms kalau timeout - itu bakal macetin siklus gantian ini kalau
+     dilakuin sinkron tiap siklus)
+  4. Ulangi terus (rate disaranin mulai dari 20Hz, sama kayak konvensi
+     protokol lain di project ini - boleh disesuaikan hasil testing nanti)
+
+**GCS → Jetson**, biner 10 byte:
 ```
 [Estop][Mode][XJoystick1][YJoystick1][XJoystick2][YJoystick2][Zoom][LRF][FLamp][BLamp]
 ```
-10 byte biner, dikirim GCS lewat RF ke Jetson. Detail per-field (tipe data
-exact tiap byte, encoding Estop/Mode/dll) **belum saya konfirmasi di sesi
-ini** - cek langsung ke user atau file eksplorasi RF di bawah kalau perlu
-presisi lebih.
+Detail per-field (tipe data exact tiap byte, encoding Estop/Mode/dll)
+**belum saya konfirmasi presisi di sesi ini** - cek `dokumentasi/ARDUINO_GCS_BRIEF.md`
+buat konteks asal field-field ini (dari panel Arduino Mega Pro + widget
+touchscreen app GCS).
+
+**Jetson → GCS**, biner 4 byte (telemetry balik, BARU didesain hari ini,
+BELUM diimplementasi di kode manapun):
+```
+[stm32_status][lrf_status][lrf_jarak_LSB][lrf_jarak_MSB]
+```
+| Field | Arti |
+|---|---|
+| `stm32_status` | 0/1 - port serial Jetson↔STM32 kebuka & normal. **CATATAN: ini CUMA ngecek port kebuka, BUKAN konfirmasi firmware STM32 beneran hidup/proses command dengan benar** (protokol Jetson→STM32 saat ini 1 arah, gak ada ack balik dari STM32 - kalau mau status lebih akurat, perlu tambahan protokol ack STM32→Jetson terpisah, di luar scope sekarang) |
+| `lrf_status` | 0/1 - pembacaan LRF TERAKHIR (bukan live/fresh) berhasil (1) atau timeout (0) |
+| `lrf_jarak` | uint16 desimeter (encoding SAMA kayak yang dipakai bridge STM32 - konsisten), 0 kalau `lrf_status`=0 |
 
 ### 3.6. RF link GCS↔Jetson (implementasi) - status belum jelas, ada beberapa file eksplorasi
 - Ada `Testcode/test_rf_link.py`, `test_rf_tx.py`, `test_rf_rx.py`,
   `test_gcs_forwarder.py` - **saya (Claude sisi Windows) belum sempat
   review detail isinya di sesi ini**, cek langsung filenya buat tau
   status implementasi RF yang sebenarnya (apakah sudah match protokol
-  10-byte di 3.5 atau masih versi eksplorasi lama).
+  10-byte + telemetry 4-byte di atas, atau masih versi eksplorasi lama/
+  simplex "panel koper" v1 - lihat komentar di `test_rf_link.py` soal
+  format 13-field lama, itu SISTEM LAMA, bukan yang dipakai sekarang).
+- Protokol gantian request-response (3.5) BELUM diimplementasi - baru
+  desain di sesi ini, perlu ditulis dari nol di `gcs_interface_node`
+  (sisi Jetson) dan aplikasi GCS (sisi NUC, lihat bagian 7).
 
 ### 3.7. Desain kontrol GCS (joystick/tombol) - konsep sudah dibahas, DETAIL EXACT BELUM saya rangkum
 Ada diskusi panjang soal skema kontrol GCS: 2 joystick, 2 mode ("Drive"
@@ -278,9 +312,75 @@ kalau firmware STM32 sudah siap.
 | `Testcode/test_rf_link.py`, `test_rf_tx.py`, `test_rf_rx.py`, `test_gcs_forwarder.py` | Eksplorasi RF link, belum di-review detail |
 | `Testcode/test_linear_motors.py` | Test 12 motor linear, status integrasi ke firmware belum jelas |
 | `dokumentasi/STM32_BRIEF.md` | Brief lama motor AC - SEBAGIAN SUDAH OUTDATED (baudrate beda dari test tool aktual) |
+| `dokumentasi/ARDUINO_GCS_BRIEF.md` | Brief protokol panel Arduino Mega Pro → NUC (BARU, desain belum diimplementasi) |
 | `dokumentasi/GCS/GCS.drawio`, folder `dokumentasi/` lainnya | Kemungkinan berisi detail skema kontrol GCS |
 | `Datasheet/LRF127.pdf` | Datasheet resmi LRF Noptel |
 | `Datasheet/SP-09732-001_v1.1.pdf` | Datasheet carrier board Jetson Orin Nano Dev Kit (pinout J41/J50) |
+
+## 7. Aplikasi GCS (NUC, Windows 11, layar touchscreen)
+
+Selain ROS2 di Jetson, user juga lagi mulai bangun **aplikasi GCS** yang
+jalan di NUC (Windows 11) di sisi operator. Framework belum dipilih
+(kandidat: PyQt/Kivy Python, atau WPF/.NET).
+
+### 7.1. Alur data
+```
+Panel fisik (tombol/joystick) --USB serial--> Arduino Mega Pro --USB serial--> App NUC --RF--> Jetson
+Kamera (di mobil) --RF--> Receiver terpisah --capture card/HDMI--> App NUC (Camera Viewer)
+```
+Detail protokol Arduino Mega Pro → NUC: lihat `dokumentasi/ARDUINO_GCS_BRIEF.md`
+(file terpisah, dibuat hari ini juga).
+
+### 7.2. Layout aplikasi (halaman utama)
+- **Slip Ring** (switch on/off - power kamera+LRF di mobil)
+- **Slider brightness lampu depan** (0-100, dipakai kalau Lampu Switch
+  fisik di panel dalam keadaan ON)
+- **Kontrol motor linear sederhana** (tombol up/down + widen/narrow -
+  ini MEREFLEKSIKAN tombol fisik Body Up/Down di panel, bukan kontrol
+  terpisah)
+- **Camera Viewer** (video feed)
+- **Console Log** (lihat 7.4)
+- Tombol "buka detail" dari kontrol motor linear sederhana → buka
+  halaman **Kontrol Motor Linear Individual**
+
+### 7.3. Halaman Kontrol Motor Linear Individual
+- Kontrol **ke-12 motor linear SATU-SATU** (extend/retract independen).
+- Tombol **Kalibrasi**: maksa SEMUA motor linear extend penuh + steering
+  full kiri (posisi referensi/homing).
+
+**⚠️ GAP ARSITEKTUR YANG PERLU DISELESAIKAN**: protokol Jetson→STM32
+8-field yang sudah final (section 3.4) cuma punya field
+`steer/fbody/bbody/rarm/larm` (masing-masing -1/0/1, MENGGERAKKAN
+GRUP motor bareng - steer=4 motor, fbody/bbody/rarm/larm=2 motor tiap
+grup, total 12). **Field-field ini TIDAK BISA menggerakkan 1 motor
+individual secara independen dari motor pasangannya dalam 1 grup yang
+sama.** Kalau "Kontrol Motor Linear Individual" ini beneran perlu
+menggerakkan tiap 1 dari 12 motor secara independen (misal 2 motor
+dalam 1 grup `fbody` bergerak arah BEDA saat kalibrasi), protokol
+8-field yang ada SEKARANG TIDAK CUKUP - butuh salah satu dari:
+  (a) protokol/mode TERPISAH ke STM32 khusus buat mode kalibrasi/individual
+      (misal command ASCII beda, bukan frame 8-field biasa), atau
+  (b) firmware STM32 didesain ulang supaya grouping-nya bisa dipecah
+      per-motor (bukan cuma per-grup).
+**Ini WAJIB dikonfirmasi ke user sebelum implementasi fitur Individual
+Control** - jangan asumsikan salah satu solusi tanpa nanya dulu.
+
+### 7.4. Console Log - didesain buat 2 sumber info
+1. **Status LOKAL** (diketahui GCS sendiri, gak butuh RF balik):
+   Arduino Mega Pro connect/disconnect (pakai watchdog - kalau gak ada
+   baris valid masuk dalam durasi tertentu, declare disconnect).
+2. **Status dari TELEMETRY Jetson** (lihat 3.5 - protokol 4-byte balik):
+   - `stm32_status`=0 → log ERROR "STM32 tidak terhubung ke Jetson"
+   - `lrf_status`=0 (setelah user request jarak) → log WARNING "LRF tidak ada jawaban"
+   - `lrf_status`=1 → log INFO jarak yang didapat
+   - Gagal terima telemetry N kali berturut-turut → log WARNING "Jetson tidak merespon"
+   - Balik normal setelah putus → log INFO "Jetson tersambung kembali"
+
+Prinsip: log PERUBAHAN STATUS/EVENT DISKRIT, bukan tiap siklus RF (bakal
+banjir baris kalau di-log tiap 50ms). Level warna: INFO=abu-abu,
+WARNING=kuning, ERROR=merah. Auto-scroll (pause kalau user scroll manual
+ke atas), batasi max baris tersimpan (misal 500) biar gak memory leak
+kalau nyala lama.
 
 ## 6. Hal yang masih terbuka / perlu dicek lebih lanjut
 Semua pertanyaan besar (versi ROS2, baudrate, gabung firmware, protokol
@@ -290,9 +390,20 @@ Semua pertanyaan besar (versi ROS2, baudrate, gabung firmware, protokol
    tipe data persis (misal Estop 1 byte gimana encoding-nya, XJoystick
    range berapa, dll) belum dikonfirmasi presisi di sesi ini.
 2. **Status implementasi RF** (`test_rf_link.py` dkk, section 3.6) - apa
-   sudah sesuai protokol 10-byte final atau masih versi eksplorasi lama.
+   sudah sesuai protokol 10-byte + telemetry 4-byte final atau masih
+   versi eksplorasi lama.
 3. **Nama mode kedua GCS** (section 3.7) - "Drive" sudah fix buat mode 1,
    mode 2 (naik-turun chassis + lebar/sempit arm) namanya masih dicari.
+   **KEMUNGKINAN JUGA SUDAH GAK RELEVAN** - lihat poin 5 di bawah, layout
+   panel terbaru (section 7, `ARDUINO_GCS_BRIEF.md`) kelihatannya per-fungsi
+   fixed (Joystick1=gerak, DJoystick=pantilt, Body Up/Down=tombol
+   terpisah), BUKAN 2 joystick yang gonta-ganti fungsi per mode kayak
+   konsep lama. Perlu dikonfirmasi apa field `Mode` di protokol 10-byte
+   masih dipakai atau sisa dari desain lama.
 4. **Logic detail 12 motor linear** di firmware gabungan (section 3.4) -
    gimana persis sinyal -1/0/1 diterjemahkan jadi gerakan fisik tiap motor
    (durasi jalan, limit switch kalau ada, dll) - belum dibahas detail.
+5. **GAP protokol "Kontrol Motor Linear Individual"** (section 7.3) - lihat
+   penjelasan lengkap di situ, protokol 8-field yang ada TIDAK BISA
+   menggerakkan 12 motor linear secara independen satu-satu, cuma per-grup.
+6. Framework aplikasi GCS (section 7) belum dipilih (PyQt/Kivy/WPF).
