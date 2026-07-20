@@ -1,0 +1,4 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "ugv") (type "KiCad") (uri "${KIPRJMOD}/ugv.kicad_sym") (options "") (descr ""))
+)
