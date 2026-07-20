@@ -1,0 +1,71 @@
+PANDUAN INSTALL ROS2 FOXY DI JETSON NANO (VIA DOCKER)
+=======================================================
+
+CATATAN PENTING:
+ROS2 Foxy resmi cuma support Ubuntu 20.04. Jetson Nano kamu masih
+Ubuntu 18.04 (JetPack 4.x), jadi TIDAK BISA install lewat apt biasa.
+Solusinya pakai Docker container resmi dari NVIDIA (dusty-nv/jetson-containers).
+Docker/nvidia-container-runtime biasanya sudah terpasang otomatis di JetPack.
+
+
+LANGKAH 1 - Cek versi L4T (buat nentuin tag docker image yang cocok)
+---------------------------------------------------------------------
+head -n 1 /etc/nv_tegra_release
+
+Contoh hasil: "R32 (release), REVISION: 7.1" artinya L4T r32.7.1
+
+
+LANGKAH 2 - Pull image ROS2 Foxy yang sesuai versi L4T kamu
+---------------------------------------------------------------------
+# Ganti r32.7.1 sesuai hasil Langkah 1
+sudo docker pull dustynv/ros:foxy-ros-base-l4t-r32.7.1
+
+Catatan: image untuk R32.x biasa kompatibel lintas versi minor
+(misal image r32.7.1 tetap jalan di device r32.6.1 dst).
+
+Ada 3 varian, pilih sesuai kebutuhan:
+- foxy-ros-base-l4t-r32.7.1   -> paling ringan, cukup buat mulai
+- foxy-desktop-l4t-r32.7.1    -> lengkap dgn tools GUI (rviz, dll)
+- foxy-pytorch-l4t-r32.7.1    -> ros-base + PyTorch (buat proyek AI/ML)
+
+
+LANGKAH 3 - Jalankan container
+---------------------------------------------------------------------
+sudo docker run -it --rm \
+  --runtime nvidia \
+  --network host \
+  -v ~/ros2_ws:/workspace \
+  dustynv/ros:foxy-ros-base-l4t-r32.7.1
+
+Penjelasan flag:
+  --runtime nvidia   -> biar container bisa akses GPU Jetson
+  --network host     -> biar ROS2 node bisa saling komunikasi gampang
+  -v ~/ros2_ws:/workspace  -> mount folder workspace di host ke
+                              dalam container, biar kerjaan/kode
+                              nggak hilang kalau container di-stop
+
+
+LANGKAH 4 - Verifikasi ROS2 jalan (di dalam container)
+---------------------------------------------------------------------
+source /opt/ros/foxy/setup.bash
+ros2 topic list
+
+Kalau muncul list topic (atau list kosong tanpa error), berarti ROS2
+Foxy sudah jalan dengan benar.
+
+
+LANGKAH 5 - Tips pemakaian sehari-hari
+---------------------------------------------------------------------
+- Setiap mau pakai ROS2, jalankan lagi command di Langkah 3
+  (docker run ...) - ini yang "masuk" ke environment ROS2.
+- Semua file yang kamu simpan di /workspace (dalam container)
+  otomatis nyimpen ke ~/ros2_ws di Jetson (host), jadi aman
+  meskipun container-nya berhenti/dihapus.
+- Kalau butuh kerja lebih rapi, bikin script kecil buat mempersingkat
+  command docker run di atas (misal simpan sebagai run_ros2.sh).
+
+
+REFERENSI
+---------------------------------------------------------------------
+https://github.com/dusty-nv/jetson-containers
+https://hub.docker.com/r/dustynv/ros/tags
