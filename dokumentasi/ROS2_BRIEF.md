@@ -3,14 +3,15 @@
 Robot darat remote-control (TNI Zeni AD). Operator pakai GCS (aplikasi
 touchscreen di NUC, `gcs_app/`) yang kirim command lewat radio RF ke
 Jetson Orin Nano. Jetson yang jalanin ROS2, nerjemahin command itu jadi
-perintah ke STM32 (motor+lampu, lewat SPI) dan ke bus RS485 (pantilt+
-kamera+LRF, lewat modul RS485-to-TTL).
+perintah ke STM32 (motor+lampu+linear, lewat SPI) dan ke bus RS485
+(pantilt+kamera+LRF, lewat modul RS485-to-TTL).
 
 Dokumen ini brief SINGKAT buat mulai development - bukan referensi
 lengkap byte-per-byte (itu ada di file kode masing-masing, ditunjuk di
 bagian akhir). Ditulis buat orang yang baru belajar ROS2 dari nol.
 
 ## Arsitektur: 4 node
+
 Semua panah **2 arah** (bidirectional) - tiap interface node kirim
 command KE hardware-nya, dan terima status/feedback DARI hardware-nya
 balik ke Core Node.
@@ -32,11 +33,11 @@ update salah satu pas ada perubahan. Simpen SEMUA keputusan di 1 tempat
 | Topic | Dari → Ke | Isi |
 |---|---|---|
 | `/gcs/command_mentah` | GCS Interface → Core Node | Semua field frame 16-byte dari GCS (lihat protokol di bawah) |
-| `/gcs/status_balik` | Core Node → GCS Interface | Status buat dikirim balik ke GCS (5-byte reply) |
+| `/gcs/status_balik` | Core Node → GCS Interface | Status buat dikirim balik ke GCS (4-byte reply) |
 | `/rs485/command` | Core Node → RS485 Interface | Command pantilt/kamera/LRF yang UDAH diterjemahin |
 | `/rs485/status` | RS485 Interface → Core Node | Hasil baca (jarak LRF, dll) |
-| `/stm32/command` | Core Node → STM32 Interface | Frame 8-field (speed/steer/fbody/dst) UDAH final |
-| `/stm32/status` | STM32 Interface → Core Node | Ack/status dari STM32 (lihat catatan di bawah) |
+| `/stm32/command` | Core Node → STM32 Interface | 15 field (speed + 12 motor individual + 2 lampu) UDAH final |
+| `/stm32/status` | STM32 Interface → Core Node | Status dari STM32 (lihat catatan SPI di bawah) |
 
 ## Protokol GCS ↔ Jetson (lewat GCS Interface)
 
@@ -49,31 +50,70 @@ Request-response bergantian, ~20Hz, GCS selalu mulai duluan.
 Semua `uint8`/`int8` (1 byte per field). Struct Python: `"=BBbbbbbBBBBbbBbB"`.
 Range tiap field ada di `gcs_app/main_window.py` (`_bangun_frame_gcs`).
 
-**Jetson → GCS, 5 byte (WAJIB dibalas TIAP kali terima 16-byte valid):**
+**Jetson → GCS, 4 byte (WAJIB dibalas TIAP kali terima 16-byte valid):**
 ```
-[stm32_status][lrf_status][lrf_jarak_LSB][lrf_jarak_MSB][individual_ack]
+[stm32_status][lrf_status][lrf_jarak_LSB][lrf_jarak_MSB]
 ```
-Pakai status YANG SUDAH DI-CACHE (jangan query fresh STM32/LRF secara
-blocking pas mau balas - bisa telat sampai 500ms dan macetin siklus RF).
+- `lrf_jarak` dipecah 2 byte (LSB+MSB, uint16) karena 1 byte max cuma
+  255 desimeter (25.5m) - LRF ini jangkauannya sampai ~4500m, jadi butuh
+  16-bit (`jarak_desimeter = LSB | (MSB << 8)`, lalu `/10` buat meter).
+- **TIDAK ADA field ack terpisah buat command individual/kalibrasi**
+  (sempat didesain, lalu DIHAPUS 2026-07-16 - dengan frame yang udah
+  disatuin, gak ada momen "sukses/gagal" khusus buat sebagian field,
+  semua field diterapkan/diabaikan BARENGAN sebagai 1 frame. `stm32_status`
+  yang ada udah cukup buat tau apa command nyampe ke STM32 atau nggak).
+- Pakai status YANG SUDAH DI-CACHE (jangan query fresh STM32/LRF secara
+  blocking pas mau balas - bisa telat sampai 500ms dan macetin siklus RF).
 
 ## Protokol Jetson ↔ STM32 (lewat STM32 Interface)
 
-**Jetson → STM32**, ASCII, `\n`-terminated, 20Hz:
+**Status saat ini (firmware `STM32Cube/motorugv/`, SUDAH JALAN & dicompile)**:
+UART (USART3 @ 57600), ASCII `\n`-terminated, **15 field**:
 ```
-"<speed> <steer> <fbody> <bbody> <rarm> <larm> <flamp> <blamp>\n"
+"<speed> <act0> <act1> ... <act11> <flamp> <blamp>\n"
 ```
-`speed` -100..100 (kontinu), `steer/fbody/bbody/rarm/larm` -1/0/1
-(diskrit, tiap field gerakin 1 GRUP motor bareng), `flamp` 0..100,
-`blamp` 0/1/2.
+- `speed`: -100..100 (kontinu) - 4 motor AC
+- **12 field individual** (urutan PERSIS sama `actuatorTable`/enum di
+  `STM32Cube/motorugv/Core/Src/main.c`: `ACT_STEER_FD..ACT_LARM_BELAKANG`),
+  masing-masing **-1/0/1** (extend/stop/retract) - **1 field = 1 motor**,
+  bukan grup. Semua logic "mana yang gerak bareng pas operasi normal"
+  ada di `vehicle_control_node` (isi field berpasangan dengan nilai
+  SAMA); kalibrasi/individual juga lewat field yang sama, gak ada
+  command terpisah.
+- `flamp`: 0..100, `blamp`: 0/1/2
 
-Command khusus (dipicu dari `MotorIndividualID`/`Kalibrasi` di frame
-GCS): `"I <motor_id 1-12> <arah -1/0/1>\n"` dan `"K\n"`.
+**RENCANA BERIKUTNYA (belum diimplementasi): pindah ke SPI + tambah
+balikan.** Alasan pindah dari UART: rencana awal emang SPI (Jetson pegang
+lebih banyak jalur SPI daripada UART di header 40-pin). Desain yang
+disepakati (2026-07-16):
 
-**STM32 → Jetson (BARU, harus ditambah - sebelumnya cuma 1 arah)**:
-belum ada spesifikasi persis, TAPI harus dibuat supaya `stm32_status`
-beneran valid (bukan cuma "port kebuka"). Minimal: STM32 kirim balik 1
-baris ack/status tiap kali terima command. **Ini butuh update firmware
-STM32 juga, bukan cuma sisi Jetson.**
+**Jetson → STM32 (MOSI), 15 byte biner** (field SAMA PERSIS kayak versi
+ASCII di atas, cuma dikodekan biner - gak perlu `\n` lagi karena SPI
+transaksi ukuran tetap):
+```
+[speed(int8)][act0..act11(int8 x12)][flamp(uint8)][blamp(uint8)]
+```
+
+**STM32 → Jetson (MISO), 15 byte biner, DIKIRIM BARENGAN** (SPI
+full-duplex - byte balasan clock keluar DI SAAT YANG SAMA byte command
+clock masuk):
+```
+[status(uint8)][reserved x14, isi 0 dulu]
+```
+`status`: minimal 1 bit "frame terakhir valid", sisanya reserved buat
+telemetry lain nanti.
+
+**PENTING soal SPI slave**: STM32 (sebagai SLAVE, Jetson pegang clock)
+**GAK BISA "mikir dulu baru balas"** di tengah transaksi - byte balasan
+harus UDAH SIAP sebelum Jetson mulai clocking. Makanya balasannya
+otomatis **status dari SIKLUS SEBELUMNYA** (telat 1 siklus), bukan fresh
+dari command yang baru aja diterima di transaksi yang sama.
+
+**Belum ditentukan**: peripheral SPI mana yang dipakai di STM32U575ZI,
+konfigurasi CPOL/CPHA (harus SAMA persis sisi Jetson & STM32), dan
+implementasi HAL_SPI slave (biasanya `HAL_SPI_TransmitReceive_IT`,
+di-arm ulang tiap selesai 1 transaksi, mirip pola `HAL_UART_Receive_IT`
+yang udah dipakai di firmware lain project ini).
 
 ## Protokol Jetson ↔ RS485 (lewat RS485 Interface)
 
@@ -89,12 +129,14 @@ Detail checksum/byte persis: lihat `Testcode/test_bus_pantilt_kamera_lrf.py`
 ## Saran buat yang baru mulai ROS2
 
 1. **Bahasa: Python (`rclpy`)**, biar konsisten sama seluruh stack
-   (STM32/RS485/RF protokol semua udah ada reference implementation-nya
-   di Python, di `Testcode/*.py` dan `gcs_app/`) - tinggal bungkus jadi
-   Node class, bukan nulis ulang dari nol.
+   (RS485/RF protokol semua udah ada reference implementation-nya di
+   Python, di `Testcode/*.py` dan `gcs_app/`) - tinggal bungkus jadi
+   Node class, bukan nulis ulang dari nol. STM32 Interface (SPI) mungkin
+   perlu library SPI Python di Jetson (misal `spidev`) - belum ada
+   reference implementation Python-nya, ini bagian yang beneran baru.
 2. **Test tiap node SENDIRI-SENDIRI dulu** sebelum digabung - misal
-   STM32 Interface dites pakai `ros2 topic pub` manual ke `/stm32/command`,
-   amati serial monitor/motor fisik, BARU sambungin ke Core Node.
+   RS485 Interface dites pakai `ros2 topic pub` manual, amati hasil baca
+   sensor, BARU sambungin ke Core Node.
 3. **Package ROS2**: 1 package (misal `ugv_robot`), 4 node di
    `ugv_robot/ugv_robot/*.py`, daftarin tiap node jadi executable di
    `setup.py` (`entry_points`).
@@ -104,7 +146,7 @@ Detail checksum/byte persis: lihat `Testcode/test_bus_pantilt_kamera_lrf.py`
 | File | Isi |
 |---|---|
 | `gcs_app/serial_workers.py`, `main_window.py` | Protokol RF GCS↔Jetson persis |
-| `Testcode/test_ac_motors_stm32.py`, `kodestm32tes.c` | Referensi motor AC (protokol lama, perlu diupdate ke 8-field final) |
+| `STM32Cube/motorugv/Core/Src/main.c` | Firmware STM32 motor+linear+lampu SAAT INI (UART, SUDAH JALAN & dicompile) - `actuatorTable`/enum buat urutan 12 motor |
 | `Testcode/test_bus_pantilt_kamera_lrf.py` | Referensi RS485 pantilt+kamera+LRF, SUDAH TERBUKTI JALAN |
 | `Testcode/lrfinterface.c` | Firmware bridge LRF (NUCLEO-G431KB), SUDAH TERBUKTI JALAN |
 | `dokumentasi/ARDUINO_GCS_BRIEF.md` | Protokol panel Arduino → GCS (buat konteks asal data GCS) |
