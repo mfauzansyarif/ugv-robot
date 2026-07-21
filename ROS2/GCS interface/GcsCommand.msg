@@ -1,0 +1,16 @@
+uint8 estop
+uint8 mode
+int8 x_joystick1
+int8 y_joystick1
+int8 x_joystick2
+int8 y_joystick2
+int8 zoom
+uint8 lrf
+uint8 f_lamp
+uint8 b_lamp
+uint8 slip_ring
+int8 body_up_down
+int8 arm_widen_narrow
+uint8 motor_individual_id
+int8 motor_individual_arah
+uint8 kalibrasi
