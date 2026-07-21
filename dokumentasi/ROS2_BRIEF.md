@@ -11,29 +11,6 @@ lengkap byte-per-byte (itu ada di file kode masing-masing, ditunjuk di
 bagian akhir). Ditulis buat orang yang baru belajar ROS2 dari nol.
 
 ## Arsitektur: 4 node
-
-```
-                    ┌─────────────────┐
-      ┌─────────────┤   Core Node     ├─────────────┐
-      │             │  ("otak" - SEMUA │             │
-      │             │  logic ada di sini) │           │
-      │             └────────┬────────┘             │
-      ▼                      │                       ▼
-┌───────────┐                ▼                ┌─────────────┐
-│GCS         │         ┌───────────┐          │STM32         │
-│Interface   │◄───────►│           │◄────────►│Interface     │
-│(RF)        │         │           │          │(SPI)         │
-└───────────┘          └───────────┘          └─────────────┘
-                              ▲
-                              │
-                        ┌───────────┐
-                        │RS485       │
-                        │Interface   │
-                        │(pantilt+   │
-                        │kamera+LRF) │
-                        └───────────┘
-```
-
 Semua panah **2 arah** (bidirectional) - tiap interface node kirim
 command KE hardware-nya, dan terima status/feedback DARI hardware-nya
 balik ke Core Node.
@@ -115,19 +92,12 @@ Detail checksum/byte persis: lihat `Testcode/test_bus_pantilt_kamera_lrf.py`
    (STM32/RS485/RF protokol semua udah ada reference implementation-nya
    di Python, di `Testcode/*.py` dan `gcs_app/`) - tinggal bungkus jadi
    Node class, bukan nulis ulang dari nol.
-2. **Mulai dari 1 node dulu**, jangan langsung 4-4-nya: saran mulai dari
-   **STM32 Interface** (paling sederhana, protokolnya ASCII biasa,
-   tinggal contek `Testcode/test_ac_motors_stm32.py`), baru lanjut ke
-   yang lain.
-3. **Test tiap node SENDIRI-SENDIRI dulu** sebelum digabung - misal
+2. **Test tiap node SENDIRI-SENDIRI dulu** sebelum digabung - misal
    STM32 Interface dites pakai `ros2 topic pub` manual ke `/stm32/command`,
    amati serial monitor/motor fisik, BARU sambungin ke Core Node.
-4. **Package ROS2**: 1 package (misal `ugv_robot`), 4 node di
+3. **Package ROS2**: 1 package (misal `ugv_robot`), 4 node di
    `ugv_robot/ugv_robot/*.py`, daftarin tiap node jadi executable di
    `setup.py` (`entry_points`).
-5. Pakai message sederhana dulu (`std_msgs/Int32MultiArray` atau bikin
-   custom `.msg` kalau udah nyaman) - jangan overthink tipe message di
-   awal, yang penting node-nya jalan & bisa dites dulu.
 
 ## Referensi kode (baca ini buat detail persis, bukan cuma percaya brief ini)
 
