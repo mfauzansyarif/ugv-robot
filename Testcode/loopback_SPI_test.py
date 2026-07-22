@@ -1,17 +1,17 @@
 import spidev
-import time
 
-# Ganti bus & device sesuai SPI yang mau dites
-# spi1 (pin 19,21,23,24,26) -> bus 0
-# spi2 (pin 13,16,18,22,37) -> bus 1
 BUS = 0
 DEVICE = 0
 
 spi = spidev.SpiDev()
 spi.open(BUS, DEVICE)
 
-spi.max_speed_hz = 500000
-spi.mode = 0b00  # CPOL=0, CPHA=0
+spi.max_speed_hz = 10000  # pelanin dulu, 10kHz
+spi.mode = 0b00
+
+print("Max speed:", spi.max_speed_hz)
+print("Mode:", spi.mode)
+print("Bits per word:", spi.bits_per_word)
 
 test_data = [0x01, 0x55, 0xAA, 0xFF, 0x00, 0x12, 0x34]
 
