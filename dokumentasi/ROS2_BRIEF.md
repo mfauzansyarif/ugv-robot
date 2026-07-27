@@ -99,23 +99,25 @@ kirim berkala (disaranin **~10-20Hz**, dites di 10Hz/100ms pakai
 `Testcode/test_jetson_stm32_g474.py` dan jalan lancar), STM32 balas
 LANGSUNG tiap terima 1 down-frame valid.
 
-### Down-frame: Jetson → STM32, 24 byte (`"=b12bBBBBbBBBBBB"`)
+### Down-frame: Jetson → STM32, 20 byte (`"=b8bBBBBbBBBBBB"`)
+
+**Catatan: actuator linear final CUMA 8** (bukan 12) — bagian "arm" (RArm/LArm depan-belakang, dulu index 8-11) DIBATALKAN. Sisa 8 actuator: Steer (4×, index 0-3) + FBody/BBody (4×, index 4-7).
 
 | Offset | Field | Tipe | Range/arti |
 |---|---|---|---|
 | 0 | speed | int8 | -100..100, motor AC (semua 4 motor sama, +maju/-mundur) |
-| 1-12 | act0..act11 | int8 ×12 | -100..100 tiap actuator linear (0=diam, +/-=dorong/tarik), urutan sesuai `actuatorTable` di `main.c` |
-| 13 | fLamp | uint8 | 0..100, brightness lampu depan |
-| 14 | bLamp | uint8 | 0..100, brightness lampu belakang |
-| 15 | bLampMode | uint8 | 0=mati, 1=nyala, 2=kedip |
-| 16 | pantiltArah | uint8 | 0=kiri, 1=kanan, 2=atas, 3=bawah, 4=stop |
-| 17 | kameraZoom | int8 | -1=out, 0=stop, 1=in |
-| 18 | slipRing | uint8 | 0/1 |
-| 19 | lrfTrigger | uint8 | 0=idle, 1=baca jarak, 2=pointer on, 3=pointer off |
-| 20 | gcsReplyStm32Status | uint8 | Dipakai STM32 buat balas ke GCS - Jetson yang nentuin isinya |
-| 21 | gcsReplyLrfStatus | uint8 | idem |
-| 22 | gcsReplyLrfLsb | uint8 | idem |
-| 23 | gcsReplyLrfMsb | uint8 | idem |
+| 1-8 | act0..act7 | int8 ×8 | -100..100 tiap actuator linear (0=diam, +/-=dorong/tarik), urutan sesuai `actuatorTable` di `main.c` |
+| 9 | fLamp | uint8 | 0..100, brightness lampu depan |
+| 10 | bLamp | uint8 | 0..100, brightness lampu belakang |
+| 11 | bLampMode | uint8 | 0=mati, 1=nyala, 2=kedip |
+| 12 | pantiltArah | uint8 | 0=kiri, 1=kanan, 2=atas, 3=bawah, 4=stop |
+| 13 | kameraZoom | int8 | -1=out, 0=stop, 1=in |
+| 14 | slipRing | uint8 | 0/1 |
+| 15 | lrfTrigger | uint8 | 0=idle, 1=baca jarak, 2=pointer on, 3=pointer off |
+| 16 | gcsReplyStm32Status | uint8 | Dipakai STM32 buat balas ke GCS - Jetson yang nentuin isinya |
+| 17 | gcsReplyLrfStatus | uint8 | idem |
+| 18 | gcsReplyLrfLsb | uint8 | idem |
+| 19 | gcsReplyLrfMsb | uint8 | idem |
 
 ### Up-frame: STM32 → Jetson, 20 byte
 
