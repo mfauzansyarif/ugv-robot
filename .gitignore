@@ -6,3 +6,15 @@
 **/*.kicad_prl
 **/~*.lck
 **/*.bak
+
+# KiCad backup/history folder (nested git repo made by an autosave plugin -
+# not a real submodule, just noise that keeps showing as "modified")
+**/.history/
+
+# STM32CubeIDE build output and IDE-local metadata (regenerated on every
+# build/regenerate, not needed in the repo)
+STM32Cube/**/Debug/
+STM32Cube/**/Release/
+STM32Cube/**/.settings/
+STM32Cube/**/.metadata/
+STM32Cube/**/.mxproject
