@@ -37,6 +37,9 @@ sudo docker run -it --rm \
   -v ~/ros2_ws:/workspace \
   dustynv/ros:foxy-ros-base-l4t-r32.7.1
 
+
+sudo docker run -it --rm --runtime nvidia --network host -v ~/ros2_ws:/workspace dustynv/ros:foxy-ros-base-l4t-r32.7.1
+
 Penjelasan flag:
   --runtime nvidia   -> biar container bisa akses GPU Jetson
   --network host     -> biar ROS2 node bisa saling komunikasi gampang
