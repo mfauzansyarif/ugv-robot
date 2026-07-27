@@ -1,0 +1,4 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "easyeda") (type "KiCad") (uri "C:/Users/mfauz/OneDrive/Documents/KiCad/10.0/footprints/easyeda.pretty") (options "") (descr ""))
+)

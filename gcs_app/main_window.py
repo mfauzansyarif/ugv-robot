@@ -3,7 +3,7 @@ section 7 dan dokumentasi/ARDUINO_GCS_BRIEF.md. Beberapa asumsi BELUM
 dikonfirmasi ke user - ditandai TODO di komentar.
 """
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QDialog, QGraphicsOpacityEffect, QGridLayout, QGroupBox, QHBoxLayout,
     QLabel, QMainWindow, QPushButton, QSlider, QSpinBox, QVBoxLayout,
@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 import config
 from camera_viewer import CameraViewer, cari_index_kamera
 from console_log import ConsoleLog
+from lampu_icon import LampuIcon
 from motor_linear_dialog import MotorLinearDialog
 from serial_workers import ArduinoReader, RFLink
 from settings_dialog import SettingsDialog
@@ -34,12 +35,20 @@ class MainWindow(QMainWindow):
             "lampu": 0, "cam_atas": 0, "cam_kanan": 0, "cam_bawah": 0, "cam_kiri": 0,
         }
         self._slip_ring_on = False
+        self._stm32_status_terakhir = None  # None = belum ada telemetry masuk sama sekali
 
         # State tombol Raise/Lower/Widen/Narrow di touchscreen (terpisah dari
         # state Arduino) - -1/0/1, digabung sama tombol fisik Body Up/Down
         # pas bikin frame (touchscreen menang kalau dua-duanya aktif barengan).
         self._touch_fbody_bbody = 0  # Raise=1, Lower=-1, lepas=0
         self._touch_rarm_larm = 0    # Widen=1, Narrow=-1, lepas=0
+
+        # State command individual/kalibrasi (dari dialog Kontrol Motor
+        # Linear Individual) - ikut di SETIAP frame 16-byte (gak perlu
+        # pause/mode terpisah lagi, lihat ROS2_BRIEF.md 7.3).
+        self._individual_motor_id = 0    # 0 = mode normal, 1-12 = override motor itu
+        self._individual_arah = 0        # -1/0/1, cuma dipakai kalau motor_id != 0
+        self._kalibrasi_trigger = 0      # 0/1, di-pulse sebentar pas tombol Kalibrasi diklik
 
         self._arduino_reader = None
         self._rf_link = None
@@ -126,6 +135,8 @@ class MainWindow(QMainWindow):
         layout.addLayout(baris_label_lampu)
 
         baris_slider = QHBoxLayout()
+        self.lampu_icon = LampuIcon()
+        baris_slider.addWidget(self.lampu_icon)
         self.slider_lampu = QSlider(Qt.Horizontal)
         self.slider_lampu.setRange(0, 100)
         self.slider_lampu.setValue(20)  # default rendah, dikalibrasi nanti - lihat ARDUINO_GCS_BRIEF.md
@@ -217,16 +228,31 @@ class MainWindow(QMainWindow):
         self.console_log.info(f"Slip ring: {'ON' if self._slip_ring_on else 'OFF'}")
 
     def _buka_dialog_motor_individual(self):
-        if self._rf_link is None:
-            self.console_log.error("RF belum connect - gak bisa buka Kontrol Individual")
-            return
+        dialog = MotorLinearDialog(
+            self.console_log, self._set_individual_motor, self._trigger_kalibrasi, self
+        )
+        dialog.exec()
+        # Safety net: pastiin override berhenti begitu dialog ditutup, walau
+        # user nutup pas lagi nahan tombol (harusnya udah kepencet released,
+        # tapi jaga-jaga).
+        self._individual_motor_id = 0
+        self._individual_arah = 0
 
-        self._rf_link.pause()
-        try:
-            dialog = MotorLinearDialog(self.console_log, self._rf_link, self)
-            dialog.exec()
-        finally:
-            self._rf_link.resume()
+    def _set_individual_motor(self, motor_id, arah):
+        """Dipanggil dari MotorLinearDialog - motor_id 0 berarti gak ada
+        override (mode normal), 1-12 lagi override motor itu."""
+        self._individual_motor_id = motor_id if arah != 0 else 0
+        self._individual_arah = arah
+
+    def _trigger_kalibrasi(self):
+        """Pulse Kalibrasi=1 sebentar (~200ms, beberapa siklus frame di
+        20Hz) biar Jetson kebaca transisi 0->1, terus balik ke 0 - supaya
+        gak trigger ulang terus-menerus selama command ini "nyangkut"."""
+        self._kalibrasi_trigger = 1
+        QTimer.singleShot(200, self._clear_kalibrasi_trigger)
+
+    def _clear_kalibrasi_trigger(self):
+        self._kalibrasi_trigger = 0
 
     def _set_touch_fbody_bbody(self, nilai):
         self._touch_fbody_bbody = nilai
@@ -311,6 +337,7 @@ class MainWindow(QMainWindow):
     def _update_tampilan_lampu(self, nyala):
         self._efek_opacity_slider_lampu.setOpacity(1.0 if nyala else 0.35)
         self.label_status_lampu.setText("(nyala)" if nyala else "(mati)")
+        self.lampu_icon.set_menyala(nyala)
 
     def _on_arduino_terhubung(self):
         self.label_status_arduino.setText("Terhubung")
@@ -345,8 +372,10 @@ class MainWindow(QMainWindow):
         return max(-100, min(100, (nilai_mentah - 500) // 5))
 
     def _bangun_frame_gcs(self):
-        """Gabungin state Arduino + widget touchscreen jadi 1 frame 13-byte.
-        Dipanggil dari thread RFLink - HARUS cepat & gak blocking."""
+        """Gabungin state Arduino + widget touchscreen jadi 1 frame 16-byte
+        FIXED (satu bentuk doang, termasuk field individual/kalibrasi -
+        gak ada mode/pause terpisah lagi). Dipanggil dari thread RFLink -
+        HARUS cepat & gak blocking."""
         s = self._state_arduino
 
         # TODO: Estop belum ada sumbernya (gak ada tombol fisik di daftar
@@ -391,14 +420,22 @@ class MainWindow(QMainWindow):
             x1, y1, x2, y2,
             zoom, s["lrf"], flamp, blamp,
             slip_ring, body_updown, arm_widenarrow,
+            self._individual_motor_id, self._individual_arah, self._kalibrasi_trigger,
         )
 
     def _on_telemetry(self, data):
-        if data["stm32_status"]:
+        stm32_ok = bool(data["stm32_status"])
+        if stm32_ok != self._stm32_status_terakhir:
+            if stm32_ok:
+                self.console_log.info("STM32 tersambung kembali")
+            else:
+                self.console_log.error("STM32 tidak terhubung ke Jetson")
+            self._stm32_status_terakhir = stm32_ok
+
+        if stm32_ok:
             self.label_status_stm32.setText("STM32: OK")
         else:
             self.label_status_stm32.setText("STM32: TIDAK TERHUBUNG")
-            self.console_log.error("STM32 tidak terhubung ke Jetson")
 
         if data["lrf_status"]:
             self.label_status_lrf.setText(f"LRF: {data['lrf_jarak_meter']:.1f} m")

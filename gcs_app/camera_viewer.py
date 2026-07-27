@@ -21,6 +21,15 @@ except ImportError:
 INTERVAL_UPDATE_MS = 33  # ~30fps
 
 
+def list_nama_kamera():
+    """List semua nama device capture yang kedetect DirectShow - buat isi
+    dropdown di Settings dialog. List kosong kalau pygrabber gak ke-install
+    atau emang gak ada device."""
+    if FilterGraph is None:
+        return []
+    return FilterGraph().get_input_devices()
+
+
 def cari_index_kamera(nama_substring):
     """Cari index device capture yang namanya MENGANDUNG nama_substring
     (case-insensitive) lewat DirectShow (pygrabber) - lebih stabil daripada

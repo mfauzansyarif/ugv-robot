@@ -1,11 +1,13 @@
 """Dialog Kontrol Motor Linear Individual - lihat dokumentasi/ROS2_BRIEF.md
 section 7.3.
 
-Protokol (FINAL, disepakati 2026-07-16): dikirim lewat RFLink yang sama
-(marker byte 0xEE/0xEF, beda dari frame 13-byte normal) - lihat
-serial_workers.py. RFLink HARUS di-pause() dulu sama pemanggil (main_window)
-sebelum dialog ini dibuka, dan di-resume() begitu ditutup, supaya command
-individual gak tabrakan sama frame normal yang jalan terus-menerus.
+Protokol (FINAL, disederhanain 2026-07-16 jadi 1 frame fixed - gak ada
+mode/pause terpisah lagi): dialog ini cuma nyetel STATE lokal di
+MainWindow lewat callback (set_individual/set_kalibrasi), yang otomatis
+ikut ke SETIAP frame 16-byte yang dikirim RFLink tiap siklus (lihat
+main_window.py `_bangun_frame_gcs`/`_set_individual_motor`/
+`_trigger_kalibrasi`). Dialog ini SENGAJA gak perlu tau apa-apa soal RF
+link sama sekali.
 """
 
 from PySide6.QtWidgets import (
@@ -24,11 +26,11 @@ DAFTAR_MOTOR = [
 
 
 class MotorLinearDialog(QDialog):
-    def __init__(self, console_log, rf_link, parent=None):
+    def __init__(self, console_log, set_individual, trigger_kalibrasi, parent=None):
         super().__init__(parent)
         self.console_log = console_log
-        self.rf_link = rf_link
-        self.rf_link.ack_individual_diterima.connect(self._on_ack)
+        self.set_individual = set_individual
+        self.trigger_kalibrasi = trigger_kalibrasi
         self.setWindowTitle("Kontrol Motor Linear Individual")
 
         layout_utama = QVBoxLayout(self)
@@ -64,13 +66,9 @@ class MotorLinearDialog(QDialog):
     def _kirim(self, motor_id, arah):
         nama = DAFTAR_MOTOR[motor_id - 1]
         aksi = {1: "extend", -1: "retract", 0: "stop"}[arah]
-        self.rf_link.kirim_command_individual(motor_id, arah)
+        self.set_individual(motor_id, arah)
         self.console_log.info(f"[Individual] {nama}: {aksi}")
 
     def _kirim_kalibrasi(self):
-        self.rf_link.kirim_kalibrasi()
+        self.trigger_kalibrasi()
         self.console_log.info("[Individual] Kalibrasi dipicu")
-
-    def _on_ack(self, sukses):
-        if not sukses:
-            self.console_log.warning("[Individual] Command gagal/gak ada ack dari Jetson")

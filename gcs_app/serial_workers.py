@@ -15,7 +15,6 @@ dikonfirmasi presisi - masih placeholder di bawah (Estop & Mode dikirim
 """
 
 import struct
-import threading
 import time
 
 import serial
@@ -102,36 +101,27 @@ class ArduinoReader(QThread):
             return None
 
 
-# Format struct buat frame 13-byte GCS->Jetson (lihat ROS2_BRIEF.md 3.5,
-# diperluas 2026-07-16 dari 10-byte buat nampung SlipRing + BodyUpDown +
-# ArmWidenNarrow yang sebelumnya gak punya field tujuan):
+# Format struct buat frame 16-byte GCS->Jetson - FIXED, SATU bentuk doang
+# (disederhanain 2026-07-16 dari skema 3-jenis-frame+marker-byte sebelumnya,
+# karena bandwidth RF ini masih longgar banget - 13/16 byte @ 20Hz cuma
+# ~5% dari kapasitas 57600 baud, jadi gak ada untungnya bikin protokol
+# bercabang cuma buat "hemat" beberapa byte). Lihat ROS2_BRIEF.md 3.5:
 # Estop(B) Mode(B) XJoy1(b) YJoy1(b) XJoy2(b) YJoy2(b) Zoom(b) LRF(B)
 # FLamp(B) BLamp(B) SlipRing(B) BodyUpDown(b) ArmWidenNarrow(b)
-FORMAT_FRAME_GCS = "=BBbbbbbBBBBbb"
-
-# Marker byte buat bedain command individual/kalibrasi dari frame 13-byte
-# normal di RF link yang sama (lihat ROS2_BRIEF.md - protokol Kontrol Motor
-# Linear Individual). Byte pertama frame normal (Estop) cuma 0/1, jadi
-# 0xEE/0xEF gak akan pernah ketuker sama frame biasa.
-MARKER_INDIVIDUAL = 0xEE   # diikuti 2 byte: motor_id(1-12), arah(-1/0/1)
-MARKER_KALIBRASI = 0xEF    # berdiri sendiri, gak ada data tambahan
+# MotorIndividualID(B) MotorIndividualArah(b) Kalibrasi(B)
+FORMAT_FRAME_GCS = "=BBbbbbbBBBBbbBbB"
 
 
 class RFLink(QThread):
-    """Kelola siklus gantian request-response ke Jetson: kirim 13-byte
-    command, dengerin sebentar buat 4-byte telemetry balik. Penyedia_frame
+    """Kelola siklus gantian request-response ke Jetson: kirim 1 frame
+    16-byte FIXED (selalu bentuk yang sama, gak ada mode/pause/marker byte
+    lagi), dengerin sebentar buat 4-byte telemetry balik. Penyedia_frame
     dipanggil tiap siklus buat ambil nilai TERBARU yang mau dikirim (harus
-    thread-safe di sisi pemanggil).
-
-    Bisa di-pause() (misal pas dialog Kontrol Motor Linear Individual
-    dibuka) - selama pause, frame 13-byte normal BERHENTI dikirim, dan
-    thread ini cuma ngirim command individual/kalibrasi kalau ada yang
-    di-antrikan lewat kirim_command_individual()/kirim_kalibrasi()."""
+    cepat & non-blocking, dipanggil dari thread ini)."""
 
     telemetry_diterima = Signal(dict)
     jetson_terhubung = Signal()
     jetson_terputus = Signal()
-    ack_individual_diterima = Signal(bool)  # True=sukses (ack byte=1), False=gagal/timeout
 
     AMBANG_MISS_BERTURUT = 5  # sekian kali gagal balasan berturut baru declare disconnect
 
@@ -142,29 +132,10 @@ class RFLink(QThread):
         self.penyedia_frame = penyedia_frame
         self.interval = 1.0 / hz
         self._jalan = True
-        self._paused = False
-        self._lock = threading.Lock()
-        self._command_pending = None  # ("I", motor_id, arah) atau ("K",) atau None
 
     def stop(self):
         self._jalan = False
         self.wait(1000)
-
-    def pause(self):
-        self._paused = True
-
-    def resume(self):
-        self._paused = False
-
-    def kirim_command_individual(self, motor_id, arah):
-        """Antrikan command individual - dikirim di siklus berikutnya
-        selama RFLink lagi paused(). Aman dipanggil dari thread GUI."""
-        with self._lock:
-            self._command_pending = ("I", motor_id, arah)
-
-    def kirim_kalibrasi(self):
-        with self._lock:
-            self._command_pending = ("K",)
 
     def run(self):
         try:
@@ -178,11 +149,6 @@ class RFLink(QThread):
 
         while self._jalan:
             waktu_mulai = time.monotonic()
-
-            if self._paused:
-                self._proses_command_individual(ser)
-                time.sleep(0.05)
-                continue
 
             nilai = self.penyedia_frame()
             frame = struct.pack(FORMAT_FRAME_GCS, *nilai)
@@ -214,25 +180,3 @@ class RFLink(QThread):
                 time.sleep(sisa_waktu)
 
         ser.close()
-
-    def _proses_command_individual(self, ser):
-        with self._lock:
-            cmd = self._command_pending
-            self._command_pending = None
-        if cmd is None:
-            return
-
-        if cmd[0] == "I":
-            _, motor_id, arah = cmd
-            frame = struct.pack("=BBb", MARKER_INDIVIDUAL, motor_id, arah)
-        else:
-            frame = struct.pack("=B", MARKER_KALIBRASI)
-
-        try:
-            ser.write(frame)
-        except serial.SerialException:
-            return
-
-        respons = ser.read(1)
-        sukses = len(respons) == 1 and respons[0] == 1
-        self.ack_individual_diterima.emit(sukses)

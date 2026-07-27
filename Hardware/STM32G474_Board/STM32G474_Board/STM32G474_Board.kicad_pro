@@ -484,14 +484,15 @@
     }
   },
   "libraries": {
-    "pinned_footprint_libs": [],
+    "pinned_footprint_libs": [
+      "easyeda"
+    ],
     "pinned_symbol_libs": [
-      "bulldozercomp",
-      "UGV_Lib"
+      "easyeda"
     ]
   },
   "meta": {
-    "filename": "ugv-robot.kicad_pro",
+    "filename": "STM32G474_Board.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -646,27 +647,18 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "ugv-robot.kicad_sch",
-        "name": "GCS",
-        "uuid": "cb717689-3fed-4997-90cb-ca2068d6c570"
-      },
-      {
-        "filename": "ugv.kicad_sch",
-        "name": "UGV",
-        "uuid": "90529edd-bc99-4b19-bdf7-a431d95739a2"
+        "filename": "STM32G474_Board.kicad_sch",
+        "name": "Root",
+        "uuid": "2c66c4fa-9f6a-4541-aa5f-23783ae69341"
       }
     ],
-    "used_designators": "BT2,#PWR22-25,J2,U5",
+    "used_designators": "CN1,#PWR1-32,J1-19",
     "variants": []
   },
   "sheets": [
     [
-      "cb717689-3fed-4997-90cb-ca2068d6c570",
-      "GCS"
-    ],
-    [
-      "90529edd-bc99-4b19-bdf7-a431d95739a2",
-      "UGV"
+      "2c66c4fa-9f6a-4541-aa5f-23783ae69341",
+      "Root"
     ]
   ],
   "text_variables": {},

@@ -59,7 +59,7 @@ typedef struct {
 /* Command final dari Jetson (Core Node udah mutusin) - lihat brief Fase 4 */
 typedef struct {
     int8_t  speed;
-    int8_t  act[12];
+    int8_t  act[8];
     uint8_t fLamp;
     uint8_t bLamp;
     uint8_t bLampMode;
@@ -77,7 +77,7 @@ typedef struct {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define JUMLAH_MOTOR        4U
-#define JUMLAH_ACTUATOR     12U
+#define JUMLAH_ACTUATOR     8U
 
 #define FREQ_PER_RPM        50U
 #define TIMER_CLOCK_HZ      170000000UL   /* HSI 16MHz -> PLL -> 170MHz, SAMA buat semua timer (APB1/APB2 prescaler 1) */
@@ -99,7 +99,7 @@ typedef struct {
 
 #define GCS_FRAME_LEN       16U
 
-#define JETSON_DOWN_LEN     24U  /* Jetson -> STM32: speed+12act+flamp+blamp+blampmode+pantilt+zoom+slipring+lrftrigger+4 gcsreply */
+#define JETSON_DOWN_LEN     20U  /* Jetson -> STM32: speed+8act+flamp+blamp+blampmode+pantilt+zoom+slipring+lrftrigger+4 gcsreply */
 #define JETSON_UP_LEN       20U  /* STM32 -> Jetson: 16 byte relay GCS + lrf_lsb+lrf_msb+lrf_status+stm32_status */
 
 #define LRF_TRIGGER_IDLE       0U
@@ -147,10 +147,6 @@ static const ActuatorPin_t actuatorTable[JUMLAH_ACTUATOR] = {
     /* 5  */ { LinearR_5_GPIO_Port,  LinearR_5_Pin,  LinearL_5_GPIO_Port,  LinearL_5_Pin  },
     /* 6  */ { LinearR_6_GPIO_Port,  LinearR_6_Pin,  LinearL_6_GPIO_Port,  LinearL_6_Pin  },
     /* 7  */ { LinearR_7_GPIO_Port,  LinearR_7_Pin,  LinearL_7_GPIO_Port,  LinearL_7_Pin  },
-    /* 8  */ { LinearR_8_GPIO_Port,  LinearR_8_Pin,  LinearL_8_GPIO_Port,  LinearL_8_Pin  },
-    /* 9  */ { LinearR_9_GPIO_Port,  LinearR_9_Pin,  LinearL_9_GPIO_Port,  LinearL_9_Pin  },
-    /* 10 */ { LinearR_10_GPIO_Port, LinearR_10_Pin, LinearL_10_GPIO_Port, LinearL_10_Pin },
-    /* 11 */ { LinearR_11_GPIO_Port, LinearR_11_Pin, LinearL_11_GPIO_Port, LinearL_11_Pin },
 };
 
 /* TODO: proteksi stall - durasi maks HIGH per actuator belum ditentukan.
@@ -366,9 +362,7 @@ static void DebugPrint(const char *format, ...)
  * ==========================================================================*/
 
 static void RS485_KirimFrame(const uint8_t *frame, uint8_t panjang) {
-    HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_SET);   /* mode kirim */
     HAL_UART_Transmit(&huart1, (uint8_t *)frame, panjang, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_RESET); /* balik ke mode dengar */
 }
 
 /* ---- Pantilt (protokol custom, hasil reverse-engineer - lihat
@@ -502,17 +496,17 @@ static void JetsonParseFrame(const uint8_t *frame24, JetsonCommand_t *out) {
     for (uint8_t i = 0; i < JUMLAH_ACTUATOR; i++) {
         out->act[i] = (int8_t)frame24[1U + i];
     }
-    out->fLamp               = frame24[13];
-    out->bLamp                = frame24[14];
-    out->bLampMode             = frame24[15];
-    out->pantiltArah           = frame24[16];
-    out->kameraZoom            = (int8_t)frame24[17];
-    out->slipRing              = frame24[18];
-    out->lrfTrigger            = frame24[19];
-    out->gcsReplyStm32Status   = frame24[20];
-    out->gcsReplyLrfStatus     = frame24[21];
-    out->gcsReplyLrfLsb        = frame24[22];
-    out->gcsReplyLrfMsb        = frame24[23];
+    out->fLamp               = frame24[9];
+    out->bLamp                = frame24[10];
+    out->bLampMode             = frame24[11];
+    out->pantiltArah           = frame24[12];
+    out->kameraZoom            = (int8_t)frame24[13];
+    out->slipRing              = frame24[14];
+    out->lrfTrigger            = frame24[15];
+    out->gcsReplyStm32Status   = frame24[16];
+    out->gcsReplyLrfStatus     = frame24[17];
+    out->gcsReplyLrfLsb        = frame24[18];
+    out->gcsReplyLrfMsb        = frame24[19];
 }
 
 static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
