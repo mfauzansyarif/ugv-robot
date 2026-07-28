@@ -82,8 +82,6 @@ typedef struct {
 #define FREQ_PER_RPM        50U
 #define TIMER_CLOCK_HZ      170000000UL   /* HSI 16MHz -> PLL -> 170MHz, SAMA buat semua timer (APB1/APB2 prescaler 1) */
 
-#define WATCHDOG_MS         300U
-
 #define LAMP_PWM_ARR        3399U   /* 170MHz / (3400*50) = 1kHz, prescaler 49 (di-set manual di USER CODE 2) */
 
 #define BLINK_INTERVAL_MS   250U
@@ -107,8 +105,10 @@ typedef struct {
 #define LRF_TRIGGER_POINTER_ON 2U
 #define LRF_TRIGGER_POINTER_OFF 3U
 
-#define LINK_TIMEOUT_MS      500U  /* LED link mati kalau gak ada frame valid selama ini */
+#define LINK_TIMEOUT_MS      500U  /* LED mati + failsafe stop kalau gak ada frame Jetson valid selama ini */
 #define HEARTBEAT_INTERVAL_MS 500U
+
+#define UART_TX_TIMEOUT_MS   50U   /* batas HAL_UART_Transmit - jangan HAL_MAX_DELAY, biar main loop gak bisa hang selamanya */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -181,6 +181,14 @@ static uint32_t waktuFrameGcsTerakhir = 0;
 static uint32_t waktuHeartbeatTerakhir = 0;
 static uint8_t  statusHeartbeat = 0;
 
+/* ---- Anti-spam RS485 (cuma kirim pas berubah) - file-scope biar bisa
+ * dipicu paksa ke STOP dari failsafe di main loop juga, gak cuma dari
+ * JetsonApplyCommand. Sentinel awal DILUAR rentang valid biar frame
+ * pertama pasti dianggap "berubah". */
+static uint8_t pantiltArahTerakhir = 0xFFU;
+static int8_t  kameraZoomTerakhir = 127;
+static uint8_t slipRingTerakhir = 0xFFU;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -210,7 +218,6 @@ static void RS485_KirimFrame(const uint8_t *frame, uint8_t panjang);
 
 static uint8_t Pantilt_Checksum(const uint8_t *payload5);
 static void Pantilt_Kirim(const uint8_t *payload5);
-static uint8_t Pantilt_BacaRespons(uint8_t *payloadOut5);
 static void Pantilt_Gerak(PantiltArah_t arah);
 static void Pantilt_PowerSlipRing(uint8_t nyala);
 
@@ -354,7 +361,7 @@ static void DebugPrint(const char *format, ...)
     va_start(args, format);
     int panjang = vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
-    HAL_UART_Transmit(&hlpuart1, (uint8_t *)buffer, (uint16_t)panjang, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&hlpuart1, (uint8_t *)buffer, (uint16_t)panjang, UART_TX_TIMEOUT_MS);
 }
 
 /* ============================================================================
@@ -362,7 +369,7 @@ static void DebugPrint(const char *format, ...)
  * ==========================================================================*/
 
 static void RS485_KirimFrame(const uint8_t *frame, uint8_t panjang) {
-    HAL_UART_Transmit(&huart1, (uint8_t *)frame, panjang, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart1, (uint8_t *)frame, panjang, UART_TX_TIMEOUT_MS);
 }
 
 /* ---- Pantilt (protokol custom, hasil reverse-engineer - lihat
@@ -384,14 +391,6 @@ static void Pantilt_Kirim(const uint8_t *payload5) {
     RS485_KirimFrame(frame, 7U);
 }
 
-static uint8_t Pantilt_BacaRespons(uint8_t *payloadOut5) {
-    uint8_t frame[7];
-    if (HAL_UART_Receive(&huart1, frame, 7U, RS485_TIMEOUT_MS) != HAL_OK) return 0U;
-    if (frame[6] != Pantilt_Checksum(&frame[1])) return 0U;
-    for (uint8_t i = 0; i < 5U; i++) payloadOut5[i] = frame[1U + i];
-    return 1U;
-}
-
 static const uint8_t PANTILT_GERAK_TABLE[5][5] = {
     {0x00, 0x00, 0x04, 0x3F, 0x00}, /* kiri */
     {0x00, 0x00, 0x02, 0x3F, 0x00}, /* kanan */
@@ -408,6 +407,17 @@ static void Pantilt_PowerSlipRing(uint8_t nyala) {
     uint8_t payload5[5] = { 0x00, 0x00, (uint8_t)(nyala ? 0x09U : 0x0BU), 0x00, 0x02 };
     Pantilt_Kirim(payload5);
 }
+
+/* BELUM DIIMPLEMENTASI (sengaja) - pantilt sebenernya BISA dibaca sudutnya,
+ * beda dari command gerak/slip ring yang emang gak pernah balas. Referensi:
+ * Testcode/test_bus_pantilt_kamera_lrf.py -> pantilt_baca_sudut().
+ * Kirim payload5 = {0x00,0x00,cmd2,0x00,0x00}, cmd2: 0x51=azimuth, 0x53=elevasi.
+ * Baca respons 7 byte (pola sama kayak Pantilt_Kirim, checksum pakai
+ * Pantilt_Checksum), payload[3] & payload[4] = data encoder mentah, lalu:
+ *   elevasi = 2.694879023302476*data[3] + 1.1455831934909497*data[4]/100 - 73.36566910656754
+ *   azimuth = 2.447221740538158*data[3] + (-2.2315937758949502)*data[4]/100 - 69.7511885011599
+ * Kalau nanti mau diimplementasi: butuh field trigger baru di down-frame
+ * Jetson (mirip lrfTrigger) + field balik di up-frame buat hasil sudutnya. */
 
 /* ---- Kamera + LRF-bridge, sama-sama bungkus Pelco-D (lihat
  * test_bus_pantilt_kamera_lrf.py) ---- */
@@ -519,19 +529,29 @@ static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
     Lamp_SetBrightness(&htim1, TIM_CHANNEL_1, cmd->fLamp);
     setLampuBelakang(cmd->bLamp, cmd->bLampMode);
 
-    if (cmd->pantiltArah <= (uint8_t)PANTILT_STOP) {
+    /* RS485 (pantilt/kamera/slip ring) CUMA dikirim kalau nilainya BERUBAH
+     * dari siklus sebelumnya - bukan tiap ada frame Jetson masuk (~10-20Hz).
+     * Tanpa ini, bus RS485 digempur command identik terus-menerus. */
+    if (cmd->pantiltArah <= (uint8_t)PANTILT_STOP && cmd->pantiltArah != pantiltArahTerakhir) {
         Pantilt_Gerak((PantiltArah_t)cmd->pantiltArah);
+        pantiltArahTerakhir = cmd->pantiltArah;
     }
 
-    if (cmd->kameraZoom > 0) {
-        Kamera_ZoomIn();
-    } else if (cmd->kameraZoom < 0) {
-        Kamera_ZoomOut();
-    } else {
-        Kamera_ZoomStop();
+    if (cmd->kameraZoom != kameraZoomTerakhir) {
+        if (cmd->kameraZoom > 0) {
+            Kamera_ZoomIn();
+        } else if (cmd->kameraZoom < 0) {
+            Kamera_ZoomOut();
+        } else {
+            Kamera_ZoomStop();
+        }
+        kameraZoomTerakhir = cmd->kameraZoom;
     }
 
-    Pantilt_PowerSlipRing(cmd->slipRing);
+    if (cmd->slipRing != slipRingTerakhir) {
+        Pantilt_PowerSlipRing(cmd->slipRing);
+        slipRingTerakhir = cmd->slipRing;
+    }
 
     if (cmd->lrfTrigger == LRF_TRIGGER_BACA_JARAK) {
         uint16_t jarak;
@@ -694,6 +714,30 @@ int main(void)
     HAL_GPIO_WritePin(LED_RF_GPIO_Port, LED_RF_Pin,
         (HAL_GetTick() - waktuFrameGcsTerakhir < LINK_TIMEOUT_MS) ? GPIO_PIN_SET : GPIO_PIN_RESET);
 
+    /* FAILSAFE: kalau Jetson gak kirim frame valid selama LINK_TIMEOUT_MS,
+     * paksa berhenti - jangan terus nurut command terakhir tanpa batas
+     * waktu cuma karena link putus (Jetson mati/hang/USB kecabut, dll).
+     * Motor/actuator aman di-stop tiap loop (idempoten, murah). Pantilt/
+     * kamera RS485 SENGAJA dijaga cuma kirim SEKALI pas transisi ke
+     * failsafe (guard pakai tracker anti-spam yang sama) - biar gak balik
+     * spam RS485 gara-gara loop ini muter terus selama link masih putus. */
+    if (HAL_GetTick() - waktuFrameJetsonTerakhir >= LINK_TIMEOUT_MS) {
+        stopSemuaMotor();
+        StopSemuaActuator();
+        if (pantiltArahTerakhir != (uint8_t)PANTILT_STOP) {
+            Pantilt_Gerak(PANTILT_STOP);
+            pantiltArahTerakhir = (uint8_t)PANTILT_STOP;
+        }
+        if (kameraZoomTerakhir != 0) {
+            Kamera_ZoomStop();
+            kameraZoomTerakhir = 0;
+        }
+        if (slipRingTerakhir != 0) {
+            Pantilt_PowerSlipRing(0);
+            slipRingTerakhir = 0;
+        }
+    }
+
     if (jetsonFrameSiap) {
         uint8_t salinanJetson[JETSON_DOWN_LEN];
         memcpy(salinanJetson, jetsonFrameKerja, JETSON_DOWN_LEN);
@@ -705,7 +749,7 @@ int main(void)
 
         uint8_t upFrame[JETSON_UP_LEN];
         JetsonBangunUpFrame(upFrame);
-        HAL_UART_Transmit(&huart3, upFrame, JETSON_UP_LEN, HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart3, upFrame, JETSON_UP_LEN, UART_TX_TIMEOUT_MS);
 
         DebugPrint("Jetson RX: speed=%d flamp=%u blamp=%u pantilt=%u zoom=%d lrfTrig=%u\r\n",
             cmd.speed, cmd.fLamp, cmd.bLamp, cmd.pantiltArah, cmd.kameraZoom, cmd.lrfTrigger);
@@ -725,7 +769,7 @@ int main(void)
             cmd.estop, cmd.mode, cmd.xJoy1, cmd.yJoy1, cmd.xJoy2, cmd.yJoy2,
             cmd.fLamp, cmd.bLamp, cmd.kalibrasi);
 
-        HAL_UART_Transmit(&huart2, gcsBalasanCache, 4U, HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart2, gcsBalasanCache, 4U, UART_TX_TIMEOUT_MS);
     }
 
     /* USER CODE END WHILE */
@@ -797,7 +841,7 @@ static void MX_LPUART1_UART_Init(void)
 
   /* USER CODE END LPUART1_Init 1 */
   hlpuart1.Instance = LPUART1;
-  hlpuart1.Init.BaudRate = 115200;
+  hlpuart1.Init.BaudRate = 209700;
   hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
   hlpuart1.Init.StopBits = UART_STOPBITS_1;
   hlpuart1.Init.Parity = UART_PARITY_NONE;
@@ -1337,16 +1381,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, LinearR_0_Pin|LinearL_0_Pin|LinearR_1_Pin|MotorS_2_Pin
-                          |MotorS_3_Pin|LinearL_1_Pin|LinearR_2_Pin|LinearL_2_Pin
-                          |LinearR_3_Pin|LinearL_3_Pin|LinearR_4_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, MotorS_1_Pin|LinearL_3_Pin|LinearR_5_Pin|MotorS_3_Pin
+                          |LinearR_7_Pin|MotorS_2_Pin|LinearR_1_Pin|LinearL_4_Pin
+                          |LinearR_0_Pin|LinearR_4_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOF, LinearL_4_Pin|LinearR_5_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOF, LinearR_3_Pin|LinearL_5_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, MotorS_0_Pin|MotorS_1_Pin|LinearR_11_Pin|LinearL_5_Pin
-                          |LinearR_6_Pin|LinearL_6_Pin|LinearR_7_Pin|LinearL_7_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LinearR_2_Pin|LinearL_2_Pin|LinearR_11_Pin|MotorS_0_Pin
+                          |LinearL_1_Pin|LinearL_6_Pin|LinearL_7_Pin|LinearR_6_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LED_Jetson_Pin|LED_RF_Pin|LED_Heartbeat_Pin|LinearR_8_Pin
@@ -1354,30 +1398,30 @@ static void MX_GPIO_Init(void)
                           |LinearL_10_Pin|LinearL_11_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LinearL_0_GPIO_Port, LinearL_0_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : LinearR_0_Pin LinearL_0_Pin LinearR_1_Pin MotorS_2_Pin
-                           MotorS_3_Pin LinearL_1_Pin LinearR_2_Pin LinearL_2_Pin
-                           LinearR_3_Pin LinearL_3_Pin LinearR_4_Pin */
-  GPIO_InitStruct.Pin = LinearR_0_Pin|LinearL_0_Pin|LinearR_1_Pin|MotorS_2_Pin
-                          |MotorS_3_Pin|LinearL_1_Pin|LinearR_2_Pin|LinearL_2_Pin
-                          |LinearR_3_Pin|LinearL_3_Pin|LinearR_4_Pin;
+  /*Configure GPIO pins : MotorS_1_Pin LinearL_3_Pin LinearR_5_Pin MotorS_3_Pin
+                           LinearR_7_Pin MotorS_2_Pin LinearR_1_Pin LinearL_4_Pin
+                           LinearR_0_Pin LinearR_4_Pin */
+  GPIO_InitStruct.Pin = MotorS_1_Pin|LinearL_3_Pin|LinearR_5_Pin|MotorS_3_Pin
+                          |LinearR_7_Pin|MotorS_2_Pin|LinearR_1_Pin|LinearL_4_Pin
+                          |LinearR_0_Pin|LinearR_4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LinearL_4_Pin LinearR_5_Pin */
-  GPIO_InitStruct.Pin = LinearL_4_Pin|LinearR_5_Pin;
+  /*Configure GPIO pins : LinearR_3_Pin LinearL_5_Pin */
+  GPIO_InitStruct.Pin = LinearR_3_Pin|LinearL_5_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MotorS_0_Pin MotorS_1_Pin LinearR_11_Pin LinearL_5_Pin
-                           LinearR_6_Pin LinearL_6_Pin LinearR_7_Pin LinearL_7_Pin */
-  GPIO_InitStruct.Pin = MotorS_0_Pin|MotorS_1_Pin|LinearR_11_Pin|LinearL_5_Pin
-                          |LinearR_6_Pin|LinearL_6_Pin|LinearR_7_Pin|LinearL_7_Pin;
+  /*Configure GPIO pins : LinearR_2_Pin LinearL_2_Pin LinearR_11_Pin MotorS_0_Pin
+                           LinearL_1_Pin LinearL_6_Pin LinearL_7_Pin LinearR_6_Pin */
+  GPIO_InitStruct.Pin = LinearR_2_Pin|LinearL_2_Pin|LinearR_11_Pin|MotorS_0_Pin
+                          |LinearL_1_Pin|LinearL_6_Pin|LinearL_7_Pin|LinearR_6_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -1394,12 +1438,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : RS485_DE_Pin */
-  GPIO_InitStruct.Pin = RS485_DE_Pin;
+  /*Configure GPIO pin : LinearL_0_Pin */
+  GPIO_InitStruct.Pin = LinearL_0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(RS485_DE_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(LinearL_0_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
