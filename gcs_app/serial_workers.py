@@ -114,8 +114,8 @@ FORMAT_FRAME_GCS = "=BbbbbbBBBBbBbB"
 
 
 class RFLink(QThread):
-    """Kelola siklus gantian request-response ke Jetson: kirim 1 frame
-    16-byte FIXED (selalu bentuk yang sama, gak ada mode/pause/marker byte
+    """Kelola siklus gantian request-response ke STM32: kirim 1 frame
+    14-byte FIXED (selalu bentuk yang sama, gak ada mode/pause/marker byte
     lagi), dengerin sebentar buat 4-byte telemetry balik. Penyedia_frame
     dipanggil tiap siklus buat ambil nilai TERBARU yang mau dikirim (harus
     cepat & non-blocking, dipanggil dari thread ini)."""
