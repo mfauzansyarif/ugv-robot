@@ -5,8 +5,10 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/GcsCommand.msg"
-  "msg/GcsStatus.msg"
+  "msg/StmCommand.msg"
+  "msg/GcsRelay.msg"
+  "msg/LrfStatus.msg"
+  "msg/Health.msg"
 )
 
 ament_package()
