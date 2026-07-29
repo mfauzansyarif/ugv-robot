@@ -15,7 +15,200 @@ head -n 1 /etc/nv_tegra_release
 Contoh hasil: "R32 (release), REVISION: 7.1" artinya L4T r32.7.1
 
 
-LANGKAH 2 - Pull image ROS2 Foxy yang sesuai versi L4T kamu
+LANGKAH 2 - Pull image ROS2 Foxy yang sesuai versi L4T kamuPANDUAN MENJALANKAN ROS2 UGV LIDIKZI DI JETSON NANO
+=====================================================
+Dipakai tiap kali habis nyalain/reboot Jetson.
+
+
+==========================================================
+BAGIAN A - SETUP SETELAH REBOOT (wajib, tiap kali nyala)
+==========================================================
+
+A1. Matikan serial console yang ngunci /dev/ttyTHS1
+---------------------------------------------------------
+Kalau dulu sudah pakai "systemctl disable", ini harusnya OTOMATIS
+mati tiap boot. Cek dulu:
+
+    systemctl is-enabled serial-getty@ttyTHS1.service
+
+  - Kalau jawabannya "disabled" atau "not-found" -> AMAN, lanjut A2.
+  - Kalau "enabled", jalankan (cukup SEKALI seumur hidup Jetson):
+
+    sudo systemctl stop serial-getty@ttyTHS1.service
+    sudo systemctl disable serial-getty@ttyTHS1.service
+
+
+A2. Cek device serial ada
+---------------------------------------------------------
+    ls -la /dev/ttyTHS1
+
+Harus muncul barisnya. Kalau "No such file or directory", berarti
+ada masalah di level device tree/hardware - jangan lanjut, cek dulu.
+
+
+A3. Tes cepat komunikasi ke STM32 (opsional tapi disarankan)
+---------------------------------------------------------
+Mastiin kabel + STM32 sehat SEBELUM ngurusin ROS2:
+
+    sudo python3 -c "
+    import serial
+    ser = serial.Serial('/dev/ttyTHS1', 115200, timeout=2)
+    ser.write(b'\x00' * 21)
+    data = ser.read(18)
+    print(f'Diterima: {len(data)} byte -> {data.hex()}')
+    "
+
+  - HASIL BAGUS: "Diterima: 18 byte", byte terakhir = 01
+  - Kalau 0 byte: cek kabel TX/RX (harus SILANG) + GND nyambung,
+    dan pastikan STM32 nyala/firmware jalan.
+
+CATATAN: sekarang kirim 21 byte & baca 18 byte (protokol BARU),
+bukan 20/20 kayak versi lama.
+
+
+==========================================================
+BAGIAN B - MASUK CONTAINER DOCKER
+==========================================================
+
+B1. Jalankan container
+---------------------------------------------------------
+    sudo docker run -it --rm --network host --device=/dev/ttyTHS1 -v ~/ros2_ws:/workspace dustynv/ros:foxy-ros-base-l4t-r32.7.1
+
+Penjelasan flag:
+  --network host          -> node ROS2 bisa saling ketemu
+  --device=/dev/ttyTHS1   -> container boleh akses port serial fisik
+  -v ~/ros2_ws:/workspace -> folder kerja host ke-mount ke container
+
+(--runtime nvidia TIDAK dipakai, karena node ini gak butuh GPU)
+
+
+B2. Install pyserial DI DALAM container
+---------------------------------------------------------
+    pip3 install pyserial
+
+PENTING: karena container pakai --rm, pyserial HILANG tiap container
+ditutup. Jadi langkah ini harus DIULANG tiap masuk container baru.
+
+Verifikasi:
+    python3 -c "import serial; print(serial.__version__)"
+
+
+B3. Source environment ROS2
+---------------------------------------------------------
+    source /opt/ros/foxy/install/setup.bash
+
+
+==========================================================
+BAGIAN C - BUILD WORKSPACE
+==========================================================
+
+C1. Build (cuma perlu kalau ada perubahan kode/.msg)
+---------------------------------------------------------
+    cd /workspace
+    colcon build --symlink-install
+
+Urutan yang benar di output: ugv_robot_msgs "Finished" DULUAN,
+baru ugv_robot (karena ugv_robot butuh message dari sana).
+
+Kalau ugv_robot_msgs GAGAL, jangan lanjut - biasanya penyebabnya:
+  - Nama file salah kapital (harus persis "CMakeLists.txt", M & L besar)
+  - package.xml / CMakeLists.txt kesasar ke dalam folder msg/
+  - Cache lama nyangkut, bersihin dulu:
+        rm -rf build/ugv_robot_msgs install/ugv_robot_msgs
+    lalu build ulang.
+
+
+C2. Source hasil build
+---------------------------------------------------------
+    source install/setup.bash
+
+WAJIB diulang tiap buka terminal/panel BARU di dalam container.
+
+
+==========================================================
+BAGIAN D - MENJALANKAN NODE
+==========================================================
+Butuh beberapa panel terminal. Paling enak pakai Terminator
+(split: Ctrl+Shift+O horizontal, Ctrl+Shift+E vertical).
+
+Buat panel KEDUA dan seterusnya, masuk ke container yang SAMA:
+    sudo docker ps                          (catat CONTAINER ID)
+    sudo docker exec -it <CONTAINER_ID> bash
+    source /opt/ros/foxy/install/setup.bash
+    source /workspace/install/setup.bash
+
+
+D1. PANEL 1 - STM32 Interface Node
+---------------------------------------------------------
+    ros2 run ugv_robot stm32_interface_node
+
+Kalau port/baudrate beda dari default:
+    ros2 run ugv_robot stm32_interface_node --ros-args -p serial_port:=/dev/ttyTHS1 -p baudrate:=115200
+
+TANDA SEHAT: cuma muncul 1 baris "Serial terbuka di ... @ 115200 baud",
+lalu DIAM (gak ada WARN "Up-frame gak lengkap" berulang-ulang).
+Diam = normal, bukan hang.
+
+
+D2. PANEL 2 - Core Node
+---------------------------------------------------------
+    ros2 run ugv_robot core_node
+
+TANDA SEHAT: muncul "Core Node siap", lalu diam.
+
+
+D3. PANEL 3 - Pantau data (buat cek/debug)
+---------------------------------------------------------
+Pilih salah satu:
+
+    ros2 topic echo /stm32/gcs_relay     (data mentah dari GCS)
+    ros2 topic echo /stm32/lrf_status    (jarak + status LRF)
+    ros2 topic echo /stm32/health        (kesehatan STM32)
+    ros2 topic echo /stm32/command       (hasil keputusan Core Node)
+
+Cek semua node & topic aktif:
+    ros2 node list
+    ros2 topic list
+
+
+==========================================================
+BAGIAN E - TES MANUAL TANPA CORE NODE
+==========================================================
+Buat nguji STM32 Interface SENDIRIAN (Core Node dimatikan dulu),
+kirim command manual dari panel lain:
+
+    ros2 topic pub /stm32/command ugv_robot_msgs/msg/StmCommand "{speed: 0, act: [0,0,0,0,0,0,0,0], f_lamp: 80, b_lamp: 80, b_lamp_mode: 1, pantilt_horizontal: 0, pantilt_vertical: 0, kamera_zoom: 0, slip_ring: 0, lrf_trigger: 3, gcs_reply_stm32_status: 1, gcs_reply_lrf_status: 0, gcs_reply_lrf_lsb: 0, gcs_reply_lrf_msb: 0}" --once
+
+Efek yang diharapkan: lampu depan & belakang nyala 80%.
+
+PERINGATAN: jangan jalankan Core Node BARENGAN dengan perintah ini -
+dua-duanya publish ke topic yang sama, nilainya bakal rebutan.
+
+
+==========================================================
+BAGIAN F - MEMATIKAN
+==========================================================
+  - Stop 1 node          : Ctrl+C di panel node tersebut
+  - Keluar container     : ketik "exit"
+    (container kehapus otomatis karena --rm, TAPI semua file di
+     /workspace tetap aman karena ke-mount ke ~/ros2_ws di host)
+
+
+==========================================================
+CATATAN PENTING
+==========================================================
+1. Estop belum dikonfirmasi. Di core_node.py, estop diperlakukan
+   sebagai override tertinggi (semua gerakan dipaksa 0). Ini ASUMSI
+   demi keamanan, BELUM ada di brief - konfirmasi ke tim.
+
+2. steer_threshold default 30 (dari -100..100). Nilai ini juga
+   belum ada di brief, tinggal diubah tanpa edit kode:
+       ros2 run ugv_robot core_node --ros-args -p steer_threshold:=20
+
+3. Ukuran frame protokol BARU: 21 byte turun, 18 byte naik.
+   Kalau firmware STM32 diupdate lagi dan ukurannya berubah,
+   FORMAT_DOWN/FORMAT_UP di stm32_interface_node.py DAN file .msg
+   dua-duanya harus ikut diupdate (rawan out-of-sync).
 ---------------------------------------------------------------------
 # Ganti r32.7.1 sesuai hasil Langkah 1
 sudo docker pull dustynv/ros:foxy-ros-base-l4t-r32.7.1
