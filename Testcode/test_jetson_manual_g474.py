@@ -18,7 +18,10 @@ Command yang bisa diketik (pisah spasi):
   actall <-100..100>                 semua 8 actuator sekaligus
   flamp <0-100>                      brightness lampu depan
   blamp <0-100> <mati|nyala|kedip>   lampu belakang
-  pantilt <kiri|kanan|atas|bawah|stop>
+  pantilth <kiri|stop|kanan>          arah horizontal pantilt (independen)
+  pantiltv <bawah|stop|atas>          arah vertical pantilt (independen -
+                                       gabungin pantilth+pantiltv buat diagonal,
+                                       misal "pantilth kanan" + "pantiltv atas")
   zoom <in|out|stop>
   slip <0|1>
   lrf <idle|baca|pointeron|pointeroff>
@@ -43,16 +46,17 @@ import serial.tools.list_ports
 BAUDRATE = 115200
 KIRIM_INTERVAL_S = 0.1  # 10Hz, cukup buat "heartbeat" tanpa spam bus
 
-FORMAT_DOWN = "=b8bBBBBbBBBBBB"         # 20 byte
-FORMAT_GCS_RELAY = "=BBbbbbbBBBBbbBbB"  # 16 byte (bagian awal up-frame)
+FORMAT_DOWN = "=b8bBBBbbbBBBBBB"        # 21 byte
+FORMAT_GCS_RELAY = "=BbbbbbBBBBbBbB"    # 14 byte (bagian awal up-frame)
 FORMAT_UP_TAIL = "=BBBB"                # 4 byte (bagian akhir up-frame)
 
 SIZE_DOWN = struct.calcsize(FORMAT_DOWN)
 SIZE_GCS_RELAY = struct.calcsize(FORMAT_GCS_RELAY)
 SIZE_UP = SIZE_GCS_RELAY + struct.calcsize(FORMAT_UP_TAIL)
-assert SIZE_DOWN == 20 and SIZE_UP == 20
+assert SIZE_DOWN == 21 and SIZE_UP == 18
 
-PANTILT_ARAH = {"kiri": 0, "kanan": 1, "atas": 2, "bawah": 3, "stop": 4}
+PANTILT_HORIZONTAL = {"kiri": -1, "stop": 0, "kanan": 1}
+PANTILT_VERTICAL = {"bawah": -1, "stop": 0, "atas": 1}
 ZOOM_ARAH = {"in": 1, "stop": 0, "out": -1}
 BLAMP_MODE = {"mati": 0, "nyala": 1, "kedip": 2}
 LRF_TRIGGER = {"idle": 0, "baca": 1, "pointeron": 2, "pointeroff": 3}
@@ -64,7 +68,8 @@ state = {
     "f_lamp": 0,
     "b_lamp": 0,
     "b_lamp_mode": 0,
-    "pantilt_arah": 4,
+    "pantilt_horizontal": 0,
+    "pantilt_vertical": 0,
     "kamera_zoom": 0,
     "slip_ring": 0,
     "lrf_trigger": 0,
@@ -90,19 +95,19 @@ def bangun_frame():
         return struct.pack(
             FORMAT_DOWN,
             state["speed"], *state["act"], state["f_lamp"], state["b_lamp"],
-            state["b_lamp_mode"], state["pantilt_arah"], state["kamera_zoom"],
-            state["slip_ring"], state["lrf_trigger"],
+            state["b_lamp_mode"], state["pantilt_horizontal"], state["pantilt_vertical"],
+            state["kamera_zoom"], state["slip_ring"], state["lrf_trigger"],
             1, 0, 0, 0,  # gcsReply* - dummy, gak relevan buat kontrol manual
         )
 
 
-def urai_up_frame(raw20):
-    gcs = struct.unpack(FORMAT_GCS_RELAY, raw20[:SIZE_GCS_RELAY])
+def urai_up_frame(raw18):
+    gcs = struct.unpack(FORMAT_GCS_RELAY, raw18[:SIZE_GCS_RELAY])
     lrf_lsb, lrf_msb, lrf_status, stm32_status = struct.unpack(
-        FORMAT_UP_TAIL, raw20[SIZE_GCS_RELAY:])
+        FORMAT_UP_TAIL, raw18[SIZE_GCS_RELAY:])
     return {
         "estop_relay_gcs": gcs[0],
-        "xJoy1_relay_gcs": gcs[2],
+        "xJoy1_relay_gcs": gcs[1],
         "lrf_status": lrf_status,
         "jarak_meter": (lrf_lsb | (lrf_msb << 8)) / 10.0,
         "stm32_status": stm32_status,
@@ -147,7 +152,8 @@ def proses_command(cmd):
                 state["f_lamp"] = 0
                 state["b_lamp"] = 0
                 state["b_lamp_mode"] = 0
-                state["pantilt_arah"] = 4
+                state["pantilt_horizontal"] = 0
+                state["pantilt_vertical"] = 0
                 state["kamera_zoom"] = 0
                 state["slip_ring"] = 0
                 state["lrf_trigger"] = 0
@@ -183,11 +189,16 @@ def proses_command(cmd):
                 state["b_lamp"] = val
                 state["b_lamp_mode"] = mode
             print(f"  blamp = {val} ({parts[2]})")
-        elif p0 == "pantilt":
-            arah = PANTILT_ARAH[parts[1]]
+        elif p0 == "pantilth":
+            arah = PANTILT_HORIZONTAL[parts[1]]
             with lock:
-                state["pantilt_arah"] = arah
-            print(f"  pantilt = {parts[1]}")
+                state["pantilt_horizontal"] = arah
+            print(f"  pantilt horizontal = {parts[1]}")
+        elif p0 == "pantiltv":
+            arah = PANTILT_VERTICAL[parts[1]]
+            with lock:
+                state["pantilt_vertical"] = arah
+            print(f"  pantilt vertical = {parts[1]}")
         elif p0 == "zoom":
             arah = ZOOM_ARAH[parts[1]]
             with lock:

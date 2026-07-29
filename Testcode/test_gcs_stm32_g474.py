@@ -1,5 +1,5 @@
 """Verifikasi protokol GCS/RF dari firmware STM32Cube/motorugv_G474RE, pura-pura
-jadi GCS - laptop kirim 16 byte request, STM32 harus balas 4 byte.
+jadi GCS - laptop kirim 14 byte request, STM32 harus balas 4 byte.
 
 Sambung USB-to-serial LANGSUNG ke pin USART2 STM32 (skip modul RF-nya dulu,
 sama alasannya kayak test RS485 - di level TTL protokolnya sama aja).
@@ -15,11 +15,12 @@ WIRING (WAJIB disilang RX<->TX, GND WAJIB nyambung, VCC JANGAN disambung)
 
 Baudrate: 57600 (sama kayak konfigurasi USART2 di CubeMX).
 
-Format frame (lihat dokumentasi/ROS2_BRIEF.md & gcs_interface_node.py):
-  Request  (16 byte, GCS->STM32): "=BBbbbbbBBBBbbBbB"
-    estop, mode, xJoy1, yJoy1, xJoy2, yJoy2, zoom, lrf,
-    fLamp, bLamp, slipRing, bodyUpDown, armWidenNarrow,
+Format frame (lihat dokumentasi/ROS2_BRIEF.md & gcs_app/serial_workers.py):
+  Request  (14 byte, GCS->STM32): "=BbbbbbBBBBbBbB"
+    estop, xJoy1, yJoy1, xJoy2, yJoy2, zoom, lrf,
+    fLamp, bLamp, slipRing, bodyUpDown,
     motorIndividualId, motorIndividualArah, kalibrasi
+    (mode & armWidenNarrow dihapus - gak pernah dipakai)
   Response (4 byte, STM32->GCS): "=BBBB"
     stm32_status, lrf_status, lrf_jarak_lsb, lrf_jarak_msb
 
@@ -40,12 +41,12 @@ import serial.tools.list_ports
 
 BAUDRATE = 57600
 
-FORMAT_REQUEST = "=BBbbbbbBBBBbbBbB"   # 16 byte
+FORMAT_REQUEST = "=BbbbbbBBBBbBbB"    # 14 byte
 FORMAT_RESPONSE = "=BBBB"              # 4 byte
 
 SIZE_REQUEST = struct.calcsize(FORMAT_REQUEST)
 SIZE_RESPONSE = struct.calcsize(FORMAT_RESPONSE)
-assert SIZE_REQUEST == 16 and SIZE_RESPONSE == 4
+assert SIZE_REQUEST == 14 and SIZE_RESPONSE == 4
 
 
 def pilih_port():
@@ -60,14 +61,14 @@ def pilih_port():
     return ports[int(idx)].device
 
 
-def bangun_frame(estop=0, mode=0, x_joy1=0, y_joy1=0, x_joy2=0, y_joy2=0,
+def bangun_frame(estop=0, x_joy1=0, y_joy1=0, x_joy2=0, y_joy2=0,
                   zoom=0, lrf=0, f_lamp=0, b_lamp=0, slip_ring=0,
-                  body_up_down=0, arm_widen_narrow=0, motor_individual_id=0,
+                  body_up_down=0, motor_individual_id=0,
                   motor_individual_arah=0, kalibrasi=0):
     return struct.pack(
         FORMAT_REQUEST,
-        estop, mode, x_joy1, y_joy1, x_joy2, y_joy2, zoom, lrf,
-        f_lamp, b_lamp, slip_ring, body_up_down, arm_widen_narrow,
+        estop, x_joy1, y_joy1, x_joy2, y_joy2, zoom, lrf,
+        f_lamp, b_lamp, slip_ring, body_up_down,
         motor_individual_id, motor_individual_arah, kalibrasi,
     )
 

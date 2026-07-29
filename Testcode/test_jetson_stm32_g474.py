@@ -1,10 +1,10 @@
 """Verifikasi protokol Jetson<->STM32 dari firmware STM32Cube/motorugv_G474RE,
-laptop PURA-PURA JADI JETSON - kirim down-frame 20 byte, baca up-frame 20 byte.
+laptop PURA-PURA JADI JETSON - kirim down-frame 21 byte, baca up-frame 18 byte.
 
 Ini juga otomatis nge-tes alur relay GCS: kalau test_gcs_stm32_g474.py dijalanin
 BARENGAN (port USB-serial beda) sambil nyambung ke USART2, up-frame yang
-dibalikin STM32 di sini bakal keliatan isi 16 byte GCS-nya ikut berubah sesuai
-apa yang dikirim GCS. Kalau cuma jalanin script ini sendirian, 16 byte GCS-nya
+dibalikin STM32 di sini bakal keliatan isi 14 byte GCS-nya ikut berubah sesuai
+apa yang dikirim GCS. Kalau cuma jalanin script ini sendirian, 14 byte GCS-nya
 bakal tetep nol (default gcsFrameTerakhir sebelum ada GCS yang connect).
 
 =====================================================================
@@ -19,15 +19,18 @@ WIRING (WAJIB disilang RX<->TX, GND WAJIB nyambung, VCC JANGAN disambung)
 Baudrate: 115200 (sama kayak konfigurasi USART3 di CubeMX).
 
 Format frame (lihat main.c: JetsonParseFrame/JetsonBangunUpFrame):
-  Down-frame (20 byte, Jetson->STM32): "=b8bBBBBbBBBBBB"
-    speed, act0..act7, fLamp, bLamp, bLampMode, pantiltArah, kameraZoom,
-    slipRing, lrfTrigger, gcsReplyStm32Status, gcsReplyLrfStatus,
-    gcsReplyLrfLsb, gcsReplyLrfMsb
-  Up-frame (20 byte, STM32->Jetson): 16 byte GCS mentah (format sama kayak
-    request GCS: "=BBbbbbbBBBBbbBbB") + "=BBBB" (lrfJarakLsb, lrfJarakMsb,
+  Down-frame (21 byte, Jetson->STM32): "=b8bBBBbbbBBBBBB"
+    speed, act0..act7, fLamp, bLamp, bLampMode, pantiltHorizontal,
+    pantiltVertical, kameraZoom, slipRing, lrfTrigger,
+    gcsReplyStm32Status, gcsReplyLrfStatus, gcsReplyLrfLsb, gcsReplyLrfMsb
+  Up-frame (18 byte, STM32->Jetson): 14 byte GCS mentah (format sama kayak
+    request GCS: "=BbbbbbBBBBbBbB") + "=BBBB" (lrfJarakLsb, lrfJarakMsb,
     lrfStatus, stm32Status)
 
-pantiltArah: 0=kiri 1=kanan 2=atas 3=bawah 4=stop
+pantiltHorizontal: -1=kiri 0=stop 1=kanan
+pantiltVertical: -1=bawah 0=stop 1=atas
+(BISA aktif bareng buat gerak diagonal, misal horizontal=1+vertical=1 =
+gerak kanan-atas sekaligus)
 kameraZoom: -1=out 0=stop 1=in
 lrfTrigger: 0=idle 1=baca jarak 2=pointer on 3=pointer off
 
@@ -42,15 +45,15 @@ import serial.tools.list_ports
 
 BAUDRATE = 115200
 
-FORMAT_DOWN = "=b8bBBBBbBBBBBB"   # 20 byte
-FORMAT_GCS_RELAY = "=BBbbbbbBBBBbbBbB"  # 16 byte (bagian pertama up-frame)
+FORMAT_DOWN = "=b8bBBBbbbBBBBBB"  # 21 byte
+FORMAT_GCS_RELAY = "=BbbbbbBBBBbBbB"  # 14 byte (bagian pertama up-frame)
 FORMAT_UP_TAIL = "=BBBB"          # 4 byte (bagian akhir up-frame)
 
 SIZE_DOWN = struct.calcsize(FORMAT_DOWN)
 SIZE_GCS_RELAY = struct.calcsize(FORMAT_GCS_RELAY)
 SIZE_UP_TAIL = struct.calcsize(FORMAT_UP_TAIL)
 SIZE_UP = SIZE_GCS_RELAY + SIZE_UP_TAIL
-assert SIZE_DOWN == 20 and SIZE_UP == 20
+assert SIZE_DOWN == 21 and SIZE_UP == 18
 
 
 def pilih_port():
@@ -66,29 +69,30 @@ def pilih_port():
 
 
 def bangun_down_frame(speed=0, act=None, f_lamp=0, b_lamp=0, b_lamp_mode=0,
-                       pantilt_arah=4, kamera_zoom=0, slip_ring=0, lrf_trigger=0,
+                       pantilt_horizontal=0, pantilt_vertical=0, kamera_zoom=0,
+                       slip_ring=0, lrf_trigger=0,
                        gcs_reply_stm32_status=1, gcs_reply_lrf_status=0,
                        gcs_reply_lrf_lsb=0, gcs_reply_lrf_msb=0):
     if act is None:
         act = [0] * 8
     return struct.pack(
         FORMAT_DOWN,
-        speed, *act, f_lamp, b_lamp, b_lamp_mode, pantilt_arah, kamera_zoom,
+        speed, *act, f_lamp, b_lamp, b_lamp_mode,
+        pantilt_horizontal, pantilt_vertical, kamera_zoom,
         slip_ring, lrf_trigger, gcs_reply_stm32_status, gcs_reply_lrf_status,
         gcs_reply_lrf_lsb, gcs_reply_lrf_msb,
     )
 
 
-def urai_up_frame(raw20):
-    gcs = struct.unpack(FORMAT_GCS_RELAY, raw20[:SIZE_GCS_RELAY])
+def urai_up_frame(raw18):
+    gcs = struct.unpack(FORMAT_GCS_RELAY, raw18[:SIZE_GCS_RELAY])
     lrf_lsb, lrf_msb, lrf_status, stm32_status = struct.unpack(
-        FORMAT_UP_TAIL, raw20[SIZE_GCS_RELAY:])
-    (estop, mode, x_joy1, y_joy1, x_joy2, y_joy2, zoom, lrf, f_lamp, b_lamp,
-     slip_ring, body_up_down, arm_widen_narrow, motor_id, motor_arah,
-     kalibrasi) = gcs
+        FORMAT_UP_TAIL, raw18[SIZE_GCS_RELAY:])
+    (estop, x_joy1, y_joy1, x_joy2, y_joy2, zoom, lrf, f_lamp, b_lamp,
+     slip_ring, body_up_down, motor_id, motor_arah, kalibrasi) = gcs
     jarak_meter = (lrf_lsb | (lrf_msb << 8)) / 10.0
     return {
-        "estop": estop, "mode": mode, "xJoy1": x_joy1, "yJoy1": y_joy1,
+        "estop": estop, "xJoy1": x_joy1, "yJoy1": y_joy1,
         "xJoy2": x_joy2, "yJoy2": y_joy2, "flamp_gcs": f_lamp, "blamp_gcs": b_lamp,
         "lrf_status": lrf_status, "jarak_meter": jarak_meter,
         "stm32_status": stm32_status,
@@ -96,20 +100,22 @@ def urai_up_frame(raw20):
 
 
 # Siklus demo: gantian gerakin tiap fungsi biar keliatan efeknya satu-satu.
-# (speed, act_semua, f_lamp, b_lamp, b_lamp_mode, pantilt_arah, kamera_zoom, slip_ring, lrf_trigger)
+# (speed, act_semua, f_lamp, b_lamp, b_lamp_mode, pantilt_h, pantilt_v, kamera_zoom, slip_ring, lrf_trigger)
 SIKLUS_DEMO = [
-    (0,   0, 0,   0, 0, 4, 0, 0, 0),   # 0: diam total
-    (50,  0, 0,   0, 0, 4, 0, 0, 0),   # 1: motor maju
-    (-50, 0, 0,   0, 0, 4, 0, 0, 0),   # 2: motor mundur
-    (0,   80, 0,  0, 0, 4, 0, 0, 0),   # 3: actuator dorong
-    (0,  -80, 0,  0, 0, 4, 0, 0, 0),   # 4: actuator tarik
-    (0,   0, 100, 0, 0, 4, 0, 0, 0),   # 5: lampu depan nyala
-    (0,   0, 0, 100, 1, 4, 0, 0, 0),   # 6: lampu belakang nyala
-    (0,   0, 0, 100, 2, 4, 0, 0, 0),   # 7: lampu belakang kedip
-    (0,   0, 0,   0, 0, 1, 0, 0, 0),   # 8: pantilt kanan
-    (0,   0, 0,   0, 0, 4, 1, 0, 0),   # 9: kamera zoom in
-    (0,   0, 0,   0, 0, 4, 0, 1, 0),   # 10: slip ring nyala
-    (0,   0, 0,   0, 0, 4, 0, 0, 1),   # 11: LRF baca jarak
+    (0,   0, 0,   0, 0, 0, 0, 0, 0, 0),   # 0: diam total
+    (50,  0, 0,   0, 0, 0, 0, 0, 0, 0),   # 1: motor maju
+    (-50, 0, 0,   0, 0, 0, 0, 0, 0, 0),   # 2: motor mundur
+    (0,   80, 0,  0, 0, 0, 0, 0, 0, 0),   # 3: actuator dorong
+    (0,  -80, 0,  0, 0, 0, 0, 0, 0, 0),   # 4: actuator tarik
+    (0,   0, 100, 0, 0, 0, 0, 0, 0, 0),   # 5: lampu depan nyala
+    (0,   0, 0, 100, 1, 0, 0, 0, 0, 0),   # 6: lampu belakang nyala
+    (0,   0, 0, 100, 2, 0, 0, 0, 0, 0),   # 7: lampu belakang kedip
+    (0,   0, 0,   0, 0, 1, 0, 0, 0, 0),   # 8: pantilt kanan
+    (0,   0, 0,   0, 0, 0, 1, 0, 0, 0),   # 9: pantilt atas
+    (0,   0, 0,   0, 0, 1, 1, 0, 0, 0),   # 10: pantilt DIAGONAL kanan-atas
+    (0,   0, 0,   0, 0, 0, 0, 1, 0, 0),   # 11: kamera zoom in
+    (0,   0, 0,   0, 0, 0, 0, 0, 1, 0),   # 12: slip ring nyala
+    (0,   0, 0,   0, 0, 0, 0, 0, 0, 1),   # 13: LRF baca jarak
 ]
 
 
@@ -126,12 +132,13 @@ def main():
         siklus = 0
         try:
             while True:
-                (speed, act_val, f_lamp, b_lamp, b_lamp_mode, pantilt_arah,
+                (speed, act_val, f_lamp, b_lamp, b_lamp_mode, pantilt_h, pantilt_v,
                  kamera_zoom, slip_ring, lrf_trigger) = SIKLUS_DEMO[siklus % len(SIKLUS_DEMO)]
 
                 frame = bangun_down_frame(
                     speed=speed, act=[act_val] * 8, f_lamp=f_lamp, b_lamp=b_lamp,
-                    b_lamp_mode=b_lamp_mode, pantilt_arah=pantilt_arah,
+                    b_lamp_mode=b_lamp_mode, pantilt_horizontal=pantilt_h,
+                    pantilt_vertical=pantilt_v,
                     kamera_zoom=kamera_zoom, slip_ring=slip_ring,
                     lrf_trigger=lrf_trigger,
                 )
@@ -142,8 +149,8 @@ def main():
                     info = urai_up_frame(balasan)
                     print(f"[{siklus:03d}] TX speed={speed:+4d} act={act_val:+4d} "
                           f"flamp={f_lamp:3d} blamp={b_lamp:3d}({b_lamp_mode}) "
-                          f"pantilt={pantilt_arah} zoom={kamera_zoom:+d} slip={slip_ring} "
-                          f"lrfTrig={lrf_trigger}  |  RX relayGCS(xj1={info['xJoy1']:+d} "
+                          f"pantiltH={pantilt_h:+d} pantiltV={pantilt_v:+d} zoom={kamera_zoom:+d} "
+                          f"slip={slip_ring} lrfTrig={lrf_trigger}  |  RX relayGCS(xj1={info['xJoy1']:+d} "
                           f"estop={info['estop']}) lrf_status={info['lrf_status']} "
                           f"jarak={info['jarak_meter']:.1f}m stm32_status={info['stm32_status']}")
                 else:
