@@ -106,10 +106,11 @@ class ArduinoReader(QThread):
 # karena bandwidth RF ini masih longgar banget - 13/16 byte @ 20Hz cuma
 # ~5% dari kapasitas 57600 baud, jadi gak ada untungnya bikin protokol
 # bercabang cuma buat "hemat" beberapa byte). Lihat ROS2_BRIEF.md 3.5:
-# Estop(B) Mode(B) XJoy1(b) YJoy1(b) XJoy2(b) YJoy2(b) Zoom(b) LRF(B)
-# FLamp(B) BLamp(B) SlipRing(B) BodyUpDown(b) ArmWidenNarrow(b)
+# Estop(B) XJoy1(b) YJoy1(b) XJoy2(b) YJoy2(b) Zoom(b) LRF(B)
+# FLamp(B) BLamp(B) SlipRing(B) BodyUpDown(b)
 # MotorIndividualID(B) MotorIndividualArah(b) Kalibrasi(B)
-FORMAT_FRAME_GCS = "=BBbbbbbBBBBbbBbB"
+# (Mode & ArmWidenNarrow dihapus - gak pernah dipakai, lihat ROS2_BRIEF.md)
+FORMAT_FRAME_GCS = "=BbbbbbBBBBbBbB"
 
 
 class RFLink(QThread):

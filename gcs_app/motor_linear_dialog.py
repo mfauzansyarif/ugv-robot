@@ -1,28 +1,41 @@
 """Dialog Kontrol Motor Linear Individual - lihat dokumentasi/ROS2_BRIEF.md
-section 7.3.
+section "Core Node" (tabel `motorIndividualId`).
 
-Protokol (FINAL, disederhanain 2026-07-16 jadi 1 frame fixed - gak ada
-mode/pause terpisah lagi): dialog ini cuma nyetel STATE lokal di
-MainWindow lewat callback (set_individual/set_kalibrasi), yang otomatis
-ikut ke SETIAP frame 16-byte yang dikirim RFLink tiap siklus (lihat
-main_window.py `_bangun_frame_gcs`/`_set_individual_motor`/
-`_trigger_kalibrasi`). Dialog ini SENGAJA gak perlu tau apa-apa soal RF
-link sama sekali.
+Protokol: dialog ini cuma nyetel STATE lokal di MainWindow lewat callback
+(set_individual/set_kalibrasi), yang otomatis ikut ke SETIAP frame 14-byte
+yang dikirim RFLink tiap siklus (lihat main_window.py `_bangun_frame_gcs`/
+`_set_individual_motor`/`_trigger_kalibrasi`). Dialog ini SENGAJA gak perlu
+tau apa-apa soal RF link sama sekali.
+
+PENTING - Steering di-LOCK berpasangan, BUKAN per-actuator individual:
+operator kontrol "Steering Depan belok kanan/kiri" (gerakin actuator
+Steer Depan Kiri + Steer Depan Kanan BARENGAN, arah berlawanan - persis
+kayak logic auto-steering normal) dan "Steering Belakang" (sama polanya
+buat pasangan belakang). Ini beda dari Body yang TETAP individual
+per-actuator (Extend/Retract masing-masing sendiri).
+
+motor_id yang dikirim (arti field ini di-REDEFINE, bukan lagi 1 id = 1
+actuator buat steering):
+  1 = Steering Depan  (arah: 1=kanan, -1=kiri, 0=stop - Core Node yang
+      nerjemahin jadi 2 actuator act0+act1 berlawanan arah)
+  2 = Steering Belakang (sama polanya, act2+act3)
+  3 = FBody Kiri    (individual, arah: 1=extend, -1=retract, 0=stop)
+  4 = FBody Kanan   (individual)
+  5 = BBody Kiri    (individual)
+  6 = BBody Kanan   (individual)
 """
 
 from PySide6.QtWidgets import (
     QDialog, QGridLayout, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
 )
 
-# 12 motor, nama sesuai grouping di protokol 8-field STM32 (steer=4,
-# sisanya masing2 2) - motor_id yang dikirim = index (1-based) di list ini.
-DAFTAR_MOTOR = [
-    "Steer 1", "Steer 2", "Steer 3", "Steer 4",
-    "FBody 1", "FBody 2",
-    "BBody 1", "BBody 2",
-    "RArm 1", "RArm 2",
-    "LArm 1", "LArm 2",
-]
+# Steering: dikontrol berpasangan (depan/belakang), tombol Kanan/Kiri.
+DAFTAR_STEERING = ["Steering Depan", "Steering Belakang"]
+
+# Body: tetap individual per-actuator, tombol Extend/Retract - urutan &
+# nama SAMA PERSIS kayak actuatorTable index 4-7 di
+# STM32Cube/motorugv_G474RE/Core/Src/main.c.
+DAFTAR_BODY = ["FBody Kiri", "FBody Kanan", "BBody Kiri", "BBody Kanan"]
 
 
 class MotorLinearDialog(QDialog):
@@ -35,22 +48,39 @@ class MotorLinearDialog(QDialog):
 
         layout_utama = QVBoxLayout(self)
 
-        grid = QGridLayout()
-        for baris, nama_motor in enumerate(DAFTAR_MOTOR):
+        layout_utama.addWidget(QLabel("Steering (berpasangan depan/belakang):"))
+        grid_steering = QGridLayout()
+        for baris, nama in enumerate(DAFTAR_STEERING):
             motor_id = baris + 1
-            grid.addWidget(QLabel(nama_motor), baris, 0)
+            grid_steering.addWidget(QLabel(nama), baris, 0)
+
+            btn_kanan = QPushButton("Kanan")
+            btn_kanan.pressed.connect(lambda m=motor_id: self._kirim(m, 1, "kanan"))
+            btn_kanan.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
+            grid_steering.addWidget(btn_kanan, baris, 1)
+
+            btn_kiri = QPushButton("Kiri")
+            btn_kiri.pressed.connect(lambda m=motor_id: self._kirim(m, -1, "kiri"))
+            btn_kiri.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
+            grid_steering.addWidget(btn_kiri, baris, 2)
+        layout_utama.addLayout(grid_steering)
+
+        layout_utama.addWidget(QLabel("Body (individual per-actuator):"))
+        grid_body = QGridLayout()
+        for baris, nama in enumerate(DAFTAR_BODY):
+            motor_id = len(DAFTAR_STEERING) + baris + 1
+            grid_body.addWidget(QLabel(nama), baris, 0)
 
             btn_extend = QPushButton("Extend")
-            btn_extend.pressed.connect(lambda m=motor_id: self._kirim(m, 1))
-            btn_extend.released.connect(lambda m=motor_id: self._kirim(m, 0))
-            grid.addWidget(btn_extend, baris, 1)
+            btn_extend.pressed.connect(lambda m=motor_id: self._kirim(m, 1, "extend"))
+            btn_extend.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
+            grid_body.addWidget(btn_extend, baris, 1)
 
             btn_retract = QPushButton("Retract")
-            btn_retract.pressed.connect(lambda m=motor_id: self._kirim(m, -1))
-            btn_retract.released.connect(lambda m=motor_id: self._kirim(m, 0))
-            grid.addWidget(btn_retract, baris, 2)
-
-        layout_utama.addLayout(grid)
+            btn_retract.pressed.connect(lambda m=motor_id: self._kirim(m, -1, "retract"))
+            btn_retract.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
+            grid_body.addWidget(btn_retract, baris, 2)
+        layout_utama.addLayout(grid_body)
 
         baris_bawah = QHBoxLayout()
         btn_kalibrasi = QPushButton("KALIBRASI (semua extend penuh + steering full kiri)")
@@ -63,11 +93,11 @@ class MotorLinearDialog(QDialog):
 
         layout_utama.addLayout(baris_bawah)
 
-    def _kirim(self, motor_id, arah):
-        nama = DAFTAR_MOTOR[motor_id - 1]
-        aksi = {1: "extend", -1: "retract", 0: "stop"}[arah]
+    def _kirim(self, motor_id, arah, label_aksi):
+        nama_semua = DAFTAR_STEERING + DAFTAR_BODY
+        nama = nama_semua[motor_id - 1]
         self.set_individual(motor_id, arah)
-        self.console_log.info(f"[Individual] {nama}: {aksi}")
+        self.console_log.info(f"[Individual] {nama}: {label_aksi}")
 
     def _kirim_kalibrasi(self):
         self.trigger_kalibrasi()

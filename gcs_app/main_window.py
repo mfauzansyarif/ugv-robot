@@ -37,16 +37,16 @@ class MainWindow(QMainWindow):
         self._slip_ring_on = False
         self._stm32_status_terakhir = None  # None = belum ada telemetry masuk sama sekali
 
-        # State tombol Raise/Lower/Widen/Narrow di touchscreen (terpisah dari
-        # state Arduino) - -1/0/1, digabung sama tombol fisik Body Up/Down
-        # pas bikin frame (touchscreen menang kalau dua-duanya aktif barengan).
+        # State tombol Raise/Lower di touchscreen (terpisah dari state
+        # Arduino) - -1/0/1, digabung sama tombol fisik Body Up/Down pas
+        # bikin frame (touchscreen menang kalau dua-duanya aktif barengan).
         self._touch_fbody_bbody = 0  # Raise=1, Lower=-1, lepas=0
-        self._touch_rarm_larm = 0    # Widen=1, Narrow=-1, lepas=0
 
         # State command individual/kalibrasi (dari dialog Kontrol Motor
-        # Linear Individual) - ikut di SETIAP frame 16-byte (gak perlu
-        # pause/mode terpisah lagi, lihat ROS2_BRIEF.md 7.3).
-        self._individual_motor_id = 0    # 0 = mode normal, 1-12 = override motor itu
+        # Linear Individual) - ikut di SETIAP frame 14-byte, lihat
+        # ROS2_BRIEF.md & motor_linear_dialog.py buat arti motor_id
+        # (1-2=steering berpasangan, 3-6=body individual).
+        self._individual_motor_id = 0    # 0 = mode normal, 1-6 = override
         self._individual_arah = 0        # -1/0/1, cuma dipakai kalau motor_id != 0
         self._kalibrasi_trigger = 0      # 0/1, di-pulse sebentar pas tombol Kalibrasi diklik
 
@@ -156,14 +156,14 @@ class MainWindow(QMainWindow):
         self._update_tampilan_lampu(nyala=False)
 
         layout.addWidget(QLabel("Motor Linear (kontrol sederhana - gerak semua sekaligus)"))
-        # NOTE: 4 tombol ini momentary (aktif selama ditahan, stop pas dilepas)
-        # - SAMA prinsipnya kayak tombol fisik Body Up/Down di panel Arduino.
-        # Raise/Lower gerakin fbody+bbody bareng, Widen/Narrow gerakin rarm+larm
-        # bareng. State-nya digabung sama tombol fisik panel (lihat
-        # _bangun_frame_gcs) dan DIKIRIM sebagai command AGGREGATE (bukan
-        # per-motor) lewat field BodyUpDown/ArmWidenNarrow di frame 13-byte
-        # GCS->Jetson (diperluas 2026-07-16) - Jetson (vehicle_control_node)
-        # yang nerjemahin ke gerakan fbody/bbody/rarm/larm individual.
+        # NOTE: momentary (aktif selama ditahan, stop pas dilepas) - SAMA
+        # prinsipnya kayak tombol fisik Body Up/Down di panel Arduino.
+        # Raise/Lower gerakin fbody+bbody bareng. State-nya digabung sama
+        # tombol fisik panel (lihat _bangun_frame_gcs) dan DIKIRIM lewat
+        # field BodyUpDown di frame 14-byte GCS->STM32 - Core Node yang
+        # nerjemahin ke gerakan fbody/bbody individual.
+        # (Tombol Widen/Narrow arm DIHAPUS - actuator arm/RArm/LArm udah
+        # dibatalkan, field ArmWidenNarrow juga udah dihapus dari protokol.)
         grid_body = QGridLayout()
         self.btn_raise = QPushButton("Raise (Body ↑)")
         self.btn_raise.pressed.connect(lambda: self._set_touch_fbody_bbody(1))
@@ -174,16 +174,6 @@ class MainWindow(QMainWindow):
         self.btn_lower.pressed.connect(lambda: self._set_touch_fbody_bbody(-1))
         self.btn_lower.released.connect(lambda: self._set_touch_fbody_bbody(0))
         grid_body.addWidget(self.btn_lower, 0, 1)
-
-        self.btn_widen = QPushButton("Widen (Arm ↔)")
-        self.btn_widen.pressed.connect(lambda: self._set_touch_rarm_larm(1))
-        self.btn_widen.released.connect(lambda: self._set_touch_rarm_larm(0))
-        grid_body.addWidget(self.btn_widen, 1, 0)
-
-        self.btn_narrow = QPushButton("Narrow (Arm ↣↢)")
-        self.btn_narrow.pressed.connect(lambda: self._set_touch_rarm_larm(-1))
-        self.btn_narrow.released.connect(lambda: self._set_touch_rarm_larm(0))
-        grid_body.addWidget(self.btn_narrow, 1, 1)
         layout.addLayout(grid_body)
 
         self.label_status_motor_linear = QLabel("Diam")
@@ -240,7 +230,8 @@ class MainWindow(QMainWindow):
 
     def _set_individual_motor(self, motor_id, arah):
         """Dipanggil dari MotorLinearDialog - motor_id 0 berarti gak ada
-        override (mode normal), 1-12 lagi override motor itu."""
+        override (mode normal), 1-6 lagi override (1-2=steering
+        berpasangan, 3-6=body individual - lihat motor_linear_dialog.py)."""
         self._individual_motor_id = motor_id if arah != 0 else 0
         self._individual_arah = arah
 
@@ -258,10 +249,6 @@ class MainWindow(QMainWindow):
         self._touch_fbody_bbody = nilai
         self._update_label_motor_linear()
 
-    def _set_touch_rarm_larm(self, nilai):
-        self._touch_rarm_larm = nilai
-        self._update_label_motor_linear()
-
     def _hitung_fbody_bbody(self):
         """Touchscreen (Raise/Lower) menang kalau aktif, kalau enggak jatuh
         balik ke tombol fisik Body Up/Down di panel Arduino."""
@@ -275,17 +262,12 @@ class MainWindow(QMainWindow):
 
     def _update_label_motor_linear(self):
         fbody_bbody = self._hitung_fbody_bbody()
-        rarm_larm = self._touch_rarm_larm
 
         bagian = []
         if fbody_bbody == 1:
             bagian.append("Raise")
         elif fbody_bbody == -1:
             bagian.append("Lower")
-        if rarm_larm == 1:
-            bagian.append("Widen")
-        elif rarm_larm == -1:
-            bagian.append("Narrow")
         self.label_status_motor_linear.setText(" + ".join(bagian) if bagian else "Diam")
 
     def _mulai_kamera(self):
@@ -372,17 +354,17 @@ class MainWindow(QMainWindow):
         return max(-100, min(100, (nilai_mentah - 500) // 5))
 
     def _bangun_frame_gcs(self):
-        """Gabungin state Arduino + widget touchscreen jadi 1 frame 16-byte
+        """Gabungin state Arduino + widget touchscreen jadi 1 frame 14-byte
         FIXED (satu bentuk doang, termasuk field individual/kalibrasi -
         gak ada mode/pause terpisah lagi). Dipanggil dari thread RFLink -
         HARUS cepat & gak blocking."""
         s = self._state_arduino
 
         # TODO: Estop belum ada sumbernya (gak ada tombol fisik di daftar
-        # panel), Mode kemungkinan udah gak relevan (lihat ROS2_BRIEF.md
-        # section 6 poin 3) - dua-duanya placeholder 0 dulu.
+        # panel) - masih placeholder 0.
+        # (Mode dihapus dari frame - dari awal gak pernah kepake/gak ada
+        # sumbernya juga, lihat ROS2_BRIEF.md)
         estop = 0
-        mode = 0
 
         x1 = self._axis_ke_signed(s["x"])
         y1 = self._axis_ke_signed(s["y"])
@@ -413,13 +395,14 @@ class MainWindow(QMainWindow):
 
         slip_ring = 1 if self._slip_ring_on else 0
         body_updown = self._hitung_fbody_bbody()   # Raise=1, Lower=-1, diam=0
-        arm_widenarrow = self._touch_rarm_larm     # Widen=1, Narrow=-1, lepas=0
+        # (field armWidenNarrow & tombol Widen/Narrow UDAH DIHAPUS total -
+        # actuator arm/RArm/LArm dibatalkan, gak relevan lagi)
 
         return (
-            estop, mode,
+            estop,
             x1, y1, x2, y2,
             zoom, s["lrf"], flamp, blamp,
-            slip_ring, body_updown, arm_widenarrow,
+            slip_ring, body_updown,
             self._individual_motor_id, self._individual_arah, self._kalibrasi_trigger,
         )
 
