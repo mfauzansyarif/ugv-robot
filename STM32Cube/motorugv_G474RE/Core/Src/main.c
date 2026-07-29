@@ -29,17 +29,9 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef enum {
-    PANTILT_KIRI = 0,
-    PANTILT_KANAN,
-    PANTILT_ATAS,
-    PANTILT_BAWAH,
-    PANTILT_STOP
-} PantiltArah_t;
 
 typedef struct {
     uint8_t estop;
-    uint8_t mode;
     int8_t  xJoy1;
     int8_t  yJoy1;
     int8_t  xJoy2;
@@ -50,7 +42,6 @@ typedef struct {
     uint8_t bLamp;
     uint8_t slipRing;
     int8_t  bodyUpDown;
-    int8_t  armWidenNarrow;
     uint8_t motorIndividualId;
     int8_t  motorIndividualArah;
     uint8_t kalibrasi;
@@ -63,7 +54,8 @@ typedef struct {
     uint8_t fLamp;
     uint8_t bLamp;
     uint8_t bLampMode;
-    uint8_t pantiltArah;
+    int8_t  pantiltHorizontal;
+    int8_t  pantiltVertical;
     int8_t  kameraZoom;
     uint8_t slipRing;
     uint8_t lrfTrigger;
@@ -95,10 +87,10 @@ typedef struct {
 #define CMD2_BACA_JARAK     0x01U
 #define CMD2_POINTER        0x02U
 
-#define GCS_FRAME_LEN       16U
+#define GCS_FRAME_LEN       14U  /* estop+xj1+yj1+xj2+yj2+zoom+lrf+flamp+blamp+slipring+bodyupdown+motorid+motorarah+kalibrasi (mode & armWidenNarrow dihapus, gak dipakai) */
 
-#define JETSON_DOWN_LEN     20U  /* Jetson -> STM32: speed+8act+flamp+blamp+blampmode+pantilt+zoom+slipring+lrftrigger+4 gcsreply */
-#define JETSON_UP_LEN       20U  /* STM32 -> Jetson: 16 byte relay GCS + lrf_lsb+lrf_msb+lrf_status+stm32_status */
+#define JETSON_DOWN_LEN     21U  /* Jetson -> STM32: speed+8act+flamp+blamp+blampmode+pantiltH+pantiltV+zoom+slipring+lrftrigger+4 gcsreply */
+#define JETSON_UP_LEN       18U  /* STM32 -> Jetson: 14 byte relay GCS + lrf_lsb+lrf_msb+lrf_status+stm32_status */
 
 #define LRF_TRIGGER_IDLE       0U
 #define LRF_TRIGGER_BACA_JARAK 1U
@@ -161,14 +153,14 @@ uint8_t lampuBelakangBrightness = 0;
 uint32_t waktuBlinkTerakhir = 0;
 uint8_t statusBlinkSekarang = 0;
 
-/* ---- Komunikasi GCS/RF (USART2, 16 byte request / 4 byte reply) ---- */
+/* ---- Komunikasi GCS/RF (USART2, 14 byte request / 4 byte reply) ---- */
 static uint8_t gcsRxBuf[GCS_FRAME_LEN];
 static uint8_t gcsFrameKerja[GCS_FRAME_LEN];
 volatile uint8_t gcsFrameSiap = 0;
 static uint8_t gcsFrameTerakhir[GCS_FRAME_LEN];      /* buat di-relay ke Jetson */
 static uint8_t gcsBalasanCache[4] = {1U, 0U, 0U, 0U}; /* diisi Jetson lewat down-frame, default aman */
 
-/* ---- Komunikasi Jetson (USART3, 24 byte down / 20 byte up) ---- */
+/* ---- Komunikasi Jetson (USART3, 21 byte down / 18 byte up) ---- */
 static uint8_t jetsonRxBuf[JETSON_DOWN_LEN];
 static uint8_t jetsonFrameKerja[JETSON_DOWN_LEN];
 volatile uint8_t jetsonFrameSiap = 0;
@@ -185,9 +177,11 @@ static uint8_t  statusHeartbeat = 0;
  * dipicu paksa ke STOP dari failsafe di main loop juga, gak cuma dari
  * JetsonApplyCommand. Sentinel awal DILUAR rentang valid biar frame
  * pertama pasti dianggap "berubah". */
-static uint8_t pantiltArahTerakhir = 0xFFU;
+static int8_t  pantiltHorizontalTerakhir = 127;
+static int8_t  pantiltVerticalTerakhir = 127;
 static int8_t  kameraZoomTerakhir = 127;
 static uint8_t slipRingTerakhir = 0xFFU;
+static uint8_t lrfPointerTerakhir = 0xFFU;
 
 /* USER CODE END PV */
 
@@ -218,7 +212,7 @@ static void RS485_KirimFrame(const uint8_t *frame, uint8_t panjang);
 
 static uint8_t Pantilt_Checksum(const uint8_t *payload5);
 static void Pantilt_Kirim(const uint8_t *payload5);
-static void Pantilt_Gerak(PantiltArah_t arah);
+static void Pantilt_Gerak(int8_t horizontal, int8_t vertical);
 static void Pantilt_PowerSlipRing(uint8_t nyala);
 
 static uint8_t Pelco_Checksum(uint8_t alamat, uint8_t cmd1, uint8_t cmd2, uint8_t data1, uint8_t data2);
@@ -232,10 +226,10 @@ static uint8_t BridgeLrf_BacaRespons(uint8_t *cmd2Out, uint8_t *data1Out, uint8_
 static uint8_t BridgeLrf_BacaJarak(uint16_t *jarakDesimeterOut);
 static uint8_t BridgeLrf_Pointer(uint8_t nyala);
 
-static void GcsParseFrame(const uint8_t *frame16, GcsCommand_t *out);
+static void GcsParseFrame(const uint8_t *frame14, GcsCommand_t *out);
 static void JetsonParseFrame(const uint8_t *frame24, JetsonCommand_t *out);
 static void JetsonApplyCommand(const JetsonCommand_t *cmd);
-static void JetsonBangunUpFrame(uint8_t *frameOut20);
+static void JetsonBangunUpFrame(uint8_t *frameOut18);
 
 /* USER CODE END PFP */
 
@@ -391,16 +385,35 @@ static void Pantilt_Kirim(const uint8_t *payload5) {
     RS485_KirimFrame(frame, 7U);
 }
 
-static const uint8_t PANTILT_GERAK_TABLE[5][5] = {
-    {0x00, 0x00, 0x04, 0x3F, 0x00}, /* kiri */
-    {0x00, 0x00, 0x02, 0x3F, 0x00}, /* kanan */
-    {0x00, 0x00, 0x08, 0x00, 0x3F}, /* atas */
-    {0x00, 0x00, 0x10, 0x00, 0x3F}, /* bawah */
-    {0x00, 0x00, 0x00, 0x00, 0x00}, /* stop */
-};
+/* cmd2 itu bitmask arah (ketauan dari pola lama: kiri=0x04, kanan=0x02,
+ * atas=0x08, bawah=0x10 - masing-masing 1 bit terpisah), jadi horizontal
+ * & vertical bisa di-OR bareng buat gerak diagonal. data1=kecepatan
+ * horizontal (dipakai kalau ada gerak kiri/kanan), data2=kecepatan
+ * vertical (dipakai kalau ada gerak atas/bawah) - keduanya bisa aktif
+ * bareng buat diagonal. */
+static void Pantilt_Gerak(int8_t horizontal, int8_t vertical) {
+    uint8_t cmd2 = 0x00;
+    uint8_t data1 = 0x00;
+    uint8_t data2 = 0x00;
 
-static void Pantilt_Gerak(PantiltArah_t arah) {
-    Pantilt_Kirim(PANTILT_GERAK_TABLE[arah]);
+    if (horizontal > 0) {
+        cmd2 |= 0x02U; /* kanan */
+        data1 = 0x3FU;
+    } else if (horizontal < 0) {
+        cmd2 |= 0x04U; /* kiri */
+        data1 = 0x3FU;
+    }
+
+    if (vertical > 0) {
+        cmd2 |= 0x08U; /* atas */
+        data2 = 0x3FU;
+    } else if (vertical < 0) {
+        cmd2 |= 0x10U; /* bawah */
+        data2 = 0x3FU;
+    }
+
+    uint8_t payload5[5] = { 0x00, 0x00, cmd2, data1, data2 };
+    Pantilt_Kirim(payload5);
 }
 
 static void Pantilt_PowerSlipRing(uint8_t nyala) {
@@ -472,33 +485,31 @@ static uint8_t BridgeLrf_Pointer(uint8_t nyala) {
 
 /* ============================================================================
  * GCS/RF - USART2, 57600. STM32 DIDIAMKAN dengerin (interrupt), balas begitu
- * 16 byte lengkap diterima. Status yang dibalas diambil dari gcsBalasanCache
+ * 14 byte lengkap diterima. Status yang dibalas diambil dari gcsBalasanCache
  * (diisi Jetson lewat down-frame - lihat JetsonApplyCommand).
  * ==========================================================================*/
 
-static void GcsParseFrame(const uint8_t *frame16, GcsCommand_t *out) {
-    out->estop               = frame16[0];
-    out->mode                = frame16[1];
-    out->xJoy1                = (int8_t)frame16[2];
-    out->yJoy1                = (int8_t)frame16[3];
-    out->xJoy2                = (int8_t)frame16[4];
-    out->yJoy2                = (int8_t)frame16[5];
-    out->zoom                 = (int8_t)frame16[6];
-    out->lrf                  = frame16[7];
-    out->fLamp                = frame16[8];
-    out->bLamp                = frame16[9];
-    out->slipRing             = frame16[10];
-    out->bodyUpDown           = (int8_t)frame16[11];
-    out->armWidenNarrow       = (int8_t)frame16[12];
-    out->motorIndividualId    = frame16[13];
-    out->motorIndividualArah  = (int8_t)frame16[14];
-    out->kalibrasi            = frame16[15];
+static void GcsParseFrame(const uint8_t *frame14, GcsCommand_t *out) {
+    out->estop               = frame14[0];
+    out->xJoy1                = (int8_t)frame14[1];
+    out->yJoy1                = (int8_t)frame14[2];
+    out->xJoy2                = (int8_t)frame14[3];
+    out->yJoy2                = (int8_t)frame14[4];
+    out->zoom                 = (int8_t)frame14[5];
+    out->lrf                  = frame14[6];
+    out->fLamp                = frame14[7];
+    out->bLamp                = frame14[8];
+    out->slipRing             = frame14[9];
+    out->bodyUpDown           = (int8_t)frame14[10];
+    out->motorIndividualId    = frame14[11];
+    out->motorIndividualArah  = (int8_t)frame14[12];
+    out->kalibrasi            = frame14[13];
 }
 
 /* ============================================================================
  * Jetson - USART3, 115200. Jetson yang inisiatif (heartbeat ~20Hz), STM32
  * APPLY command yang diterima LANGSUNG (motor/actuator/lampu/RS485), lalu
- * balas 20 byte (relay GCS terakhir + status LRF real-time).
+ * balas 18 byte (relay GCS terakhir + status LRF real-time).
  * ==========================================================================*/
 
 static void JetsonParseFrame(const uint8_t *frame24, JetsonCommand_t *out) {
@@ -509,14 +520,15 @@ static void JetsonParseFrame(const uint8_t *frame24, JetsonCommand_t *out) {
     out->fLamp               = frame24[9];
     out->bLamp                = frame24[10];
     out->bLampMode             = frame24[11];
-    out->pantiltArah           = frame24[12];
-    out->kameraZoom            = (int8_t)frame24[13];
-    out->slipRing              = frame24[14];
-    out->lrfTrigger            = frame24[15];
-    out->gcsReplyStm32Status   = frame24[16];
-    out->gcsReplyLrfStatus     = frame24[17];
-    out->gcsReplyLrfLsb        = frame24[18];
-    out->gcsReplyLrfMsb        = frame24[19];
+    out->pantiltHorizontal     = (int8_t)frame24[12];
+    out->pantiltVertical       = (int8_t)frame24[13];
+    out->kameraZoom            = (int8_t)frame24[14];
+    out->slipRing              = frame24[15];
+    out->lrfTrigger            = frame24[16];
+    out->gcsReplyStm32Status   = frame24[17];
+    out->gcsReplyLrfStatus     = frame24[18];
+    out->gcsReplyLrfLsb        = frame24[19];
+    out->gcsReplyLrfMsb        = frame24[20];
 }
 
 static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
@@ -531,10 +543,14 @@ static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
 
     /* RS485 (pantilt/kamera/slip ring) CUMA dikirim kalau nilainya BERUBAH
      * dari siklus sebelumnya - bukan tiap ada frame Jetson masuk (~10-20Hz).
-     * Tanpa ini, bus RS485 digempur command identik terus-menerus. */
-    if (cmd->pantiltArah <= (uint8_t)PANTILT_STOP && cmd->pantiltArah != pantiltArahTerakhir) {
-        Pantilt_Gerak((PantiltArah_t)cmd->pantiltArah);
-        pantiltArahTerakhir = cmd->pantiltArah;
+     * Tanpa ini, bus RS485 digempur command identik terus-menerus.
+     * pantiltHorizontal & pantiltVertical BISA aktif bareng (diagonal) -
+     * dikirim ulang kalau SALAH SATU dari keduanya berubah. */
+    if (cmd->pantiltHorizontal != pantiltHorizontalTerakhir
+            || cmd->pantiltVertical != pantiltVerticalTerakhir) {
+        Pantilt_Gerak(cmd->pantiltHorizontal, cmd->pantiltVertical);
+        pantiltHorizontalTerakhir = cmd->pantiltHorizontal;
+        pantiltVerticalTerakhir = cmd->pantiltVertical;
     }
 
     if (cmd->kameraZoom != kameraZoomTerakhir) {
@@ -554,6 +570,8 @@ static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
     }
 
     if (cmd->lrfTrigger == LRF_TRIGGER_BACA_JARAK) {
+        /* Query, SENGAJA gak di-anti-spam - boleh di-request berkali-kali
+         * (misal Core Node kirim ini 1 frame doang pas tombol LRF dilepas). */
         uint16_t jarak;
         if (BridgeLrf_BacaJarak(&jarak)) {
             lrfJarakTerakhir = jarak;
@@ -562,9 +580,19 @@ static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
             lrfStatusTerakhir = 0U;
         }
     } else if (cmd->lrfTrigger == LRF_TRIGGER_POINTER_ON) {
-        BridgeLrf_Pointer(1U);
+        /* State (laser nyala terus sampai dimatiin) - DI-ANTI-SPAM, beda
+         * sama baca jarak. Core Node bebas kirim 2 (pointer on) tiap frame
+         * selama tombol LRF di-hold, STM32 yang nyaring biar RS485 gak
+         * digempur "nyalain laser" berkali-kali per detik. */
+        if (lrfPointerTerakhir != 1U) {
+            BridgeLrf_Pointer(1U);
+            lrfPointerTerakhir = 1U;
+        }
     } else if (cmd->lrfTrigger == LRF_TRIGGER_POINTER_OFF) {
-        BridgeLrf_Pointer(0U);
+        if (lrfPointerTerakhir != 0U) {
+            BridgeLrf_Pointer(0U);
+            lrfPointerTerakhir = 0U;
+        }
     }
 
     /* Simpan buat balasan ke GCS BERIKUTNYA - Jetson yang mutusin isinya,
@@ -575,12 +603,12 @@ static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
     gcsBalasanCache[3] = cmd->gcsReplyLrfMsb;
 }
 
-static void JetsonBangunUpFrame(uint8_t *frameOut20) {
-    memcpy(frameOut20, gcsFrameTerakhir, GCS_FRAME_LEN); /* relay 16 byte GCS APA ADANYA */
-    frameOut20[16] = (uint8_t)(lrfJarakTerakhir & 0xFFU);
-    frameOut20[17] = (uint8_t)((lrfJarakTerakhir >> 8) & 0xFFU);
-    frameOut20[18] = lrfStatusTerakhir;
-    frameOut20[19] = 1U; /* stm32Status: sehat */
+static void JetsonBangunUpFrame(uint8_t *frameOut18) {
+    memcpy(frameOut18, gcsFrameTerakhir, GCS_FRAME_LEN); /* relay 14 byte GCS APA ADANYA */
+    frameOut18[GCS_FRAME_LEN + 0] = (uint8_t)(lrfJarakTerakhir & 0xFFU);
+    frameOut18[GCS_FRAME_LEN + 1] = (uint8_t)((lrfJarakTerakhir >> 8) & 0xFFU);
+    frameOut18[GCS_FRAME_LEN + 2] = lrfStatusTerakhir;
+    frameOut18[GCS_FRAME_LEN + 3] = 1U; /* stm32Status: sehat */
 }
 
 /* ============================================================================
@@ -724,9 +752,10 @@ int main(void)
     if (HAL_GetTick() - waktuFrameJetsonTerakhir >= LINK_TIMEOUT_MS) {
         stopSemuaMotor();
         StopSemuaActuator();
-        if (pantiltArahTerakhir != (uint8_t)PANTILT_STOP) {
-            Pantilt_Gerak(PANTILT_STOP);
-            pantiltArahTerakhir = (uint8_t)PANTILT_STOP;
+        if (pantiltHorizontalTerakhir != 0 || pantiltVerticalTerakhir != 0) {
+            Pantilt_Gerak(0, 0);
+            pantiltHorizontalTerakhir = 0;
+            pantiltVerticalTerakhir = 0;
         }
         if (kameraZoomTerakhir != 0) {
             Kamera_ZoomStop();
@@ -735,6 +764,10 @@ int main(void)
         if (slipRingTerakhir != 0) {
             Pantilt_PowerSlipRing(0);
             slipRingTerakhir = 0;
+        }
+        if (lrfPointerTerakhir != 0U) {
+            BridgeLrf_Pointer(0U);
+            lrfPointerTerakhir = 0U;
         }
     }
 
@@ -751,8 +784,8 @@ int main(void)
         JetsonBangunUpFrame(upFrame);
         HAL_UART_Transmit(&huart3, upFrame, JETSON_UP_LEN, UART_TX_TIMEOUT_MS);
 
-        DebugPrint("Jetson RX: speed=%d flamp=%u blamp=%u pantilt=%u zoom=%d lrfTrig=%u\r\n",
-            cmd.speed, cmd.fLamp, cmd.bLamp, cmd.pantiltArah, cmd.kameraZoom, cmd.lrfTrigger);
+        DebugPrint("Jetson RX: speed=%d flamp=%u blamp=%u pantiltH=%d pantiltV=%d zoom=%d lrfTrig=%u\r\n",
+            cmd.speed, cmd.fLamp, cmd.bLamp, cmd.pantiltHorizontal, cmd.pantiltVertical, cmd.kameraZoom, cmd.lrfTrigger);
     }
 
     if (gcsFrameSiap) {
@@ -765,8 +798,8 @@ int main(void)
         GcsCommand_t cmd;
         GcsParseFrame(salinanGcs, &cmd);
 
-        DebugPrint("GCS RX: estop=%u mode=%u xj1=%d yj1=%d xj2=%d yj2=%d flamp=%u blamp=%u kalibrasi=%u\r\n",
-            cmd.estop, cmd.mode, cmd.xJoy1, cmd.yJoy1, cmd.xJoy2, cmd.yJoy2,
+        DebugPrint("GCS RX: estop=%u xj1=%d yj1=%d xj2=%d yj2=%d flamp=%u blamp=%u kalibrasi=%u\r\n",
+            cmd.estop, cmd.xJoy1, cmd.yJoy1, cmd.xJoy2, cmd.yJoy2,
             cmd.fLamp, cmd.bLamp, cmd.kalibrasi);
 
         HAL_UART_Transmit(&huart2, gcsBalasanCache, 4U, UART_TX_TIMEOUT_MS);

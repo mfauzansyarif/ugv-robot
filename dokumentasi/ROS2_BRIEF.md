@@ -54,7 +54,7 @@ justru karena dia gak punya keputusan apapun buat digantungin ke node lain.
 
 ## Tanggung jawab
 1. Buka serial ke STM32 (USART3 @ **115200 baud**)
-2. **Kirim** (subscribe topic dari Core Node, pack jadi 20 byte, tulis serial) - berkala **~10-20Hz**, Jetson yang inisiatif
+2. **Kirim** (subscribe topic dari Core Node, pack jadi 21 byte, tulis serial) - berkala **~10-20Hz**, Jetson yang inisiatif
 3. **Terima** (baca serial, unpack up-frame 18 byte, publish ke beberapa topic) - STM32 balas LANGSUNG tiap kali terima 1 down-frame valid
 4. **TIDAK BOLEH** interpretasi/putusin apapun dari isi frame - itu kerjaan Core Node
 
@@ -62,12 +62,12 @@ justru karena dia gak punya keputusan apapun buat digantungin ke node lain.
 
 | Topic | Arah | Isi |
 |---|---|---|
-| `/stm32/command` | **Subscribe** (dari Core Node) | Semua 20 field down-frame, sudah final, tinggal di-`struct.pack` dan kirim |
+| `/stm32/command` | **Subscribe** (dari Core Node) | Semua 21 field down-frame, sudah final, tinggal di-`struct.pack` dan kirim |
 | `/stm32/gcs_relay` | **Publish** (ke Core Node) | 14 field relay GCS mentah dari up-frame offset 0-13 |
 | `/stm32/lrf_status` | **Publish** (ke Core Node) | Jarak LRF real-time + status baca, dari up-frame offset 14-16 |
 | `/stm32/health` | **Publish** (ke Core Node) | `stm32Status`, dari up-frame offset 17 |
 
-## Down-frame yang HARUS dikirim: Jetson → STM32, 20 byte (`"=b8bBBBBbBBBBBB"`)
+## Down-frame yang HARUS dikirim: Jetson → STM32, 21 byte (`"=b8bBBBbbbBBBBBB"`)
 
 | Offset | Field | Tipe | Range |
 |---|---|---|---|
@@ -76,14 +76,20 @@ justru karena dia gak punya keputusan apapun buat digantungin ke node lain.
 | 9 | fLamp | uint8 | 0-100 |
 | 10 | bLamp | uint8 | 0-100 |
 | 11 | bLampMode | uint8 | 0/1/2 |
-| 12 | pantiltArah | uint8 | 0-4 |
-| 13 | kameraZoom | int8 | -1/0/1 |
-| 14 | slipRing | uint8 | 0/1 |
-| 15 | lrfTrigger | uint8 | 0-3 |
-| 16 | gcsReplyStm32Status | uint8 | 0-255 |
-| 17 | gcsReplyLrfStatus | uint8 | 0-255 |
-| 18 | gcsReplyLrfLsb | uint8 | 0-255 |
-| 19 | gcsReplyLrfMsb | uint8 | 0-255 |
+| 12 | pantiltHorizontal | int8 | -1/0/1 |
+| 13 | pantiltVertical | int8 | -1/0/1 |
+| 14 | kameraZoom | int8 | -1/0/1 |
+| 15 | slipRing | uint8 | 0/1 |
+| 16 | lrfTrigger | uint8 | 0-3 |
+| 17 | gcsReplyStm32Status | uint8 | 0-255 |
+| 18 | gcsReplyLrfStatus | uint8 | 0-255 |
+| 19 | gcsReplyLrfLsb | uint8 | 0-255 |
+| 20 | gcsReplyLrfMsb | uint8 | 0-255 |
+
+**`pantiltHorizontal`/`pantiltVertical` BISA aktif bareng buat gerak
+diagonal** (misal horizontal=1 + vertical=1 = gerak kanan-atas sekaligus) -
+STM32 nge-OR bitmask keduanya ke 1 command RS485. Beda dari sebelumnya
+(`pantiltArah` 1 field enum 0-4, cuma bisa 1 arah).
 
 (Arti/efek tiap field ada di BAGIAN 2 - Interface Node gak perlu tau
 artinya, cuma perlu tau cara pack-nya benar)
@@ -113,7 +119,7 @@ artinya, cuma perlu tau cara pack-nya benar)
 
 ## Framing
 `HAL_UARTEx_ReceiveToIdle_IT` di sisi STM32 - frame HARUS pas ukurannya
-(20 byte down / 18 byte up), kalau kepotong/lebih otomatis dibuang. Gak
+(21 byte down / 18 byte up), kalau kepotong/lebih otomatis dibuang. Gak
 perlu sync byte khusus di sisi Python, `pyserial` baca blocking aja cukup
 selama ukurannya pas.
 
@@ -150,10 +156,11 @@ dibahas/disepakati - JANGAN asal nebak nilainya, konfirmasi dulu.
 | `fLamp` | `fLamp` | **[PASTI]** Passthrough langsung, sama-sama 0-100 |
 | `bLamp` | `fLamp` (BUKAN `bLamp`!) | **[PASTI]** `bLamp (down) = fLamp (relay)` - COPY nilai fLamp, karena `bLamp` di relay itu MODE bukan brightness (lihat baris di bawah) |
 | `bLampMode` | `bLamp` (relay) | **[PASTI]** Passthrough langsung, sama-sama 0/1/2. GCS udah ngitung ini sendiri (`2` kalau `yJoy1<0`/mundur, `1` kalau nyala biasa, `0` kalau mati) |
-| `pantiltArah` | `xJoy2` + `yJoy2` | **[PERLU DIPUTUSIN sebagian]** Terjemahin 2 field diskrit (-100/0/100) jadi 1 enum 0-4: `xJoy2>0`→kanan(1), `xJoy2<0`→kiri(0), `yJoy2>0`→atas(2), `yJoy2<0`→bawah(3), semua nol→stop(4). Yang belum diputusin: prioritas kalau xJoy2 DAN yJoy2 sama-sama aktif barengan (device fisik cuma 1 arah per waktu, jadi kemungkinan gak akan kejadian, tapi tetap perlu didefinisiin) |
+| `pantiltHorizontal` | `xJoy2` | **[PASTI]** `xJoy2>0`→`1`(kanan), `xJoy2<0`→`-1`(kiri), `xJoy2==0`→`0`(stop). Langsung pakai TANDA `xJoy2` aja (udah -100/0/100 diskrit dari GCS, jadi tanda-nya konsisten) |
+| `pantiltVertical` | `yJoy2` | **[PASTI]** `yJoy2>0`→`1`(atas), `yJoy2<0`→`-1`(bawah), `yJoy2==0`→`0`(stop). `pantiltHorizontal` & `pantiltVertical` BISA nonzero bareng (gerak diagonal), gak perlu logic prioritas - dua axis independen |
 | `kameraZoom` | `zoom` | **[PASTI]** Passthrough langsung, sama-sama -1/0/1 |
 | `slipRing` | `slipRing` | **[PASTI]** Passthrough langsung, sama-sama 0/1 |
-| `lrfTrigger` | `lrf` | **[PASTI, simpel]** `lrf==1` → `lrfTrigger=1` (baca jarak), `lrf==0` → `lrfTrigger=0` (idle). Boleh passthrough langsung tiap frame (STM32 gak anti-spam `lrfTrigger`, aman diminta berkali-kali). Pointer LRF (`lrfTrigger=2/3`) belum ada sumber field-nya dari GCS - **[PERLU DIPUTUSIN]** mau dipicu dari mana |
+| `lrfTrigger` | `lrf` (+ state SEBELUMNYA-nya `lrf`, HARUS diinget Core Node) | **[PASTI]** Perilaku **hold-to-laser, release-to-read**: selama `lrf==1` (tombol DITAHAN) → `lrfTrigger=2` (pointer ON) tiap frame. Pas `lrf` baru aja `1→0` (release, HARUS deteksi edge sendiri di Core Node, bandingin ke nilai `lrf` frame sebelumnya) → `lrfTrigger=1` (baca jarak) SATU frame itu doang. Selain 2 kondisi itu (gak ditahan, bukan momen lepas) → `lrfTrigger=3` (pointer OFF) tiap frame. STM32 udah anti-spam sisi `lrfTrigger=2/3` (pointer), jadi Core Node BEBAS kirim nilai sama terus tanpa mikirin spam RS485 - kecuali `lrfTrigger=1` (baca jarak) yang emang harus PAS 1 frame doang di momen release (STM32 gak nge-dedupe field ini) |
 | `gcsReplyStm32Status` | `stm32Status` (dari `/stm32/health`) | **[PASTI]** Passthrough - STM32 sehat, relay balik status kesehatannya sendiri |
 | `gcsReplyLrfStatus` | `lrfStatus` (dari `/stm32/lrf_status`) | **[PASTI]** Passthrough - hasil baca LRF terakhir |
 | `gcsReplyLrfLsb`/`Msb` | `lrfJarakLsb`/`Msb` (dari `/stm32/lrf_status`) | **[PASTI]** Passthrough - jarak LRF terakhir |
@@ -174,14 +181,19 @@ yang dilakuin OPERATOR langsung liat gerakan fisiknya (bukan otomatis).
    LRF terbaru" dan "GCS lihat status itu di layarnya" - disengaja, STM32
    gak boleh nunggu Jetson mikir pas lagi ngebales GCS.
 2. **RS485 (pantilt/kamera/LRF) FULL tanggung jawab STM32** - Core Node
-   CUKUP isi `pantiltArah`/`kameraZoom`/`slipRing`/`lrfTrigger`, STM32
-   yang urus checksum/protokol RS485-nya. Core Node gak perlu tau detail
-   Pelco-D/pantilt custom protocol sama sekali.
-3. **STM32 CUMA kirim ke RS485 kalau `pantiltArah`/`kameraZoom`/`slipRing`
-   BERUBAH** dari siklus sebelumnya (anti-spam, dicek internal STM32) -
-   Core Node BEBAS ngirim nilai yang sama terus-menerus tiap down-frame,
-   gak perlu logic "cuma kirim sekali" sendiri. `lrfTrigger` TIDAK
-   di-anti-spam (boleh di-request berkali-kali, itu query bukan state).
+   CUKUP isi `pantiltHorizontal`/`pantiltVertical`/`kameraZoom`/`slipRing`/
+   `lrfTrigger`, STM32 yang urus checksum/protokol RS485-nya. Core Node
+   gak perlu tau detail Pelco-D/pantilt custom protocol sama sekali.
+3. **STM32 CUMA kirim ke RS485 kalau nilainya BERUBAH** dari siklus
+   sebelumnya (anti-spam, dicek internal STM32) - berlaku buat
+   `pantiltHorizontal`/`pantiltVertical`/`kameraZoom`/`slipRing`, DAN
+   `lrfTrigger` pas nilainya `2`/`3` (pointer on/off, ini state). Core Node
+   BEBAS ngirim nilai yang sama terus-menerus tiap down-frame buat
+   field-field itu, gak perlu logic "cuma kirim sekali" sendiri.
+   **KECUALI `lrfTrigger=1`** (baca jarak) - itu TIDAK di-anti-spam (query,
+   bukan state), jadi Core Node HARUS jaga sendiri ini cuma kekirim pas
+   momen yang tepat (lihat baris `lrfTrigger` di tabel atas - logic
+   hold/release).
 
 ---
 
@@ -210,10 +222,9 @@ karena actuator arm/RArm/LArm udah dibatalkan.)
    dites standalone pakai `ros2 topic pub` buat kirim command manual ke
    `/stm32/command`, amati balasan di `/stm32/gcs_relay` dkk, BARU
    sambungin ke Core Node.
-3. **Cek tabel BAGIAN 2** buat mapping up-frame→down-frame yang udah
-   confirmed - semua field logic-nya udah **[PASTI]** sekarang (termasuk
-   `speed`, Steer, body), tinggal sisa `lrfTrigger=2/3` (pointer LRF) yang
-   belum ada sumber field-nya dari GCS kalau mau dipakai.
+3. **Cek tabel BAGIAN 2** buat mapping up-frame→down-frame - **SEMUA field
+   udah [PASTI]**, gak ada lagi yang perlu diputusin (termasuk `speed`,
+   Steer, body, pantilt diagonal, dan LRF hold/release).
 4. Buat prototyping/debug cepat sebelum nulis node beneran, pakai
    referensi Python yang UDAH TERBUKTI jalan di `Testcode/` (lihat
    tabel di bawah) - tinggal contek pola `struct.pack`/`struct.unpack`
