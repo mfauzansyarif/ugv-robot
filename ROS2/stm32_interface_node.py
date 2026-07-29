@@ -15,6 +15,7 @@ node ini gak butuh thread terpisah - 1 timer callback sudah cukup.
 """
 
 import struct
+import time
 
 import serial
 import rclpy
@@ -42,10 +43,16 @@ class Stm32InterfaceNode(Node):
         self.declare_parameter('serial_port', '/dev/ttyTHS1')
         self.declare_parameter('baudrate', 115200)
         self.declare_parameter('timer_period_sec', 0.1)  # 10Hz
+        # Watchdog: kalau udah selama ini gak dapat up-frame lengkap,
+        # anggap link putus, publish Health(stm32_status=0) - biar Core
+        # Node (dan akhirnya GCS) tau link mati, bukan cuma diam beku.
+        # Default samain sama LINK_TIMEOUT_MS di firmware STM32 (500ms).
+        self.declare_parameter('link_timeout_sec', 0.5)
 
         port = self.get_parameter('serial_port').value
         baud = self.get_parameter('baudrate').value
         period = self.get_parameter('timer_period_sec').value
+        self.link_timeout_sec = self.get_parameter('link_timeout_sec').value
 
         # --- Publisher: 3 topic hasil pecahan up-frame ---
         self.pub_gcs_relay = self.create_publisher(GcsRelay, '/stm32/gcs_relay', 10)
@@ -70,6 +77,9 @@ class Stm32InterfaceNode(Node):
         except serial.SerialException as e:
             self.get_logger().error(f'Gagal buka serial {port}: {e}')
             raise
+
+        self._waktu_sukses_terakhir = time.time()
+        self._link_sehat = True
 
         self.timer = self.create_timer(period, self._siklus_komunikasi)
 
@@ -118,16 +128,25 @@ class Stm32InterfaceNode(Node):
         frame_masuk = self.serial_conn.read(SIZE_UP)
         if len(frame_masuk) != SIZE_UP:
             # Timeout / STM32 gak balas lengkap -> skip siklus ini, coba lagi
-            # siklus berikutnya. NORMAL kalau STM32 restart/link putus.
+            # siklus berikutnya. NORMAL kalau STM32 restart/link putus -
+            # tapi kalau udah KELAMAAN gitu terus, itu watchdog buat detect.
             self.get_logger().warn(
                 f'Up-frame gak lengkap: dapat {len(frame_masuk)}/{SIZE_UP} byte')
+            self._cek_watchdog()
             return
 
         try:
             f = struct.unpack(FORMAT_UP, frame_masuk)
         except struct.error as e:
             self.get_logger().warn(f'Up-frame korup, dibuang: {e}')
+            self._cek_watchdog()
             return
+
+        # Sukses baca lengkap -> link sehat, update timestamp
+        self._waktu_sukses_terakhir = time.time()
+        if not self._link_sehat:
+            self.get_logger().info('Link STM32 pulih kembali')
+            self._link_sehat = True
 
         # --- Offset 0-13: relay GCS mentah ---
         relay = GcsRelay()
@@ -147,6 +166,22 @@ class Stm32InterfaceNode(Node):
         self.pub_gcs_relay.publish(relay)
         self.pub_lrf_status.publish(lrf)
         self.pub_health.publish(health)
+
+    # ------------------------------------------------------------------
+    # Dipanggil tiap kali gagal baca up-frame. Kalau udah kelamaan (lebih
+    # dari link_timeout_sec) sejak sukses TERAKHIR, anggap link putus:
+    # publish Health(stm32_status=0) SEKALI SAJA (pas transisi sehat->mati),
+    # biar Core Node & GCS tau link mati, bukan cuma diam beku terus.
+    # ------------------------------------------------------------------
+    def _cek_watchdog(self):
+        selang = time.time() - self._waktu_sukses_terakhir
+        if selang >= self.link_timeout_sec and self._link_sehat:
+            self.get_logger().warn(
+                f'Link STM32 putus (gak ada up-frame valid {selang:.1f}s)')
+            self._link_sehat = False
+            health = Health()
+            health.stm32_status = 0
+            self.pub_health.publish(health)
 
     def destroy_node(self):
         if hasattr(self, 'serial_conn'):
