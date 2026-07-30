@@ -72,15 +72,16 @@ class MotorLinearDialog(QDialog):
             motor_id = len(DAFTAR_STEERING) + baris + 1
             grid_body.addWidget(QLabel(nama), baris, 0)
 
-            btn_extend = QPushButton("Extend")
-            btn_extend.pressed.connect(lambda m=motor_id: self._kirim(m, 1, "extend"))
-            btn_extend.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
-            grid_body.addWidget(btn_extend, baris, 1)
-
             btn_retract = QPushButton("Retract")
             btn_retract.pressed.connect(lambda m=motor_id: self._kirim(m, -1, "retract"))
             btn_retract.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
-            grid_body.addWidget(btn_retract, baris, 2)
+            grid_body.addWidget(btn_retract, baris, 1)
+
+            btn_extend = QPushButton("Extend")
+            btn_extend.pressed.connect(lambda m=motor_id: self._kirim(m, 1, "extend"))
+            btn_extend.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
+            grid_body.addWidget(btn_extend, baris, 2)
+            
         layout_utama.addLayout(grid_body)
 
         baris_bawah = QHBoxLayout()
