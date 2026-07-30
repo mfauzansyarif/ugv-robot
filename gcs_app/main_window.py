@@ -22,7 +22,7 @@ from settings_dialog import SettingsDialog
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("GCS - UGV Lidikzi v2")
+        self.setWindowTitle("GCS - UGV Lidikzi v1")
 
         self._config = config.load_config()
 
@@ -73,31 +73,31 @@ class MainWindow(QMainWindow):
         self.console_log.setMinimumHeight(150)
         layout_utama.addWidget(self.console_log)
 
-        self.console_log.info("Aplikasi GCS dimulai")
+        self.console_log.info("GCS Application Started")
 
     def _buat_panel_koneksi(self):
-        group = QGroupBox("Koneksi")
+        group = QGroupBox("Connection")
         layout = QGridLayout(group)
 
         # NOTE: port/nama kamera SENGAJA read-only di sini (cuma label) -
         # biar gak ke-tap/ke-ubah gak sengaja di touchscreen operator biasa.
         # Ubah lewat tombol "⚙ Settings" kecil di pojok (buka dialog terpisah).
         self.label_port_arduino = QLabel(self._config["port_arduino"])
-        layout.addWidget(QLabel("Arduino Mega Pro:"), 0, 0)
+        layout.addWidget(QLabel("GCS Board:"), 0, 0)
         layout.addWidget(self.label_port_arduino, 0, 1)
         self.btn_connect_arduino = QPushButton("Connect")
         self.btn_connect_arduino.clicked.connect(self._toggle_arduino)
         layout.addWidget(self.btn_connect_arduino, 0, 2)
-        self.label_status_arduino = QLabel("Belum connect")
+        self.label_status_arduino = QLabel("Failed")
         layout.addWidget(self.label_status_arduino, 0, 3)
 
         self.label_port_rf = QLabel(self._config["port_rf"])
-        layout.addWidget(QLabel("Radio RF:"), 1, 0)
+        layout.addWidget(QLabel("Telemetry:"), 1, 0)
         layout.addWidget(self.label_port_rf, 1, 1)
         self.btn_connect_rf = QPushButton("Connect")
         self.btn_connect_rf.clicked.connect(self._toggle_rf)
         layout.addWidget(self.btn_connect_rf, 1, 2)
-        self.label_status_rf = QLabel("Belum connect")
+        self.label_status_rf = QLabel("Failed")
         layout.addWidget(self.label_status_rf, 1, 3)
 
         btn_settings = QPushButton("⚙ Settings")
@@ -116,10 +116,10 @@ class MainWindow(QMainWindow):
                 config.save_config(self._config)
                 self.label_port_arduino.setText(self._config["port_arduino"])
                 self.label_port_rf.setText(self._config["port_rf"])
-                self.console_log.info("Konfigurasi disimpan")
+                self.console_log.info("Saved")
 
     def _buat_panel_kontrol(self):
-        group = QGroupBox("Kontrol")
+        group = QGroupBox("Control Panel")
         layout = QVBoxLayout(group)
 
         self.btn_slip_ring = QPushButton("Slip Ring: OFF")
@@ -128,8 +128,8 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.btn_slip_ring)
 
         baris_label_lampu = QHBoxLayout()
-        baris_label_lampu.addWidget(QLabel("Brightness Lampu Depan"))
-        self.label_status_lampu = QLabel("(mati)")
+        baris_label_lampu.addWidget(QLabel("Lamp Brightness"))
+        self.label_status_lampu = QLabel("(off)")
         baris_label_lampu.addWidget(self.label_status_lampu)
         baris_label_lampu.addStretch()
         layout.addLayout(baris_label_lampu)
@@ -155,7 +155,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(baris_slider)
         self._update_tampilan_lampu(nyala=False)
 
-        layout.addWidget(QLabel("Motor Linear (kontrol sederhana - gerak semua sekaligus)"))
+        layout.addWidget(QLabel("Body Control"))
         # NOTE: momentary (aktif selama ditahan, stop pas dilepas) - SAMA
         # prinsipnya kayak tombol fisik Body Up/Down di panel Arduino.
         # Raise/Lower gerakin fbody+bbody bareng. State-nya digabung sama
@@ -165,28 +165,28 @@ class MainWindow(QMainWindow):
         # (Tombol Widen/Narrow arm DIHAPUS - actuator arm/RArm/LArm udah
         # dibatalkan, field ArmWidenNarrow juga udah dihapus dari protokol.)
         grid_body = QGridLayout()
-        self.btn_raise = QPushButton("Raise (Body ↑)")
+        self.btn_raise = QPushButton("Raise (↑)")
         self.btn_raise.pressed.connect(lambda: self._set_touch_fbody_bbody(1))
         self.btn_raise.released.connect(lambda: self._set_touch_fbody_bbody(0))
         grid_body.addWidget(self.btn_raise, 0, 0)
 
-        self.btn_lower = QPushButton("Lower (Body ↓)")
+        self.btn_lower = QPushButton("Lower (↓)")
         self.btn_lower.pressed.connect(lambda: self._set_touch_fbody_bbody(-1))
         self.btn_lower.released.connect(lambda: self._set_touch_fbody_bbody(0))
         grid_body.addWidget(self.btn_lower, 0, 1)
         layout.addLayout(grid_body)
 
-        self.label_status_motor_linear = QLabel("Diam")
+        self.label_status_motor_linear = QLabel("Stopped")
         layout.addWidget(self.label_status_motor_linear)
 
-        btn_detail = QPushButton("Buka Kontrol Individual...")
+        btn_detail = QPushButton("Indivisual Motor Control")
         btn_detail.clicked.connect(self._buka_dialog_motor_individual)
         layout.addWidget(btn_detail)
 
-        layout.addWidget(QLabel("Status Kendaraan (dari telemetry Jetson)"))
-        self.label_status_stm32 = QLabel("STM32: -")
+        layout.addWidget(QLabel("UGV Status"))
+        self.label_status_stm32 = QLabel("Controller: -")
         layout.addWidget(self.label_status_stm32)
-        self.label_status_lrf = QLabel("LRF: -")
+        self.label_status_lrf = QLabel("Laser Range Finder: -")
         layout.addWidget(self.label_status_lrf)
 
         layout.addStretch()
@@ -199,7 +199,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.camera_viewer)
 
         baris_tombol_kamera = QHBoxLayout()
-        btn_mulai_kamera = QPushButton("Mulai")
+        btn_mulai_kamera = QPushButton("Start")
         btn_mulai_kamera.clicked.connect(self._mulai_kamera)
         baris_tombol_kamera.addWidget(btn_mulai_kamera)
 
