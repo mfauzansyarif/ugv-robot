@@ -230,13 +230,13 @@ class MainWindow(QMainWindow):
     def _shutdown_windows(self):
         reply = QMessageBox.question(
             self,
-            "Konfirmasi Shutdown",
-            "Yakin mau shutdown NUC?",
+            "Shutdown",
+            "Confirm shutdown?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
         if reply == QMessageBox.Yes:
-            self.console_log.warning("Shutdown NUC diminta dari GCS")
+            self.console_log.warning("Shutdown GCS")
             os.system("shutdown /s /t 0")
 
     def _toggle_slip_ring(self):
