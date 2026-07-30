@@ -89,7 +89,7 @@ class MotorLinearDialog(QDialog):
         btn_kalibrasi.clicked.connect(self._kirim_kalibrasi)
         baris_bawah.addWidget(btn_kalibrasi)
 
-        btn_tutup = QPushButton("Tutup")
+        btn_tutup = QPushButton("Exit")
         btn_tutup.clicked.connect(self.accept)
         baris_bawah.addWidget(btn_tutup)
 
