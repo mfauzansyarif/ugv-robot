@@ -3,11 +3,13 @@ section 7 dan dokumentasi/ARDUINO_GCS_BRIEF.md. Beberapa asumsi BELUM
 dikonfirmasi ke user - ditandai TODO di komentar.
 """
 
+import os
+
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QDialog, QGraphicsOpacityEffect, QGridLayout, QGroupBox, QHBoxLayout,
-    QLabel, QMainWindow, QPushButton, QSlider, QSpinBox, QVBoxLayout,
-    QWidget,
+    QLabel, QMainWindow, QMessageBox, QPushButton, QSlider, QSpinBox,
+    QVBoxLayout, QWidget,
 )
 
 import config
@@ -62,7 +64,14 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget_pusat)
         layout_utama = QVBoxLayout(widget_pusat)
 
-        layout_utama.addWidget(self._buat_panel_koneksi())
+        # Baris paling atas: panel connection (kiri, melebar) + tombol
+        # Shutdown (kanan mentok, terpisah dari group box connection biar
+        # jelas beda konteks - shutdown itu aksi level sistem/OS, bukan
+        # bagian dari koneksi Arduino/RF).
+        baris_atas = QHBoxLayout()
+        baris_atas.addWidget(self._buat_panel_koneksi(), stretch=1)
+        baris_atas.addWidget(self._buat_tombol_shutdown(), stretch=0, alignment=Qt.AlignTop)
+        layout_utama.addLayout(baris_atas)
 
         baris_tengah = QHBoxLayout()
         baris_tengah.addWidget(self._buat_panel_kontrol(), stretch=1)
@@ -74,6 +83,12 @@ class MainWindow(QMainWindow):
         layout_utama.addWidget(self.console_log)
 
         self.console_log.info("GCS Application Started")
+
+    def _buat_tombol_shutdown(self):
+        btn_shutdown = QPushButton("⏻ Shutdown")
+        btn_shutdown.setMaximumWidth(110)
+        btn_shutdown.clicked.connect(self._shutdown_windows)
+        return btn_shutdown
 
     def _buat_panel_koneksi(self):
         group = QGroupBox("Connection")
@@ -211,6 +226,18 @@ class MainWindow(QMainWindow):
         return group
 
     # ------------------------------------------------------- Handler UI
+
+    def _shutdown_windows(self):
+        reply = QMessageBox.question(
+            self,
+            "Konfirmasi Shutdown",
+            "Yakin mau shutdown NUC?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if reply == QMessageBox.Yes:
+            self.console_log.warning("Shutdown NUC diminta dari GCS")
+            os.system("shutdown /s /t 0")
 
     def _toggle_slip_ring(self):
         self._slip_ring_on = self.btn_slip_ring.isChecked()
