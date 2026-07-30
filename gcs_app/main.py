@@ -5,7 +5,6 @@ Requirement: pip install PySide6 pyserial opencv-python
 """
 
 import sys
-
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget
 
@@ -27,6 +26,7 @@ def main():
 
     window.showFullScreen()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
