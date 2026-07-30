@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
         self.label_status_motor_linear = QLabel("Stopped")
         layout.addWidget(self.label_status_motor_linear)
 
-        btn_detail = QPushButton("Individual Motor Control")
+        btn_detail = QPushButton("Individual Linear Motor Control")
         btn_detail.clicked.connect(self._buka_dialog_motor_individual)
         layout.addWidget(btn_detail)
 

@@ -44,7 +44,7 @@ class MotorLinearDialog(QDialog):
         self.console_log = console_log
         self.set_individual = set_individual
         self.trigger_kalibrasi = trigger_kalibrasi
-        self.setWindowTitle("Kontrol Motor Linear Individual")
+        self.setWindowTitle("Individual Linear Motor Control")
 
         layout_utama = QVBoxLayout(self)
 
