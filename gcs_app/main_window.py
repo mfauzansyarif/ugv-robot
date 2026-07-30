@@ -280,7 +280,7 @@ class MainWindow(QMainWindow):
                 )
             else:
                 self.console_log.error(
-                    "Gak ada device kedetect (atau pygrabber belum ke-install - pip install pygrabber)"
+                    "No camera receiver detected"
                 )
             return
 
@@ -292,7 +292,7 @@ class MainWindow(QMainWindow):
 
     def _stop_kamera(self):
         self.camera_viewer.berhenti()
-        self.console_log.info("Camera dihentikan")
+        self.console_log.info("Camera stream stopped")
 
     # ------------------------------------------------------- Arduino link
 
@@ -323,11 +323,11 @@ class MainWindow(QMainWindow):
 
     def _on_arduino_terhubung(self):
         self.label_status_arduino.setText("Connected")
-        self.console_log.info("Arduino Mega Pro terhubung")
+        self.console_log.info("GCS Board connected")
 
     def _on_arduino_terputus(self):
         self.label_status_arduino.setText("Disconnected")
-        self.console_log.warning("Arduino Mega Pro terputus - cek kabel USB")
+        self.console_log.warning("GCS Board disconnected - Check USB cable")
 
     # ------------------------------------------------------------ RF link
 
@@ -427,12 +427,11 @@ class MainWindow(QMainWindow):
 
     def _on_jetson_terhubung(self):
         self.label_status_rf.setText("Connected")
-        self.console_log.info("Jetson tersambung kembali")
+        self.console_log.info("Telemetry Connected")
 
     def _on_jetson_terputus(self):
         self.label_status_rf.setText("Disconnected")
-        self.console_log.warning("Jetson tidak merespon - cek link RF/apakah mobil menyala")
-
+        self.console_log.warning("Telemetry not responding - check RF link or vehicle power")
     # -------------------------------------------------------------- close
 
     def closeEvent(self, event):

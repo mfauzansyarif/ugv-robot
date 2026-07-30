@@ -30,12 +30,12 @@ from PySide6.QtWidgets import (
 )
 
 # Steering: dikontrol berpasangan (depan/belakang), tombol Kanan/Kiri.
-DAFTAR_STEERING = ["Steering Depan", "Steering Belakang"]
+DAFTAR_STEERING = ["Front", "Rear"]
 
 # Body: tetap individual per-actuator, tombol Extend/Retract - urutan &
 # nama SAMA PERSIS kayak actuatorTable index 4-7 di
 # STM32Cube/motorugv_G474RE/Core/Src/main.c.
-DAFTAR_BODY = ["FBody Kiri", "FBody Kanan", "BBody Kiri", "BBody Kanan"]
+DAFTAR_BODY = ["Front Left", "Front Right", "Rear Left", "Rear Right"]
 
 
 class MotorLinearDialog(QDialog):
@@ -54,15 +54,16 @@ class MotorLinearDialog(QDialog):
             motor_id = baris + 1
             grid_steering.addWidget(QLabel(nama), baris, 0)
 
-            btn_kanan = QPushButton("Kanan")
-            btn_kanan.pressed.connect(lambda m=motor_id: self._kirim(m, 1, "kanan"))
-            btn_kanan.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
-            grid_steering.addWidget(btn_kanan, baris, 1)
-
-            btn_kiri = QPushButton("Kiri")
-            btn_kiri.pressed.connect(lambda m=motor_id: self._kirim(m, -1, "kiri"))
+            btn_kiri = QPushButton("Left")
+            btn_kiri.pressed.connect(lambda m=motor_id: self._kirim(m, -1, "left"))
             btn_kiri.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
-            grid_steering.addWidget(btn_kiri, baris, 2)
+            grid_steering.addWidget(btn_kiri, baris, 1)
+
+            btn_kanan = QPushButton("Right")
+            btn_kanan.pressed.connect(lambda m=motor_id: self._kirim(m, 1, "right"))
+            btn_kanan.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
+            grid_steering.addWidget(btn_kanan, baris, 2)
+            
         layout_utama.addLayout(grid_steering)
 
         layout_utama.addWidget(QLabel("Body (individual per-actuator):"))
@@ -83,7 +84,7 @@ class MotorLinearDialog(QDialog):
         layout_utama.addLayout(grid_body)
 
         baris_bawah = QHBoxLayout()
-        btn_kalibrasi = QPushButton("KALIBRASI (semua extend penuh + steering full kiri)")
+        btn_kalibrasi = QPushButton("Calibrate (Fully Extend + Fully Left)")
         btn_kalibrasi.clicked.connect(self._kirim_kalibrasi)
         baris_bawah.addWidget(btn_kalibrasi)
 
@@ -101,4 +102,4 @@ class MotorLinearDialog(QDialog):
 
     def _kirim_kalibrasi(self):
         self.trigger_kalibrasi()
-        self.console_log.info("[Individual] Kalibrasi dipicu")
+        self.console_log.info("[Individual] Calibrated")
