@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
         self.label_status_motor_linear = QLabel("Stopped")
         layout.addWidget(self.label_status_motor_linear)
 
-        btn_detail = QPushButton("Indivisual Motor Control")
+        btn_detail = QPushButton("Individual Motor Control")
         btn_detail.clicked.connect(self._buka_dialog_motor_individual)
         layout.addWidget(btn_detail)
 
@@ -301,7 +301,7 @@ class MainWindow(QMainWindow):
             self._arduino_reader.stop()
             self._arduino_reader = None
             self.btn_connect_arduino.setText("Connect")
-            self.label_status_arduino.setText("Belum connect")
+            self.label_status_arduino.setText("Connection Failed")
             return
 
         self._arduino_reader = ArduinoReader(self._config["port_arduino"])
@@ -318,15 +318,15 @@ class MainWindow(QMainWindow):
 
     def _update_tampilan_lampu(self, nyala):
         self._efek_opacity_slider_lampu.setOpacity(1.0 if nyala else 0.35)
-        self.label_status_lampu.setText("(nyala)" if nyala else "(mati)")
+        self.label_status_lampu.setText("(ON)" if nyala else "(OFF)")
         self.lampu_icon.set_menyala(nyala)
 
     def _on_arduino_terhubung(self):
-        self.label_status_arduino.setText("Terhubung")
+        self.label_status_arduino.setText("Connected")
         self.console_log.info("Arduino Mega Pro terhubung")
 
     def _on_arduino_terputus(self):
-        self.label_status_arduino.setText("TERPUTUS")
+        self.label_status_arduino.setText("Disconnected")
         self.console_log.warning("Arduino Mega Pro terputus - cek kabel USB")
 
     # ------------------------------------------------------------ RF link
@@ -336,7 +336,7 @@ class MainWindow(QMainWindow):
             self._rf_link.stop()
             self._rf_link = None
             self.btn_connect_rf.setText("Connect")
-            self.label_status_rf.setText("Belum connect")
+            self.label_status_rf.setText("Connection Failed")
             return
 
         self._rf_link = RFLink(self._config["port_rf"], self._bangun_frame_gcs)
@@ -416,21 +416,21 @@ class MainWindow(QMainWindow):
             self._stm32_status_terakhir = stm32_ok
 
         if stm32_ok:
-            self.label_status_stm32.setText("STM32: OK")
+            self.label_status_stm32.setText("Controller: OK")
         else:
-            self.label_status_stm32.setText("STM32: TIDAK TERHUBUNG")
+            self.label_status_stm32.setText("Controller: Disconnected")
 
         if data["lrf_status"]:
-            self.label_status_lrf.setText(f"LRF: {data['lrf_jarak_meter']:.1f} m")
+            self.label_status_lrf.setText(f"Laser Range Finder: {data['lrf_jarak_meter']:.1f} m")
         else:
-            self.label_status_lrf.setText("LRF: tidak ada jawaban")
+            self.label_status_lrf.setText("Laser Range Finder: tidak ada jawaban")
 
     def _on_jetson_terhubung(self):
-        self.label_status_rf.setText("Terhubung")
+        self.label_status_rf.setText("Connected")
         self.console_log.info("Jetson tersambung kembali")
 
     def _on_jetson_terputus(self):
-        self.label_status_rf.setText("TERPUTUS")
+        self.label_status_rf.setText("Disconnected")
         self.console_log.warning("Jetson tidak merespon - cek link RF/apakah mobil menyala")
 
     # -------------------------------------------------------------- close
