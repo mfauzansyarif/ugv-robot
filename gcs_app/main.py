@@ -6,7 +6,8 @@ Requirement: pip install PySide6 pyserial opencv-python
 
 import sys
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QWidget
 
 from main_window import MainWindow
 
@@ -15,9 +16,17 @@ def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.resize(1200, 800)
-    window.show()
-    sys.exit(app.exec())
 
+    def keyPressEvent(event):
+        if event.key() == Qt.Key_Escape:
+            window.showNormal()
+        else:
+            QWidget.keyPressEvent(window, event)
+
+    window.keyPressEvent = keyPressEvent
+
+    window.showFullScreen()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()
