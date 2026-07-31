@@ -239,13 +239,13 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.camera_viewer)
 
         baris_tombol_kamera = QHBoxLayout()
-        btn_mulai_kamera = QPushButton("Start")
-        btn_mulai_kamera.clicked.connect(self._mulai_kamera)
-        baris_tombol_kamera.addWidget(btn_mulai_kamera)
-
         btn_stop_kamera = QPushButton("Stop")
         btn_stop_kamera.clicked.connect(self._stop_kamera)
         baris_tombol_kamera.addWidget(btn_stop_kamera)
+
+        btn_mulai_kamera = QPushButton("Start")
+        btn_mulai_kamera.clicked.connect(self._mulai_kamera)
+        baris_tombol_kamera.addWidget(btn_mulai_kamera)
         layout.addLayout(baris_tombol_kamera)
 
         return group
