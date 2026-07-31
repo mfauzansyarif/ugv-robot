@@ -133,8 +133,15 @@ class RFLink(QThread):
     telemetry_diterima = Signal(dict)
     jetson_terhubung = Signal()
     jetson_terputus = Signal()
+    error_terjadi = Signal(str)
 
-    AMBANG_MISS_BERTURUT = 5  # sekian kali gagal balasan berturut baru declare disconnect
+    # Naik dari 5 (2026-07-31): data lapangan nunjukin RTT sukses aja bisa
+    # sampai ~58ms, dan miss rate normal link RF ini ~75-80% - 5 miss
+    # berturut (250ms nominal) kena berkali-kali tiap detik walau link
+    # sebenarnya masih hidup, cuma lemot/lossy. 10 miss (~1 detik dgn
+    # timeout baru) lebih match sama karakter link asli, cukup buat UGV
+    # (bukan drone) tanpa telat declare disconnect kalau BENERAN putus.
+    AMBANG_MISS_BERTURUT = 10  # sekian kali gagal balasan berturut baru declare disconnect
 
     def __init__(self, port, penyedia_frame, baudrate=57600, hz=20, parent=None):
         super().__init__(parent)
@@ -150,32 +157,59 @@ class RFLink(QThread):
 
     def run(self):
         try:
-            ser = serial.Serial(self.port, self.baudrate, timeout=0.05)
-        except serial.SerialException:
+            # Naik dari 0.05 (2026-07-31): data [RF DEBUG] nunjukin RTT
+            # sukses aja bisa sampai ~58ms - budget 50ms mepet banget,
+            # mayoritas "MISS - 0/6 byte" itu kehabisan waktu tunggu bukan
+            # beneran gak ada balasan. 0.1 kasih headroom ~2x dari RTT
+            # terburuk yang pernah kerekam sukses.
+            ser = serial.Serial(self.port, self.baudrate, timeout=0.1)
+        except serial.SerialException as e:
+            self.error_terjadi.emit(f"Gagal buka port RF {self.port}: {e}")
             self.jetson_terputus.emit()
             return
 
         miss_berturut = 0
         status_connect_sekarang = False
 
+        # --- DEBUG SEMENTARA (hapus setelah investigasi "Telemetry not
+        # responding" selesai): ukur round-trip time tiap siklus, biar
+        # ketahuan apakah timeout baca 50ms kekecilan buat radio yang
+        # dipakai, atau linknya emang sering putus fisik.
+        _debug_rtt_list = []
+        _debug_waktu_ringkas = time.monotonic()
+
         while self._jalan:
             waktu_mulai = time.monotonic()
 
             nilai = self.penyedia_frame()
             frame = struct.pack(FORMAT_FRAME_GCS, *nilai)
-            ser.reset_input_buffer()  # buang sisa byte nyasar dari siklus sebelumnya yang gagal/telat
+
+            # SEMUA I/O 1 siklus (reset buffer + tulis + baca) dibungkus 1
+            # try/except - sebelumnya cuma ser.write() yang dijagain, jadi
+            # kalau reset_input_buffer()/ser.read() yang error (port kecabut
+            # fisik, modul RF hang, dll), thread ini mati diam-diam TANPA
+            # ada tanda apapun ke GUI (bug nyata yang kejadian pas testing
+            # RF asli - transmisi berhenti total tapi gak ada error/log sama
+            # sekali). Sekarang exception apapun di sini kelacak & dilaporin.
             try:
+                ser.reset_input_buffer()  # buang sisa byte nyasar dari siklus sebelumnya yang gagal/telat
                 ser.write(frame)
-            except serial.SerialException:
+                t_baca_mulai = time.monotonic()
+                respons = ser.read(GCS_REPLY_LEN)
+                rtt_ms = (time.monotonic() - t_baca_mulai) * 1000
+            except serial.SerialException as e:
+                self.error_terjadi.emit(f"Link RF terputus ({self.port}): {e}")
+                if status_connect_sekarang:
+                    self.jetson_terputus.emit()
                 break
 
-            respons = ser.read(GCS_REPLY_LEN)
             valid = False
             if len(respons) == GCS_REPLY_LEN and respons[0] == GCS_REPLY_MARKER:
                 checksum_hitung = respons[1] ^ respons[2] ^ respons[3] ^ respons[4]
                 valid = checksum_hitung == respons[5]
 
             if valid:
+                _debug_rtt_list.append(rtt_ms)
                 miss_berturut = 0
                 if not status_connect_sekarang:
                     status_connect_sekarang = True
@@ -187,10 +221,22 @@ class RFLink(QThread):
                     "lrf_jarak_meter": jarak_desimeter / 10.0,
                 })
             else:
+                print(f"[RF DEBUG] MISS - {len(respons)}/{GCS_REPLY_LEN} byte diterima, "
+                      f"nunggu {rtt_ms:.1f}ms (timeout={ser.timeout * 1000:.0f}ms)")
                 miss_berturut += 1
                 if status_connect_sekarang and miss_berturut >= self.AMBANG_MISS_BERTURUT:
                     status_connect_sekarang = False
                     self.jetson_terputus.emit()
+
+            if time.monotonic() - _debug_waktu_ringkas > 1.0:
+                if _debug_rtt_list:
+                    print(f"[RF DEBUG] 1 detik terakhir: {len(_debug_rtt_list)} sukses - "
+                          f"RTT min={min(_debug_rtt_list):.1f}ms avg={sum(_debug_rtt_list)/len(_debug_rtt_list):.1f}ms "
+                          f"max={max(_debug_rtt_list):.1f}ms")
+                else:
+                    print("[RF DEBUG] 1 detik terakhir: 0 respons sukses sama sekali")
+                _debug_rtt_list = []
+                _debug_waktu_ringkas = time.monotonic()
 
             sisa_waktu = self.interval - (time.monotonic() - waktu_mulai)
             if sisa_waktu > 0:
