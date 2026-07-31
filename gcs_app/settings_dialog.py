@@ -39,7 +39,8 @@ class SettingsDialog(QDialog):
 
         layout.addLayout(form)
 
-        btn_refresh = QPushButton("Refresh daftar port & kamera")
+        btn_refresh = QPushButton("Refresh")
+        btn_refresh.setStyleSheet("min-height: 45px;")
         btn_refresh.clicked.connect(self._refresh)
         layout.addWidget(btn_refresh)
 
@@ -51,13 +52,13 @@ class SettingsDialog(QDialog):
         self.combo_camera_name.setCurrentText(config_sekarang["camera_device_name"])
 
         baris_tombol = QHBoxLayout()
-        btn_simpan = QPushButton("Simpan")
-        btn_simpan.clicked.connect(self._simpan)
-        baris_tombol.addWidget(btn_simpan)
-
         btn_batal = QPushButton("Batal")
         btn_batal.clicked.connect(self.reject)
         baris_tombol.addWidget(btn_batal)
+
+        btn_simpan = QPushButton("Simpan")
+        btn_simpan.clicked.connect(self._simpan)
+        baris_tombol.addWidget(btn_simpan)
         layout.addLayout(baris_tombol)
 
     def _refresh(self):

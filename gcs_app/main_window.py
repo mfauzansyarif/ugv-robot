@@ -93,7 +93,7 @@ class MainWindow(QMainWindow):
         Toggle (klik=aktifkan, klik lagi=lepas) - bukan momentary, biar
         konsisten sama semua tombol lain yang udah diubah ke toggle buat
         touchscreen ini."""
-        btn = QPushButton("E-STOP")
+        btn = QPushButton("Emergency\nStop")
         btn.setCheckable(True)
         btn.setFixedSize(150, 150)
         btn.setStyleSheet(
