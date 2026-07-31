@@ -60,11 +60,11 @@ BAUDRATE = 57600
 KIRIM_INTERVAL_S = 0.5  # sama kayak interval versi auto-siklus
 
 FORMAT_REQUEST = "=BbbbbbBBBBbBbB"    # 14 byte
-FORMAT_RESPONSE = "=BBBB"              # 4 byte
+GCS_REPLY_MARKER = 0xA5
+SIZE_RESPONSE = 6                      # marker+stm32_status+lrf_status+lrf_lsb+lrf_msb+checksum(XOR)
 
 SIZE_REQUEST = struct.calcsize(FORMAT_REQUEST)
-SIZE_RESPONSE = struct.calcsize(FORMAT_RESPONSE)
-assert SIZE_REQUEST == 14 and SIZE_RESPONSE == 4
+assert SIZE_REQUEST == 14
 
 # (nama_field, ("range", (min,max)) ATAU ("choices", (nilai_valid,...))) -
 # urutan HARUS sama persis kayak FORMAT_REQUEST. Range/pilihan ini sesuai
@@ -123,8 +123,12 @@ def bangun_frame():
     return struct.pack(FORMAT_REQUEST, *nilai)
 
 
-def urai_balasan(raw4):
-    stm32_status, lrf_status, jarak_lsb, jarak_msb = struct.unpack(FORMAT_RESPONSE, raw4)
+def urai_balasan(raw6):
+    if raw6[0] != GCS_REPLY_MARKER:
+        return None
+    stm32_status, lrf_status, jarak_lsb, jarak_msb, checksum = raw6[1], raw6[2], raw6[3], raw6[4], raw6[5]
+    if (stm32_status ^ lrf_status ^ jarak_lsb ^ jarak_msb) != checksum:
+        return None
     return {
         "stm32_status": stm32_status,
         "lrf_status": lrf_status,
@@ -136,10 +140,13 @@ def thread_kirim(ser):
     global balasan_terakhir
     while not berhenti:
         frame = bangun_frame()
+        ser.reset_input_buffer()
         ser.write(frame)
         balasan = ser.read(SIZE_RESPONSE)
         if len(balasan) == SIZE_RESPONSE:
-            balasan_terakhir = urai_balasan(balasan)
+            hasil = urai_balasan(balasan)
+            if hasil is not None:
+                balasan_terakhir = hasil
         time.sleep(KIRIM_INTERVAL_S)
 
 

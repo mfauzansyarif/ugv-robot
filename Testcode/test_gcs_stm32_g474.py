@@ -21,8 +21,10 @@ Format frame (lihat dokumentasi/ROS2_BRIEF.md & gcs_app/serial_workers.py):
     fLamp, bLamp, slipRing, bodyUpDown,
     motorIndividualId, motorIndividualArah, kalibrasi
     (mode & armWidenNarrow dihapus - gak pernah dipakai)
-  Response (4 byte, STM32->GCS): "=BBBB"
-    stm32_status, lrf_status, lrf_jarak_lsb, lrf_jarak_msb
+  Response (6 byte, STM32->GCS): [marker(0xA5), stm32_status, lrf_status,
+    lrf_jarak_lsb, lrf_jarak_msb, checksum(XOR ke-4 byte status)]
+    Marker+checksum ditambahin karena link ini lewat RF beneran (byte bisa
+    geser/rusak di udara) - lihat main.c bagian GCS_REPLY_MARKER.
 
 STM32 SEKARANG (Fase 3, standalone) balas status DUMMY (stm32_status=1,
 sisanya 0) - belum relay ke Jetson, jadi field yang dikirim di sini BELUM
@@ -42,11 +44,11 @@ import serial.tools.list_ports
 BAUDRATE = 57600
 
 FORMAT_REQUEST = "=BbbbbbBBBBbBbB"    # 14 byte
-FORMAT_RESPONSE = "=BBBB"              # 4 byte
+GCS_REPLY_MARKER = 0xA5
+SIZE_RESPONSE = 6                      # marker+stm32_status+lrf_status+lrf_lsb+lrf_msb+checksum
 
 SIZE_REQUEST = struct.calcsize(FORMAT_REQUEST)
-SIZE_RESPONSE = struct.calcsize(FORMAT_RESPONSE)
-assert SIZE_REQUEST == 14 and SIZE_RESPONSE == 4
+assert SIZE_REQUEST == 14
 
 
 def pilih_port():
@@ -92,18 +94,24 @@ def main():
                 f_lamp = (siklus * 10) % 101
 
                 frame = bangun_frame(x_joy1=x_joy1, f_lamp=f_lamp, kalibrasi=0)
+                ser.reset_input_buffer()
                 ser.write(frame)
 
                 balasan = ser.read(SIZE_RESPONSE)
-                if len(balasan) == SIZE_RESPONSE:
-                    stm32_status, lrf_status, jarak_lsb, jarak_msb = struct.unpack(FORMAT_RESPONSE, balasan)
+                checksum_ok = (
+                    len(balasan) == SIZE_RESPONSE
+                    and balasan[0] == GCS_REPLY_MARKER
+                    and (balasan[1] ^ balasan[2] ^ balasan[3] ^ balasan[4]) == balasan[5]
+                )
+                if checksum_ok:
+                    stm32_status, lrf_status, jarak_lsb, jarak_msb = balasan[1], balasan[2], balasan[3], balasan[4]
                     jarak_meter = (jarak_lsb | (jarak_msb << 8)) / 10.0
                     print(f"[{siklus:04d}] TX xJoy1={x_joy1:+4d} fLamp={f_lamp:3d}  "
                           f"raw={frame.hex()}  |  RX stm32_status={stm32_status} "
                           f"lrf_status={lrf_status} jarak={jarak_meter:.1f}m")
                 else:
                     print(f"[{siklus:04d}] TX xJoy1={x_joy1:+4d} fLamp={f_lamp:3d}  "
-                          f"raw={frame.hex()}  |  RX: TIMEOUT ({len(balasan)} byte)")
+                          f"raw={frame.hex()}  |  RX: TIMEOUT/INVALID ({len(balasan)} byte: {balasan.hex()})")
 
                 siklus += 1
                 time.sleep(0.5)
