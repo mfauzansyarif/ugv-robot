@@ -29,13 +29,13 @@ class ArduinoReader(QThread):
     frame_diterima = Signal(dict)
     terhubung = Signal()
     terputus = Signal()
+    error_terjadi = Signal(str)
 
     def __init__(self, port, baudrate=57600, parent=None):
         super().__init__(parent)
         self.port = port
         self.baudrate = baudrate
         self._jalan = True
-        self._pernah_connect = False
 
     def stop(self):
         self._jalan = False
@@ -44,8 +44,11 @@ class ArduinoReader(QThread):
     def run(self):
         try:
             ser = serial.Serial(self.port, self.baudrate, timeout=0.2)
-        except serial.SerialException:
-            self.terputus.emit()
+        except serial.SerialException as e:
+            # Gagal buka port SAMA SEKALI (beda dari 'terputus' - itu buat
+            # yang UDAH connect terus putus) - biar label GUI bisa bedain
+            # "Connection Failed" vs "Disconnected".
+            self.error_terjadi.emit(f"Failed to open GCS Board port {self.port}: {e}")
             return
 
         waktu_terakhir_valid = time.monotonic()
@@ -54,7 +57,12 @@ class ArduinoReader(QThread):
         while self._jalan:
             try:
                 baris = ser.readline()
-            except serial.SerialException:
+            except serial.SerialException as e:
+                # Sebelumnya di-break diam-diam tanpa sinyal apapun (bug
+                # yang sama kayak RFLink dulu) - sekarang dilaporin.
+                self.error_terjadi.emit(f"GCS Board link lost ({self.port}): {e}")
+                if status_connect_sekarang:
+                    self.terputus.emit()
                 break
 
             if baris:
@@ -164,8 +172,11 @@ class RFLink(QThread):
             # terburuk yang pernah kerekam sukses.
             ser = serial.Serial(self.port, self.baudrate, timeout=0.1)
         except serial.SerialException as e:
-            self.error_terjadi.emit(f"Gagal buka port RF {self.port}: {e}")
-            self.jetson_terputus.emit()
+            # Cuma error_terjadi (bukan jetson_terputus juga) - ini kasus
+            # "gak pernah kesambung sama sekali", beda dari "udah connect
+            # terus putus" (biar label GUI bisa bedain Connection Failed
+            # vs Disconnected, lihat _on_rf_error di main_window.py).
+            self.error_terjadi.emit(f"Failed to open RF port {self.port}: {e}")
             return
 
         miss_berturut = 0
@@ -198,7 +209,7 @@ class RFLink(QThread):
                 respons = ser.read(GCS_REPLY_LEN)
                 rtt_ms = (time.monotonic() - t_baca_mulai) * 1000
             except serial.SerialException as e:
-                self.error_terjadi.emit(f"Link RF terputus ({self.port}): {e}")
+                self.error_terjadi.emit(f"RF link lost ({self.port}): {e}")
                 if status_connect_sekarang:
                     self.jetson_terputus.emit()
                 break

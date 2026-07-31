@@ -106,9 +106,9 @@ class MainWindow(QMainWindow):
     def _toggle_estop(self):
         self._estop_aktif = self.sender().isChecked()
         if self._estop_aktif:
-            self.console_log.error("E-STOP AKTIF")
+            self.console_log.error("E-STOP ACTIVE")
         else:
-            self.console_log.info("E-STOP dilepas")
+            self.console_log.info("E-STOP released")
 
     def _buat_tombol_kanan_atas(self):
         """Shutdown (atas) + Settings (bawah) ditumpuk vertikal. Tinggi
@@ -287,7 +287,7 @@ class MainWindow(QMainWindow):
             QMessageBox.No
         )
         if reply == QMessageBox.Yes:
-            self.console_log.warning("Shutdown GCS")
+            self.console_log.warning("Shutting down GCS...")
             os.system("shutdown /s /t 0")
 
     def _toggle_slip_ring(self):
@@ -363,7 +363,7 @@ class MainWindow(QMainWindow):
         if index is None:
             if daftar_nama:
                 self.console_log.error(
-                    f"Kamera '{nama_dicari}' gak ketemu. Device yang kedetect: {daftar_nama}"
+                    f"Camera '{nama_dicari}' not found. Detected devices: {daftar_nama}"
                 )
             else:
                 self.console_log.error(
@@ -373,9 +373,9 @@ class MainWindow(QMainWindow):
 
         ok = self.camera_viewer.mulai(index)
         if ok:
-            self.console_log.info(f"Camera '{daftar_nama[index]}' dimulai (index {index})")
+            self.console_log.info(f"Camera '{daftar_nama[index]}' started (index {index})")
         else:
-            self.console_log.error(f"Gagal buka camera '{daftar_nama[index]}' (index {index})")
+            self.console_log.error(f"Failed to open camera '{daftar_nama[index]}' (index {index})")
 
     def _stop_kamera(self):
         self.camera_viewer.berhenti()
@@ -388,15 +388,25 @@ class MainWindow(QMainWindow):
             self._arduino_reader.stop()
             self._arduino_reader = None
             self.btn_connect_arduino.setText("Connect")
-            self.label_status_arduino.setText("Connection Failed")
+            # Ini AKSI OPERATOR (klik Disconnect sengaja), bukan kegagalan -
+            # dulu salah ke-set "Connection Failed" di sini.
+            self.label_status_arduino.setText("Disconnected")
+            self.console_log.info("GCS Board disconnected (by operator)")
             return
 
         self._arduino_reader = ArduinoReader(self._config["port_arduino"])
         self._arduino_reader.frame_diterima.connect(self._on_frame_arduino)
         self._arduino_reader.terhubung.connect(self._on_arduino_terhubung)
         self._arduino_reader.terputus.connect(self._on_arduino_terputus)
+        self._arduino_reader.error_terjadi.connect(self._on_arduino_error)
         self._arduino_reader.start()
         self.btn_connect_arduino.setText("Disconnect")
+
+    def _on_arduino_error(self, pesan):
+        """Gagal buka port SAMA SEKALI (belum pernah connect) - beda dari
+        _on_arduino_terputus (udah connect, baru putus)."""
+        self.label_status_arduino.setText("Connection Failed")
+        self.console_log.error(pesan)
 
     def _on_frame_arduino(self, frame):
         self._state_arduino = frame
@@ -423,16 +433,28 @@ class MainWindow(QMainWindow):
             self._rf_link.stop()
             self._rf_link = None
             self.btn_connect_rf.setText("Connect")
-            self.label_status_rf.setText("Connection Failed")
+            # Ini AKSI OPERATOR (klik Disconnect sengaja), bukan kegagalan -
+            # dulu salah ke-set "Connection Failed" di sini.
+            self.label_status_rf.setText("Disconnected")
+            self.console_log.info("Telemetry disconnected (by operator)")
             return
 
         self._rf_link = RFLink(self._config["port_rf"], self._bangun_frame_gcs)
         self._rf_link.telemetry_diterima.connect(self._on_telemetry)
         self._rf_link.jetson_terhubung.connect(self._on_jetson_terhubung)
         self._rf_link.jetson_terputus.connect(self._on_jetson_terputus)
-        self._rf_link.error_terjadi.connect(self.console_log.error)
+        self._rf_link.error_terjadi.connect(self._on_rf_error)
         self._rf_link.start()
         self.btn_connect_rf.setText("Disconnect")
+
+    def _on_rf_error(self, pesan):
+        """Set "Connection Failed" - kalau ternyata link ini SEBELUMNYA udah
+        berhasil connect, _on_jetson_terputus() (disambungkan ke sinyal
+        jetson_terputus yang ikut di-emit RFLink kalau status_connect_sekarang
+        True) bakal nimpa jadi "Disconnected" tepat setelah ini, urutannya
+        emang sengaja."""
+        self.label_status_rf.setText("Connection Failed")
+        self.console_log.error(pesan)
 
     @staticmethod
     def _axis_ke_signed(nilai_mentah):
@@ -495,9 +517,9 @@ class MainWindow(QMainWindow):
         stm32_ok = bool(data["stm32_status"])
         if stm32_ok != self._stm32_status_terakhir:
             if stm32_ok:
-                self.console_log.info("STM32 tersambung kembali")
+                self.console_log.info("STM32 reconnected")
             else:
-                self.console_log.error("STM32 tidak terhubung ke Jetson")
+                self.console_log.error("STM32 not connected to Jetson")
             self._stm32_status_terakhir = stm32_ok
 
         if stm32_ok:
