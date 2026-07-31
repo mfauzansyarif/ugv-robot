@@ -78,6 +78,15 @@ int bacaTombol(int pin) {
     return (digitalRead(pin) == LOW) ? 1 : 0;
 }
 
+/* Tombol pantilt (cam_atas/kanan/bawah/kiri) wiring fisiknya NC (Normally
+ * Closed) - kebalik dari tombol lain yang NO: idle=switch closed=LOW,
+ * ditekan=switch open=HIGH (dikonfirmasi user lewat test_arduino_baca_g474.py,
+ * kebaca 1 pas idle & malah jadi 0 pas ditekan). Dibalik di sini aja,
+ * BUKAN rewiring fisik ke NO. */
+int bacaTombolNC(int pin) {
+    return (digitalRead(pin) == HIGH) ? 1 : 0;
+}
+
 void setup() {
     Serial.begin(57600);
 
@@ -109,10 +118,10 @@ void loop() {
         int lampu     = bacaTombol(PIN_LAMPU_UTAMA);
         digitalWrite(PIN_LAMPU_INDIKATOR, lampu ? HIGH : LOW);
 
-        int camAtas   = bacaTombol(PIN_KAM_ATAS);
-        int camKanan  = bacaTombol(PIN_KAM_KANAN);
-        int camBawah  = bacaTombol(PIN_KAM_BAWAH);
-        int camKiri   = bacaTombol(PIN_KAM_KIRI);
+        int camAtas   = bacaTombolNC(PIN_KAM_ATAS);
+        int camKanan  = bacaTombolNC(PIN_KAM_KANAN);
+        int camBawah  = bacaTombolNC(PIN_KAM_BAWAH);
+        int camKiri   = bacaTombolNC(PIN_KAM_KIRI);
 
         Serial.print(x);         Serial.print(' ');
         Serial.print(y);         Serial.print(' ');
