@@ -135,7 +135,13 @@ class RFLink(QThread):
     jetson_terputus = Signal()
     error_terjadi = Signal(str)
 
-    AMBANG_MISS_BERTURUT = 5  # sekian kali gagal balasan berturut baru declare disconnect
+    # Naik dari 5 (2026-07-31): data lapangan nunjukin RTT sukses aja bisa
+    # sampai ~58ms, dan miss rate normal link RF ini ~75-80% - 5 miss
+    # berturut (250ms nominal) kena berkali-kali tiap detik walau link
+    # sebenarnya masih hidup, cuma lemot/lossy. 10 miss (~1 detik dgn
+    # timeout baru) lebih match sama karakter link asli, cukup buat UGV
+    # (bukan drone) tanpa telat declare disconnect kalau BENERAN putus.
+    AMBANG_MISS_BERTURUT = 10  # sekian kali gagal balasan berturut baru declare disconnect
 
     def __init__(self, port, penyedia_frame, baudrate=57600, hz=20, parent=None):
         super().__init__(parent)
@@ -151,7 +157,12 @@ class RFLink(QThread):
 
     def run(self):
         try:
-            ser = serial.Serial(self.port, self.baudrate, timeout=0.05)
+            # Naik dari 0.05 (2026-07-31): data [RF DEBUG] nunjukin RTT
+            # sukses aja bisa sampai ~58ms - budget 50ms mepet banget,
+            # mayoritas "MISS - 0/6 byte" itu kehabisan waktu tunggu bukan
+            # beneran gak ada balasan. 0.1 kasih headroom ~2x dari RTT
+            # terburuk yang pernah kerekam sukses.
+            ser = serial.Serial(self.port, self.baudrate, timeout=0.1)
         except serial.SerialException as e:
             self.error_terjadi.emit(f"Gagal buka port RF {self.port}: {e}")
             self.jetson_terputus.emit()
