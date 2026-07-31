@@ -112,13 +112,23 @@ class ArduinoReader(QThread):
 # (Mode & ArmWidenNarrow dihapus - gak pernah dipakai, lihat ROS2_BRIEF.md)
 FORMAT_FRAME_GCS = "=BbbbbbBBBBbBbB"
 
+# Balasan STM32->GCS: 6 byte [marker, stm32_status, lrf_status, lrf_lsb,
+# lrf_msb, checksum]. Link ini lewat RF beneran (bukan kabel langsung kayak
+# waktu testing awal), jadi byte bisa geser/hilang/rusak di udara - marker +
+# checksum (XOR ke-4 byte data) dipakai buat deteksi & buang balasan yang
+# gak valid, biar gak salah baca byte acak sebagai stm32_status (lihat
+# main.c bagian "GCS/RF - USART2" buat sisi STM32-nya).
+GCS_REPLY_MARKER = 0xA5
+GCS_REPLY_LEN = 6
+
 
 class RFLink(QThread):
     """Kelola siklus gantian request-response ke STM32: kirim 1 frame
     14-byte FIXED (selalu bentuk yang sama, gak ada mode/pause/marker byte
-    lagi), dengerin sebentar buat 4-byte telemetry balik. Penyedia_frame
-    dipanggil tiap siklus buat ambil nilai TERBARU yang mau dikirim (harus
-    cepat & non-blocking, dipanggil dari thread ini)."""
+    lagi), dengerin sebentar buat 6-byte telemetry balik (ber-marker+
+    checksum). Penyedia_frame dipanggil tiap siklus buat ambil nilai
+    TERBARU yang mau dikirim (harus cepat & non-blocking, dipanggil dari
+    thread ini)."""
 
     telemetry_diterima = Signal(dict)
     jetson_terhubung = Signal()
@@ -153,21 +163,27 @@ class RFLink(QThread):
 
             nilai = self.penyedia_frame()
             frame = struct.pack(FORMAT_FRAME_GCS, *nilai)
+            ser.reset_input_buffer()  # buang sisa byte nyasar dari siklus sebelumnya yang gagal/telat
             try:
                 ser.write(frame)
             except serial.SerialException:
                 break
 
-            respons = ser.read(4)
-            if len(respons) == 4:
+            respons = ser.read(GCS_REPLY_LEN)
+            valid = False
+            if len(respons) == GCS_REPLY_LEN and respons[0] == GCS_REPLY_MARKER:
+                checksum_hitung = respons[1] ^ respons[2] ^ respons[3] ^ respons[4]
+                valid = checksum_hitung == respons[5]
+
+            if valid:
                 miss_berturut = 0
                 if not status_connect_sekarang:
                     status_connect_sekarang = True
                     self.jetson_terhubung.emit()
-                jarak_desimeter = respons[2] | (respons[3] << 8)
+                jarak_desimeter = respons[3] | (respons[4] << 8)
                 self.telemetry_diterima.emit({
-                    "stm32_status": respons[0],
-                    "lrf_status": respons[1],
+                    "stm32_status": respons[1],
+                    "lrf_status": respons[2],
                     "lrf_jarak_meter": jarak_desimeter / 10.0,
                 })
             else:

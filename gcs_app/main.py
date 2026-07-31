@@ -19,6 +19,8 @@ def main():
     def keyPressEvent(event):
         if event.key() == Qt.Key_Escape:
             window.showNormal()
+        elif event.key() == Qt.Key_F11:
+            window.showFullScreen()
         else:
             QWidget.keyPressEvent(window, event)
 
