@@ -13,6 +13,14 @@ from main_window import MainWindow
 
 def main():
     app = QApplication(sys.argv)
+
+    # Semua teks dibikin 1.5x lebih besar dari font default Qt/OS - diambil
+    # relatif dari app.font() (bukan angka pt fixed) biar tetap proporsional
+    # ke apapun default size di sistem yang dipakai.
+    font_default = app.font()
+    font_default.setPointSizeF(font_default.pointSizeF() * 1.5)
+    app.setFont(font_default)
+
     # Semua tombol dibikin ~2x lebih tinggi dari default Qt (~28-30px jadi
     # ~60px) - touchscreen susah mencet tombol kecil, beda sama mouse yang
     # presisi. Global di sini (bukan per-tombol) biar konsisten ke SEMUA

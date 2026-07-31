@@ -64,13 +64,13 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget_pusat)
         layout_utama = QVBoxLayout(widget_pusat)
 
-        # Baris paling atas: panel connection (kiri, melebar) + tombol
-        # Shutdown (kanan mentok, terpisah dari group box connection biar
-        # jelas beda konteks - shutdown itu aksi level sistem/OS, bukan
-        # bagian dari koneksi Arduino/RF).
+        # Baris paling atas: panel connection (kiri, melebar) + Shutdown
+        # ditumpuk sama Settings (kanan mentok, terpisah dari group box
+        # connection biar jelas beda konteks - shutdown/settings itu aksi
+        # level sistem, bukan bagian dari koneksi Arduino/RF).
         baris_atas = QHBoxLayout()
         baris_atas.addWidget(self._buat_panel_koneksi(), stretch=1)
-        baris_atas.addWidget(self._buat_tombol_shutdown(), stretch=0, alignment=Qt.AlignTop)
+        baris_atas.addLayout(self._buat_tombol_kanan_atas())
         layout_utama.addLayout(baris_atas)
 
         baris_tengah = QHBoxLayout()
@@ -84,11 +84,27 @@ class MainWindow(QMainWindow):
 
         self.console_log.info("GCS Application Started")
 
-    def _buat_tombol_shutdown(self):
+    def _buat_tombol_kanan_atas(self):
+        """Shutdown (atas) + Settings (bawah) ditumpuk vertikal. Tinggi
+        masing-masing di-override lebih kecil dari default global tombol
+        (60px -> 45px, ~0.75x) via stylesheet per-widget (menang dibanding
+        stylesheet app-level) biar match tinggi panel Connection yang
+        sekarang udah 1 baris doang."""
+        layout = QVBoxLayout()
+
         btn_shutdown = QPushButton("⏻ Shutdown")
         btn_shutdown.setMaximumWidth(110)
+        btn_shutdown.setStyleSheet("min-height: 45px;")
         btn_shutdown.clicked.connect(self._shutdown_windows)
-        return btn_shutdown
+        layout.addWidget(btn_shutdown)
+
+        btn_settings = QPushButton("⚙ Settings")
+        btn_settings.setMaximumWidth(110)
+        btn_settings.setStyleSheet("min-height: 45px;")
+        btn_settings.clicked.connect(self._buka_settings)
+        layout.addWidget(btn_settings)
+
+        return layout
 
     def _buat_panel_koneksi(self):
         group = QGroupBox("Connection")
@@ -121,11 +137,6 @@ class MainWindow(QMainWindow):
         self.label_status_rf = QLabel("Failed")
         layout_rf.addWidget(self.label_status_rf)
         layout.addLayout(layout_rf)
-
-        btn_settings = QPushButton("⚙ Settings")
-        btn_settings.setMaximumWidth(100)
-        btn_settings.clicked.connect(self._buka_settings)
-        layout.addWidget(btn_settings)
 
         return group
 
