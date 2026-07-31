@@ -61,12 +61,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define MotorS_1_Pin GPIO_PIN_13
 #define MotorS_1_GPIO_Port GPIOC
-#define LinearL_3_Pin GPIO_PIN_15
-#define LinearL_3_GPIO_Port GPIOC
-#define LinearR_3_Pin GPIO_PIN_0
-#define LinearR_3_GPIO_Port GPIOF
-#define LinearL_5_Pin GPIO_PIN_1
-#define LinearL_5_GPIO_Port GPIOF
 #define Lamp_F_Pin GPIO_PIN_0
 #define Lamp_F_GPIO_Port GPIOC
 #define Lamp_B_Pin GPIO_PIN_1
@@ -83,8 +77,8 @@ void Error_Handler(void);
 #define Debug_TX_GPIO_Port GPIOA
 #define Debug_RX_Pin GPIO_PIN_3
 #define Debug_RX_GPIO_Port GPIOA
-#define LinearR_11_Pin GPIO_PIN_4
-#define LinearR_11_GPIO_Port GPIOA
+#define LinearL_5_Pin GPIO_PIN_4
+#define LinearL_5_GPIO_Port GPIOA
 #define MotorS_0_Pin GPIO_PIN_5
 #define MotorS_0_GPIO_Port GPIOA
 #define MotorP_0_Pin GPIO_PIN_6
@@ -105,14 +99,12 @@ void Error_Handler(void);
 #define Jetson_TX_GPIO_Port GPIOB
 #define Jetson_RX_Pin GPIO_PIN_11
 #define Jetson_RX_GPIO_Port GPIOB
-#define LinearR_8_Pin GPIO_PIN_12
-#define LinearR_8_GPIO_Port GPIOB
-#define LinearL_8_Pin GPIO_PIN_13
-#define LinearL_8_GPIO_Port GPIOB
+#define LinearL_3_Pin GPIO_PIN_12
+#define LinearL_3_GPIO_Port GPIOB
+#define LinearR_3_Pin GPIO_PIN_13
+#define LinearR_3_GPIO_Port GPIOB
 #define MotorP_3_Pin GPIO_PIN_14
 #define MotorP_3_GPIO_Port GPIOB
-#define LinearR_9_Pin GPIO_PIN_15
-#define LinearR_9_GPIO_Port GPIOB
 #define MotorP_2_Pin GPIO_PIN_6
 #define MotorP_2_GPIO_Port GPIOC
 #define LinearR_7_Pin GPIO_PIN_7
@@ -143,16 +135,8 @@ void Error_Handler(void);
 #define LinearL_0_GPIO_Port GPIOD
 #define RF_TX_Pin GPIO_PIN_3
 #define RF_TX_GPIO_Port GPIOB
-#define LinearL_9_Pin GPIO_PIN_4
-#define LinearL_9_GPIO_Port GPIOB
-#define LinearR_10_Pin GPIO_PIN_5
-#define LinearR_10_GPIO_Port GPIOB
-#define LinearL_10_Pin GPIO_PIN_6
-#define LinearL_10_GPIO_Port GPIOB
 #define MotorP_1_Pin GPIO_PIN_7
 #define MotorP_1_GPIO_Port GPIOB
-#define LinearL_11_Pin GPIO_PIN_9
-#define LinearL_11_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

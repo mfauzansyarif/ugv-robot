@@ -89,6 +89,9 @@ typedef struct {
 
 #define GCS_FRAME_LEN       14U  /* estop+xj1+yj1+xj2+yj2+zoom+lrf+flamp+blamp+slipring+bodyupdown+motorid+motorarah+kalibrasi (mode & armWidenNarrow dihapus, gak dipakai) */
 
+#define GCS_REPLY_MARKER    0xA5U /* byte pertama balasan GCS - biar RFLink di gcs_app bisa deteksi frame geser/rusak di udara (RF gak seideal kabel langsung) */
+#define GCS_REPLY_LEN       6U    /* marker+stm32_status+lrf_status+lrf_lsb+lrf_msb+checksum(XOR ke-4 byte data) */
+
 #define JETSON_DOWN_LEN     21U  /* Jetson -> STM32: speed+8act+flamp+blamp+blampmode+pantiltH+pantiltV+zoom+slipring+lrftrigger+4 gcsreply */
 #define JETSON_UP_LEN       18U  /* STM32 -> Jetson: 14 byte relay GCS + lrf_lsb+lrf_msb+lrf_status+stm32_status */
 
@@ -485,7 +488,11 @@ static uint8_t BridgeLrf_Pointer(uint8_t nyala) {
 
 /* ============================================================================
  * GCS/RF - USART2, 57600. STM32 DIDIAMKAN dengerin (interrupt), balas begitu
- * 14 byte lengkap diterima. Status yang dibalas diambil dari gcsBalasanCache
+ * 14 byte lengkap diterima, dengan 6 byte ber-marker+checksum (GCS_REPLY_MARKER
+ * + 4 byte status + XOR checksum) - link ini lewat RF beneran (bukan kabel),
+ * jadi byte bisa geser/rusak di udara, makanya dikasih proteksi minimal biar
+ * gcs_app bisa deteksi & buang balasan yang gak valid alih-alih salah baca
+ * byte acak sebagai status. Status yang dibalas diambil dari gcsBalasanCache
  * (diisi Jetson lewat down-frame - lihat JetsonApplyCommand).
  * ==========================================================================*/
 
@@ -802,7 +809,14 @@ int main(void)
             cmd.estop, cmd.xJoy1, cmd.yJoy1, cmd.xJoy2, cmd.yJoy2,
             cmd.fLamp, cmd.bLamp, cmd.kalibrasi);
 
-        HAL_UART_Transmit(&huart2, gcsBalasanCache, 4U, UART_TX_TIMEOUT_MS);
+        uint8_t balasanFrame[GCS_REPLY_LEN];
+        balasanFrame[0] = GCS_REPLY_MARKER;
+        balasanFrame[1] = gcsBalasanCache[0];
+        balasanFrame[2] = gcsBalasanCache[1];
+        balasanFrame[3] = gcsBalasanCache[2];
+        balasanFrame[4] = gcsBalasanCache[3];
+        balasanFrame[5] = (uint8_t)(balasanFrame[1] ^ balasanFrame[2] ^ balasanFrame[3] ^ balasanFrame[4]);
+        HAL_UART_Transmit(&huart2, balasanFrame, GCS_REPLY_LEN, UART_TX_TIMEOUT_MS);
     }
 
     /* USER CODE END WHILE */
@@ -1408,64 +1422,50 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, MotorS_1_Pin|LinearL_3_Pin|LinearR_5_Pin|MotorS_3_Pin
-                          |LinearR_7_Pin|MotorS_2_Pin|LinearR_1_Pin|LinearL_4_Pin
-                          |LinearR_0_Pin|LinearR_4_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, MotorS_1_Pin|LinearR_5_Pin|MotorS_3_Pin|LinearR_7_Pin
+                          |MotorS_2_Pin|LinearR_1_Pin|LinearL_4_Pin|LinearR_0_Pin
+                          |LinearR_4_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOF, LinearR_3_Pin|LinearL_5_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LinearR_2_Pin|LinearL_2_Pin|LinearR_11_Pin|MotorS_0_Pin
+  HAL_GPIO_WritePin(GPIOA, LinearR_2_Pin|LinearL_2_Pin|LinearL_5_Pin|MotorS_0_Pin
                           |LinearL_1_Pin|LinearL_6_Pin|LinearL_7_Pin|LinearR_6_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LED_Jetson_Pin|LED_RF_Pin|LED_Heartbeat_Pin|LinearR_8_Pin
-                          |LinearL_8_Pin|LinearR_9_Pin|LinearL_9_Pin|LinearR_10_Pin
-                          |LinearL_10_Pin|LinearL_11_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LED_Jetson_Pin|LED_RF_Pin|LED_Heartbeat_Pin|LinearL_3_Pin
+                          |LinearR_3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LinearL_0_GPIO_Port, LinearL_0_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : MotorS_1_Pin LinearL_3_Pin LinearR_5_Pin MotorS_3_Pin
-                           LinearR_7_Pin MotorS_2_Pin LinearR_1_Pin LinearL_4_Pin
-                           LinearR_0_Pin LinearR_4_Pin */
-  GPIO_InitStruct.Pin = MotorS_1_Pin|LinearL_3_Pin|LinearR_5_Pin|MotorS_3_Pin
-                          |LinearR_7_Pin|MotorS_2_Pin|LinearR_1_Pin|LinearL_4_Pin
-                          |LinearR_0_Pin|LinearR_4_Pin;
+  /*Configure GPIO pins : MotorS_1_Pin LinearR_5_Pin MotorS_3_Pin LinearR_7_Pin
+                           MotorS_2_Pin LinearR_1_Pin LinearL_4_Pin LinearR_0_Pin
+                           LinearR_4_Pin */
+  GPIO_InitStruct.Pin = MotorS_1_Pin|LinearR_5_Pin|MotorS_3_Pin|LinearR_7_Pin
+                          |MotorS_2_Pin|LinearR_1_Pin|LinearL_4_Pin|LinearR_0_Pin
+                          |LinearR_4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LinearR_3_Pin LinearL_5_Pin */
-  GPIO_InitStruct.Pin = LinearR_3_Pin|LinearL_5_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : LinearR_2_Pin LinearL_2_Pin LinearR_11_Pin MotorS_0_Pin
+  /*Configure GPIO pins : LinearR_2_Pin LinearL_2_Pin LinearL_5_Pin MotorS_0_Pin
                            LinearL_1_Pin LinearL_6_Pin LinearL_7_Pin LinearR_6_Pin */
-  GPIO_InitStruct.Pin = LinearR_2_Pin|LinearL_2_Pin|LinearR_11_Pin|MotorS_0_Pin
+  GPIO_InitStruct.Pin = LinearR_2_Pin|LinearL_2_Pin|LinearL_5_Pin|MotorS_0_Pin
                           |LinearL_1_Pin|LinearL_6_Pin|LinearL_7_Pin|LinearR_6_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LED_Jetson_Pin LED_RF_Pin LED_Heartbeat_Pin LinearR_8_Pin
-                           LinearL_8_Pin LinearR_9_Pin LinearL_9_Pin LinearR_10_Pin
-                           LinearL_10_Pin LinearL_11_Pin */
-  GPIO_InitStruct.Pin = LED_Jetson_Pin|LED_RF_Pin|LED_Heartbeat_Pin|LinearR_8_Pin
-                          |LinearL_8_Pin|LinearR_9_Pin|LinearL_9_Pin|LinearR_10_Pin
-                          |LinearL_10_Pin|LinearL_11_Pin;
+  /*Configure GPIO pins : LED_Jetson_Pin LED_RF_Pin LED_Heartbeat_Pin LinearL_3_Pin
+                           LinearR_3_Pin */
+  GPIO_InitStruct.Pin = LED_Jetson_Pin|LED_RF_Pin|LED_Heartbeat_Pin|LinearL_3_Pin
+                          |LinearR_3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
