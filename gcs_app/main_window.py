@@ -37,6 +37,7 @@ class MainWindow(QMainWindow):
             "lampu": 0, "cam_atas": 0, "cam_kanan": 0, "cam_bawah": 0, "cam_kiri": 0,
         }
         self._slip_ring_on = False
+        self._estop_aktif = False  # tombol virtual E-STOP di samping console log
         self._stm32_status_terakhir = None  # None = belum ada telemetry masuk sama sekali
 
         # State tombol Raise/Lower di touchscreen (terpisah dari state
@@ -78,11 +79,36 @@ class MainWindow(QMainWindow):
         baris_tengah.addWidget(self._buat_panel_kamera(), stretch=2)
         layout_utama.addLayout(baris_tengah, stretch=1)
 
+        baris_bawah = QHBoxLayout()
         self.console_log = ConsoleLog()
         self.console_log.setMinimumHeight(150)
-        layout_utama.addWidget(self.console_log)
+        baris_bawah.addWidget(self.console_log, stretch=1)
+        baris_bawah.addWidget(self._buat_tombol_estop())
+        layout_utama.addLayout(baris_bawah)
 
         self.console_log.info("GCS Application Started")
+
+    def _buat_tombol_estop(self):
+        """Tombol virtual E-STOP, persegi, di samping kanan console log.
+        Toggle (klik=aktifkan, klik lagi=lepas) - bukan momentary, biar
+        konsisten sama semua tombol lain yang udah diubah ke toggle buat
+        touchscreen ini."""
+        btn = QPushButton("E-STOP")
+        btn.setCheckable(True)
+        btn.setFixedSize(150, 150)
+        btn.setStyleSheet(
+            "QPushButton { background-color: #b71c1c; color: white; font-weight: bold; }"
+            "QPushButton:checked { background-color: #ff1744; border: 4px solid white; }"
+        )
+        btn.clicked.connect(self._toggle_estop)
+        return btn
+
+    def _toggle_estop(self):
+        self._estop_aktif = self.sender().isChecked()
+        if self._estop_aktif:
+            self.console_log.error("E-STOP AKTIF")
+        else:
+            self.console_log.info("E-STOP dilepas")
 
     def _buat_tombol_kanan_atas(self):
         """Shutdown (atas) + Settings (bawah) ditumpuk vertikal. Tinggi
@@ -422,11 +448,9 @@ class MainWindow(QMainWindow):
         HARUS cepat & gak blocking."""
         s = self._state_arduino
 
-        # TODO: Estop belum ada sumbernya (gak ada tombol fisik di daftar
-        # panel) - masih placeholder 0.
         # (Mode dihapus dari frame - dari awal gak pernah kepake/gak ada
         # sumbernya juga, lihat ROS2_BRIEF.md)
-        estop = 0
+        estop = 1 if self._estop_aktif else 0
 
         x1 = self._axis_ke_signed(s["x"])
         y1 = self._axis_ke_signed(s["y"])
@@ -445,9 +469,8 @@ class MainWindow(QMainWindow):
 
         lampu_on = bool(s["lampu"])
         flamp = self.slider_lampu.value() if lampu_on else 0
-        # TODO: asumsi blamp=2 (kedip) kalau y negatif (mundur) - konfirmasi
-        # ke user apa keputusan "kedip pas mundur" ini emang dihitung di GCS
-        # atau harusnya di STM32/Jetson.
+        # blamp=2 (kedip) pas y1 negatif (mundur) - LOGIC INI SUDAH BENAR
+        # & UDAH WORKS, JANGAN DIUBAH LAGI (dikonfirmasi user 2026-07-31).
         if not lampu_on:
             blamp = 0
         elif y1 < 0:

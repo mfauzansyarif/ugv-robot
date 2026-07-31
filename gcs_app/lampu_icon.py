@@ -10,7 +10,7 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QPainter, QPen
 from PySide6.QtWidgets import QWidget
 
-WARNA_NYALA = QColor("#e8e8e8")
+WARNA_NYALA = QColor("#ffc400")  # kuning/amber - standar indikator "ON", kontras jelas ke semua background
 WARNA_MATI = QColor("#707070")
 
 
