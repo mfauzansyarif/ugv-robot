@@ -180,15 +180,22 @@ class MainWindow(QMainWindow):
         # (Tombol Widen/Narrow arm DIHAPUS - actuator arm/RArm/LArm udah
         # dibatalkan, field ArmWidenNarrow juga udah dihapus dari protokol.)
         grid_body = QGridLayout()
+        # Toggle, BUKAN press/hold - touchscreen-nya ternyata gak reliable
+        # deteksi hold (pressed/released), jadi klik = mulai gerak, klik
+        # lagi = berhenti. Klik tombol lawan otomatis matiin yang ini biar
+        # gak dua-duanya aktif bareng (lihat _toggle_body_button).
         self.btn_raise = QPushButton("Raise (↑)")
-        self.btn_raise.pressed.connect(lambda: self._set_touch_fbody_bbody(1))
-        self.btn_raise.released.connect(lambda: self._set_touch_fbody_bbody(0))
+        self.btn_raise.setCheckable(True)
         grid_body.addWidget(self.btn_raise, 0, 0)
 
         self.btn_lower = QPushButton("Lower (↓)")
-        self.btn_lower.pressed.connect(lambda: self._set_touch_fbody_bbody(-1))
-        self.btn_lower.released.connect(lambda: self._set_touch_fbody_bbody(0))
+        self.btn_lower.setCheckable(True)
         grid_body.addWidget(self.btn_lower, 0, 1)
+
+        self.btn_raise.clicked.connect(
+            lambda: self._toggle_body_button(self.btn_raise, self.btn_lower, 1))
+        self.btn_lower.clicked.connect(
+            lambda: self._toggle_body_button(self.btn_lower, self.btn_raise, -1))
         layout.addLayout(grid_body)
 
         self.label_status_motor_linear = QLabel("Stopped")
@@ -275,6 +282,15 @@ class MainWindow(QMainWindow):
     def _set_touch_fbody_bbody(self, nilai):
         self._touch_fbody_bbody = nilai
         self._update_label_motor_linear()
+
+    def _toggle_body_button(self, btn_ditekan, btn_lawan, arah):
+        """Toggle style (klik=mulai, klik lagi=stop) buat Raise/Lower -
+        klik tombol lawan otomatis matiin ini biar gak dua-duanya aktif."""
+        if btn_ditekan.isChecked():
+            btn_lawan.setChecked(False)
+            self._set_touch_fbody_bbody(arah)
+        else:
+            self._set_touch_fbody_bbody(0)
 
     def _hitung_fbody_bbody(self):
         """Touchscreen (Raise/Lower) menang kalau aktif, kalau enggak jatuh

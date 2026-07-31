@@ -13,6 +13,11 @@ from main_window import MainWindow
 
 def main():
     app = QApplication(sys.argv)
+    # Semua tombol dibikin ~2x lebih tinggi dari default Qt (~28-30px jadi
+    # ~60px) - touchscreen susah mencet tombol kecil, beda sama mouse yang
+    # presisi. Global di sini (bukan per-tombol) biar konsisten ke SEMUA
+    # dialog juga (MotorLinearDialog, SettingsDialog), gak cuma MainWindow.
+    app.setStyleSheet("QPushButton { min-height: 60px; }")
     window = MainWindow()
     window.resize(1200, 800)
 

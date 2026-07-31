@@ -48,6 +48,11 @@ class MotorLinearDialog(QDialog):
 
         layout_utama = QVBoxLayout(self)
 
+        # Semua tombol di bawah TOGGLE (klik=mulai, klik lagi=stop), BUKAN
+        # press/hold - touchscreen-nya ternyata gak reliable deteksi hold
+        # (pressed/released gak selalu ke-trigger bener). Klik tombol lawan
+        # otomatis matiin yang lain biar gak dua arah aktif bareng, lihat
+        # _toggle_pasangan().
         layout_utama.addWidget(QLabel("Steering (berpasangan depan/belakang):"))
         grid_steering = QGridLayout()
         for baris, nama in enumerate(DAFTAR_STEERING):
@@ -55,15 +60,18 @@ class MotorLinearDialog(QDialog):
             grid_steering.addWidget(QLabel(nama), baris, 0)
 
             btn_kiri = QPushButton("Left")
-            btn_kiri.pressed.connect(lambda m=motor_id: self._kirim(m, -1, "left"))
-            btn_kiri.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
+            btn_kiri.setCheckable(True)
             grid_steering.addWidget(btn_kiri, baris, 1)
 
             btn_kanan = QPushButton("Right")
-            btn_kanan.pressed.connect(lambda m=motor_id: self._kirim(m, 1, "right"))
-            btn_kanan.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
+            btn_kanan.setCheckable(True)
             grid_steering.addWidget(btn_kanan, baris, 2)
-            
+
+            btn_kiri.clicked.connect(
+                lambda m=motor_id, b=btn_kiri, lawan=btn_kanan: self._toggle_pasangan(b, lawan, m, -1, "left"))
+            btn_kanan.clicked.connect(
+                lambda m=motor_id, b=btn_kanan, lawan=btn_kiri: self._toggle_pasangan(b, lawan, m, 1, "right"))
+
         layout_utama.addLayout(grid_steering)
 
         layout_utama.addWidget(QLabel("Body (individual per-actuator):"))
@@ -73,15 +81,18 @@ class MotorLinearDialog(QDialog):
             grid_body.addWidget(QLabel(nama), baris, 0)
 
             btn_retract = QPushButton("Retract")
-            btn_retract.pressed.connect(lambda m=motor_id: self._kirim(m, -1, "retract"))
-            btn_retract.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
+            btn_retract.setCheckable(True)
             grid_body.addWidget(btn_retract, baris, 1)
 
             btn_extend = QPushButton("Extend")
-            btn_extend.pressed.connect(lambda m=motor_id: self._kirim(m, 1, "extend"))
-            btn_extend.released.connect(lambda m=motor_id: self._kirim(m, 0, "stop"))
+            btn_extend.setCheckable(True)
             grid_body.addWidget(btn_extend, baris, 2)
-            
+
+            btn_retract.clicked.connect(
+                lambda m=motor_id, b=btn_retract, lawan=btn_extend: self._toggle_pasangan(b, lawan, m, -1, "retract"))
+            btn_extend.clicked.connect(
+                lambda m=motor_id, b=btn_extend, lawan=btn_retract: self._toggle_pasangan(b, lawan, m, 1, "extend"))
+
         layout_utama.addLayout(grid_body)
 
         baris_bawah = QHBoxLayout()
@@ -100,6 +111,16 @@ class MotorLinearDialog(QDialog):
         nama = nama_semua[motor_id - 1]
         self.set_individual(motor_id, arah)
         self.console_log.info(f"[Individual] {nama}: {label_aksi}")
+
+    def _toggle_pasangan(self, btn_ditekan, btn_lawan, motor_id, arah, label_aksi):
+        """Toggle style (klik=mulai, klik lagi=stop) buat sepasang tombol
+        arah berlawanan (Left/Right atau Retract/Extend) - klik tombol
+        lawan otomatis matiin yang ini biar gak dua-duanya aktif bareng."""
+        if btn_ditekan.isChecked():
+            btn_lawan.setChecked(False)
+            self._kirim(motor_id, arah, label_aksi)
+        else:
+            self._kirim(motor_id, 0, "stop")
 
     def _kirim_kalibrasi(self):
         self.trigger_kalibrasi()
