@@ -212,8 +212,16 @@ motorIndividualArah, kalibrasi — urutan byte SAMA PERSIS kayak offset
 dari awal gak ada sumbernya/gak kepake, `armWidenNarrow` gak relevan lagi
 karena actuator arm/RArm/LArm udah dibatalkan.)
 
-**STM32 → GCS, 4 byte** (`"=BBBB"`): `[stm32_status][lrf_status][lrf_jarak_lsb][lrf_jarak_msb]`
+**STM32 → GCS, 6 byte**: `[marker=0xA5][stm32_status][lrf_status][lrf_jarak_lsb][lrf_jarak_msb][checksum]`
 - nilainya dari cache yang DIISI Core Node lewat `gcsReply*` di down-frame.
+- marker+checksum (XOR ke-4 byte status) ditambahin karena link GCS↔STM32
+  ini lewat RF beneran (bukan kabel langsung) - byte bisa geser/rusak di
+  udara, ketauan pas testing gcs_app: byte `stm32_status` sesekali kebaca
+  0 padahal Core Node selalu kirim 1, ternyata bukan datanya yang salah
+  tapi alignment baca di `gcs_app` yang geser gara-gara gak ada proteksi
+  framing sama sekali di channel ini (beda dari 3 channel lain yang pakai
+  ReceiveToIdle auto-resync). `gcs_app` sekarang buang balasan yang
+  marker/checksum-nya gak cocok, dianggap sama kayak timeout/miss.
 
 ## Saran buat yang baru mulai ROS2
 

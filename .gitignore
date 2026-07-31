@@ -18,3 +18,7 @@ STM32Cube/**/Release/
 STM32Cube/**/.settings/
 STM32Cube/**/.metadata/
 STM32Cube/**/.mxproject
+
+# Python bytecode cache
+**/__pycache__/
+**/*.pyc
