@@ -92,33 +92,40 @@ class MainWindow(QMainWindow):
 
     def _buat_panel_koneksi(self):
         group = QGroupBox("Connection")
-        layout = QGridLayout(group)
+        layout = QHBoxLayout(group)
 
         # NOTE: port/nama kamera SENGAJA read-only di sini (cuma label) -
         # biar gak ke-tap/ke-ubah gak sengaja di touchscreen operator biasa.
         # Ubah lewat tombol "⚙ Settings" kecil di pojok (buka dialog terpisah).
+        # GCS Board & Telemetry disusun SAMPING-SAMPINGAN (1 baris, bukan
+        # 1 kolom 2 baris) biar panel Connection gak makan tinggi, nyisain
+        # ruang lebih buat Camera Viewer.
+        layout_arduino = QHBoxLayout()
+        layout_arduino.addWidget(QLabel("GCS Board:"))
         self.label_port_arduino = QLabel(self._config["port_arduino"])
-        layout.addWidget(QLabel("GCS Board:"), 0, 0)
-        layout.addWidget(self.label_port_arduino, 0, 1)
+        layout_arduino.addWidget(self.label_port_arduino)
         self.btn_connect_arduino = QPushButton("Connect")
         self.btn_connect_arduino.clicked.connect(self._toggle_arduino)
-        layout.addWidget(self.btn_connect_arduino, 0, 2)
+        layout_arduino.addWidget(self.btn_connect_arduino)
         self.label_status_arduino = QLabel("Failed")
-        layout.addWidget(self.label_status_arduino, 0, 3)
+        layout_arduino.addWidget(self.label_status_arduino)
+        layout.addLayout(layout_arduino)
 
+        layout_rf = QHBoxLayout()
+        layout_rf.addWidget(QLabel("Telemetry:"))
         self.label_port_rf = QLabel(self._config["port_rf"])
-        layout.addWidget(QLabel("Telemetry:"), 1, 0)
-        layout.addWidget(self.label_port_rf, 1, 1)
+        layout_rf.addWidget(self.label_port_rf)
         self.btn_connect_rf = QPushButton("Connect")
         self.btn_connect_rf.clicked.connect(self._toggle_rf)
-        layout.addWidget(self.btn_connect_rf, 1, 2)
+        layout_rf.addWidget(self.btn_connect_rf)
         self.label_status_rf = QLabel("Failed")
-        layout.addWidget(self.label_status_rf, 1, 3)
+        layout_rf.addWidget(self.label_status_rf)
+        layout.addLayout(layout_rf)
 
         btn_settings = QPushButton("⚙ Settings")
         btn_settings.setMaximumWidth(100)
         btn_settings.clicked.connect(self._buka_settings)
-        layout.addWidget(btn_settings, 0, 4, 2, 1)
+        layout.addWidget(btn_settings)
 
         return group
 
