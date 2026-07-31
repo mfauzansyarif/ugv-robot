@@ -370,6 +370,7 @@ class MainWindow(QMainWindow):
         self._rf_link.telemetry_diterima.connect(self._on_telemetry)
         self._rf_link.jetson_terhubung.connect(self._on_jetson_terhubung)
         self._rf_link.jetson_terputus.connect(self._on_jetson_terputus)
+        self._rf_link.error_terjadi.connect(self.console_log.error)
         self._rf_link.start()
         self.btn_connect_rf.setText("Disconnect")
 
