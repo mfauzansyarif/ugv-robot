@@ -3,8 +3,10 @@ MainWindow lewat callback (set_individual/set_kalibrasi), yang ikut ke
 SETIAP frame 14-byte yang dikirim RFLink - dialog ini gak perlu tau
 apa-apa soal RF link sama sekali.
 
-Steering di-LOCK berpasangan (gerakin 2 actuator sekaligus, arah
-berlawanan), Body tetap individual per-actuator.
+Hardware cuma bisa gerakin BENAR-BENAR 1 bagian motor linear dalam satu
+waktu, jadi SEMUA 12 tombol arah (steering + body) saling exclusive
+global - klik tombol manapun otomatis matiin SEMUA tombol lain, gak
+cuma pasangannya sendiri (lihat _toggle_tombol).
 
 motor_id yang dikirim:
   1 = Steering Depan    (1=kanan, -1=kiri, 0=stop -> act0+act1 berlawanan)
@@ -36,8 +38,20 @@ class MotorLinearDialog(QDialog):
 
         layout_utama = QVBoxLayout(self)
 
+        # Semua tombol arah individual (steering + body) - dipakai buat
+        # mutual exclusion GLOBAL di _toggle_tombol (klik 1 matiin semua
+        # yang lain, gak cuma pasangannya sendiri).
+        self._semua_tombol = []
+
         # Semua tombol TOGGLE (klik=mulai, klik lagi=stop) - touchscreen
-        # gak reliable deteksi hold. Lihat _toggle_pasangan().
+        # gak reliable deteksi hold. Lihat _toggle_tombol().
+        #
+        # NOTE: lambda di bawah SENGAJA taruh parameter `checked` di
+        # PALING DEPAN (sebelum b=.../m=...) - sinyal clicked() Qt selalu
+        # ngirim argumen bool `checked`, dan kalau parameter pertama lambda
+        # itu salah satu yang kita pakai buat "capture" (m=motor_id dst),
+        # Qt bakal nimpa nilai capture itu pakai bool checked-nya (True/
+        # False kebaca kayak 1/0) - itu penyebab bug "motor id selalu 1".
         layout_utama.addWidget(QLabel("Steering (berpasangan depan/belakang):"))
         grid_steering = QGridLayout()
         for baris, nama in enumerate(DAFTAR_STEERING):
@@ -53,9 +67,10 @@ class MotorLinearDialog(QDialog):
             grid_steering.addWidget(btn_kanan, baris, 2)
 
             btn_kiri.clicked.connect(
-                lambda m=motor_id, b=btn_kiri, lawan=btn_kanan: self._toggle_pasangan(b, lawan, m, -1, "left"))
+                lambda checked, b=btn_kiri, m=motor_id: self._toggle_tombol(b, m, -1, "left"))
             btn_kanan.clicked.connect(
-                lambda m=motor_id, b=btn_kanan, lawan=btn_kiri: self._toggle_pasangan(b, lawan, m, 1, "right"))
+                lambda checked, b=btn_kanan, m=motor_id: self._toggle_tombol(b, m, 1, "right"))
+            self._semua_tombol += [btn_kiri, btn_kanan]
 
         layout_utama.addLayout(grid_steering)
 
@@ -74,9 +89,10 @@ class MotorLinearDialog(QDialog):
             grid_body.addWidget(btn_extend, baris, 2)
 
             btn_retract.clicked.connect(
-                lambda m=motor_id, b=btn_retract, lawan=btn_extend: self._toggle_pasangan(b, lawan, m, -1, "retract"))
+                lambda checked, b=btn_retract, m=motor_id: self._toggle_tombol(b, m, -1, "retract"))
             btn_extend.clicked.connect(
-                lambda m=motor_id, b=btn_extend, lawan=btn_retract: self._toggle_pasangan(b, lawan, m, 1, "extend"))
+                lambda checked, b=btn_extend, m=motor_id: self._toggle_tombol(b, m, 1, "extend"))
+            self._semua_tombol += [btn_retract, btn_extend]
 
         layout_utama.addLayout(grid_body)
 
@@ -97,12 +113,16 @@ class MotorLinearDialog(QDialog):
         self.set_individual(motor_id, arah)
         self.console_log.info(f"[Individual] {nama}: {label_aksi}")
 
-    def _toggle_pasangan(self, btn_ditekan, btn_lawan, motor_id, arah, label_aksi):
-        """Toggle style (klik=mulai, klik lagi=stop) buat sepasang tombol
-        arah berlawanan (Left/Right atau Retract/Extend) - klik tombol
-        lawan otomatis matiin yang ini biar gak dua-duanya aktif bareng."""
+    def _toggle_tombol(self, btn_ditekan, motor_id, arah, label_aksi):
+        """Toggle style (klik=mulai, klik lagi=stop). Hardware cuma bisa
+        gerakin 1 bagian motor linear individual sekaligus, jadi klik
+        tombol manapun otomatis matiin SEMUA tombol lain di dialog ini
+        (bukan cuma pasangannya sendiri) biar gak ada 2 tombol aktif
+        bareng di baris yang beda (misal Front Right + Rear Right)."""
         if btn_ditekan.isChecked():
-            btn_lawan.setChecked(False)
+            for btn in self._semua_tombol:
+                if btn is not btn_ditekan:
+                    btn.setChecked(False)
             self._kirim(motor_id, arah, label_aksi)
         else:
             self._kirim(motor_id, 0, "stop")

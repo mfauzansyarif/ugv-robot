@@ -1,6 +1,7 @@
 """Main window aplikasi GCS Beberapa asumsi belum dikonfirmasi - ditandai TODO."""
 
 import os
+from datetime import datetime
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
@@ -16,6 +17,16 @@ from lampu_icon import LampuIcon
 from motor_linear_dialog import MotorLinearDialog
 from serial_workers import ArduinoReader, RFLink
 from settings_dialog import SettingsDialog
+
+# Ranging capability LRF127 (datasheet Noptel): 0-4500m. Di luar ini
+# dianggap gak valid (byte kekorupsi/overflow), bukan jarak asli.
+LRF_JARAK_MAKS_METER = 4500
+
+# Brightness minimum lampu depan PAS toggle-nya ON (persen PWM) - biar
+# gak ada kondisi "switch ON tapi PWM 0%" yang keliatan kayak padam.
+# Sesuaikan angkanya pas tes fisik ke brightness paling redup yang masih
+# keliatan nyala.
+FLAMP_MIN_SAAT_NYALA = 5
 
 
 class MainWindow(QMainWindow):
@@ -35,6 +46,8 @@ class MainWindow(QMainWindow):
         self._slip_ring_on = False
         self._estop_aktif = False  # tombol virtual E-STOP di samping console log
         self._stm32_status_terakhir = None  # None = belum ada telemetry masuk sama sekali
+        self._lrf_jarak_terakhir = None   # buat deteksi bacaan BARU vs cache lama STM32
+        self._lrf_waktu_terakhir = None   # jam bacaan LRF valid terakhir
 
         # Raise/Lower touchscreen, -1/0/1 - digabung sama tombol fisik Body
         # Up/Down pas bikin frame (touchscreen menang kalau bentrok).
@@ -174,7 +187,10 @@ class MainWindow(QMainWindow):
         self.lampu_icon = LampuIcon()
         baris_slider.addWidget(self.lampu_icon)
         self.slider_lampu = QSlider(Qt.Horizontal)
-        self.slider_lampu.setRange(0, 100)
+        # Minimum FLAMP_MIN_SAAT_NYALA (bukan 0) - biar pas toggle lampu
+        # di-ON, PWM-nya gak bisa ketarik sampai 0% (nyala tapi keliatan
+        # padam). Slider ini emang cuma ngatur brightness PAS nyala.
+        self.slider_lampu.setRange(FLAMP_MIN_SAAT_NYALA, 100)
         self.slider_lampu.setValue(20)  # default rendah, dikalibrasi nanti
         # Slider tetap bisa digeser walau lampu mati (matiin/nyalain itu
         # tombol fisik di panel) - cuma dibikin redup, gak di-disable.
@@ -182,7 +198,7 @@ class MainWindow(QMainWindow):
         self.slider_lampu.setGraphicsEffect(self._efek_opacity_slider_lampu)
         baris_slider.addWidget(self.slider_lampu)
         self.spin_lampu = QSpinBox()
-        self.spin_lampu.setRange(0, 100)
+        self.spin_lampu.setRange(FLAMP_MIN_SAAT_NYALA, 100)
         self.spin_lampu.setValue(20)
         self.slider_lampu.valueChanged.connect(self.spin_lampu.setValue)
         self.spin_lampu.valueChanged.connect(self.slider_lampu.setValue)
@@ -470,8 +486,19 @@ class MainWindow(QMainWindow):
         else:
             self.label_status_stm32.setText("Controller: Disconnected")
 
-        if data["lrf_status"]:
-            self.label_status_lrf.setText(f"Laser Range Finder: {data['lrf_jarak_meter']:.1f} m")
+        jarak = data["lrf_jarak_meter"]
+        jarak_valid = 0 <= jarak <= LRF_JARAK_MAKS_METER
+        if data["lrf_status"] and jarak_valid:
+            # STM32 relay nilai CACHE tiap siklus (20Hz), bukan cuma pas ada
+            # bacaan baru - jam cuma di-update kalau angkanya BERUBAH, biar
+            # gak keliatan seolah "baru aja diukur" padahal itu data lama.
+            if jarak != self._lrf_jarak_terakhir:
+                self._lrf_jarak_terakhir = jarak
+                self._lrf_waktu_terakhir = datetime.now()
+            waktu = self._lrf_waktu_terakhir.strftime("%H:%M:%S")
+            self.label_status_lrf.setText(f"Laser Range Finder: {jarak:.1f} m ({waktu})")
+        elif data["lrf_status"] and not jarak_valid:
+            self.label_status_lrf.setText("Laser Range Finder: -1 (data tidak valid)")
         else:
             self.label_status_lrf.setText("Laser Range Finder: tidak ada jawaban")
 
