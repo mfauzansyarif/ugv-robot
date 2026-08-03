@@ -17,6 +17,7 @@ motor_id yang dikirim:
   6 = BBody Kanan   (individual)
 """
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import (
     QDialog, QGridLayout, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
 )
@@ -27,14 +28,24 @@ DAFTAR_STEERING = ["Front", "Rear"]
 # firmware STM32 (main.c).
 DAFTAR_BODY = ["Front Left", "Front Right", "Rear Left", "Rear Right"]
 
+# Safety: kalau tombol Calibrate nyala terus-terusan lebih lama dari ini
+# (ms), otomatis mati sendiri - jaga-jaga operator lupa lepas toggle-nya.
+# Ganti angkanya sesuai kebutuhan lapangan.
+KALIBRASI_MAKS_DURASI_MS = 15000
+
 
 class MotorLinearDialog(QDialog):
-    def __init__(self, console_log, set_individual, trigger_kalibrasi, parent=None):
+    def __init__(self, console_log, set_individual, set_kalibrasi, parent=None):
         super().__init__(parent)
         self.console_log = console_log
         self.set_individual = set_individual
-        self.trigger_kalibrasi = trigger_kalibrasi
+        self.set_kalibrasi = set_kalibrasi
         self.setWindowTitle("Individual Linear Motor Control")
+
+        # Safety timer buat auto-off Calibrate - lihat _toggle_kalibrasi().
+        self._timer_kalibrasi = QTimer(self)
+        self._timer_kalibrasi.setSingleShot(True)
+        self._timer_kalibrasi.timeout.connect(self._kalibrasi_timeout)
 
         layout_utama = QVBoxLayout(self)
 
@@ -97,9 +108,13 @@ class MotorLinearDialog(QDialog):
         layout_utama.addLayout(grid_body)
 
         baris_bawah = QHBoxLayout()
-        btn_kalibrasi = QPushButton("Calibrate (Fully Extend + Fully Left)")
-        btn_kalibrasi.clicked.connect(self._kirim_kalibrasi)
-        baris_bawah.addWidget(btn_kalibrasi)
+        # Toggle (bukan pulse) - sama kayak 12 tombol arah di atas, biar
+        # actuator jalan TERUS selama operator nahan toggle-nya (Core Node
+        # yang mutusin kapan berhenti, lihat ROS2/core_node.py).
+        self.btn_kalibrasi = QPushButton("Calibrate (Fully Extend + Fully Left)")
+        self.btn_kalibrasi.setCheckable(True)
+        self.btn_kalibrasi.clicked.connect(self._toggle_kalibrasi)
+        baris_bawah.addWidget(self.btn_kalibrasi)
 
         btn_tutup = QPushButton("Exit")
         btn_tutup.clicked.connect(self.accept)
@@ -118,15 +133,41 @@ class MotorLinearDialog(QDialog):
         gerakin 1 bagian motor linear individual sekaligus, jadi klik
         tombol manapun otomatis matiin SEMUA tombol lain di dialog ini
         (bukan cuma pasangannya sendiri) biar gak ada 2 tombol aktif
-        bareng di baris yang beda (misal Front Right + Rear Right)."""
+        bareng di baris yang beda (misal Front Right + Rear Right) -
+        termasuk matiin Calibrate kalau lagi aktif."""
         if btn_ditekan.isChecked():
             for btn in self._semua_tombol:
                 if btn is not btn_ditekan:
                     btn.setChecked(False)
+            if self.btn_kalibrasi.isChecked():
+                self.btn_kalibrasi.setChecked(False)
+                self._timer_kalibrasi.stop()
+                self.set_kalibrasi(False)
             self._kirim(motor_id, arah, label_aksi)
         else:
             self._kirim(motor_id, 0, "stop")
 
-    def _kirim_kalibrasi(self):
-        self.trigger_kalibrasi()
-        self.console_log.info("[Individual] Calibrated")
+    def _toggle_kalibrasi(self, checked):
+        """Toggle Calibrate - matiin semua 12 tombol arah individual dulu
+        (kalibrasi menang, gak masuk akal jalan bareng override individual).
+        Nyalain juga safety timer - kalau kelewat KALIBRASI_MAKS_DURASI_MS
+        dia mati sendiri (lihat _kalibrasi_timeout)."""
+        if checked:
+            for btn in self._semua_tombol:
+                btn.setChecked(False)
+            self.set_individual(0, 0)
+            self.console_log.info("[Individual] Calibrate ON (fully extend + fully left)")
+            self._timer_kalibrasi.start(KALIBRASI_MAKS_DURASI_MS)
+        else:
+            self._timer_kalibrasi.stop()
+            self.console_log.info("[Individual] Calibrate OFF")
+        self.set_kalibrasi(checked)
+
+    def _kalibrasi_timeout(self):
+        """Dipanggil timer kalau Calibrate kelamaan nyala - matiin sendiri
+        (safety). setChecked() programatik gak ngirim sinyal clicked, jadi
+        efek "OFF"-nya (set_kalibrasi + log) harus manual di sini juga."""
+        self.btn_kalibrasi.setChecked(False)
+        detik = KALIBRASI_MAKS_DURASI_MS / 1000
+        self.console_log.warning(f"[Individual] Calibrate auto OFF (timeout {detik:.0f}s)")
+        self.set_kalibrasi(False)

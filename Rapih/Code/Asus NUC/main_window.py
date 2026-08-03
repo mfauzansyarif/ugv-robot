@@ -3,7 +3,7 @@
 import os
 from datetime import datetime
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog, QGraphicsOpacityEffect, QGridLayout, QGroupBox, QHBoxLayout,
     QLabel, QMainWindow, QMessageBox, QPushButton, QSlider, QSpinBox,
@@ -57,7 +57,7 @@ class MainWindow(QMainWindow):
         # frame 14-byte (motor_id: 1-2=steering berpasangan, 3-6=body).
         self._individual_motor_id = 0    # 0 = mode normal, 1-6 = override
         self._individual_arah = 0        # -1/0/1, cuma dipakai kalau motor_id != 0
-        self._kalibrasi_trigger = 0      # 0/1, di-pulse sebentar pas tombol Kalibrasi diklik
+        self._kalibrasi_aktif = False    # True SELAMA toggle Calibrate aktif (bukan pulse)
 
         self._arduino_reader = None
         self._rf_link = None
@@ -277,11 +277,14 @@ class MainWindow(QMainWindow):
 
     def _buka_dialog_motor_individual(self):
         dialog = MotorLinearDialog(
-            self.console_log, self._set_individual_motor, self._trigger_kalibrasi, self
+            self.console_log, self._set_individual_motor, self._set_kalibrasi, self
         )
         dialog.exec()
+        # Safety: nutup dialog selalu balikin ke netral, walau operator lupa
+        # lepas toggle Calibrate/individual sebelum nge-Exit.
         self._individual_motor_id = 0
         self._individual_arah = 0
+        self._kalibrasi_aktif = False
 
     def _set_individual_motor(self, motor_id, arah):
         """Dipanggil dari MotorLinearDialog - motor_id 0 berarti gak ada
@@ -290,15 +293,12 @@ class MainWindow(QMainWindow):
         self._individual_motor_id = motor_id if arah != 0 else 0
         self._individual_arah = arah
 
-    def _trigger_kalibrasi(self):
-        """Pulse Kalibrasi=1 sebentar (~200ms, beberapa siklus frame di
-        20Hz) biar Jetson kebaca transisi 0->1, terus balik ke 0 - supaya
-        gak trigger ulang terus-menerus selama command ini "nyangkut"."""
-        self._kalibrasi_trigger = 1
-        QTimer.singleShot(200, self._clear_kalibrasi_trigger)
-
-    def _clear_kalibrasi_trigger(self):
-        self._kalibrasi_trigger = 0
+    def _set_kalibrasi(self, aktif):
+        """Dipanggil dari MotorLinearDialog - toggle (bukan pulse), sama
+        kayak kontrol lain di app ini: kalibrasi=1 dikirim TERUS SELAMA
+        toggle-nya aktif, Core Node yang mutusin actuator jalan sampai
+        kapan (lihat ROS2/core_node.py)."""
+        self._kalibrasi_aktif = aktif
 
     def _set_touch_fbody_bbody(self, nilai):
         self._touch_fbody_bbody = nilai
@@ -469,7 +469,8 @@ class MainWindow(QMainWindow):
             x1, y1, x2, y2,
             zoom, s["lrf"], flamp, blamp,
             slip_ring, body_updown,
-            self._individual_motor_id, self._individual_arah, self._kalibrasi_trigger,
+            self._individual_motor_id, self._individual_arah,
+            1 if self._kalibrasi_aktif else 0,
         )
 
     def _on_telemetry(self, data):
