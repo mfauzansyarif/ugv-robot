@@ -4,6 +4,21 @@
 	(generator_version "10.0")
 	(uuid "cb717689-3fed-4997-90cb-ca2068d6c570")
 	(paper "A4")
+	(title_block
+		(title "UGV Robot")
+		(date "2026-08-03")
+		(rev "1")
+		(company "PT Respati Solusi Rekatama")
+		(comment 1 "Arduino Mega Pro")
+		(comment 2 "Asus NUC")
+		(comment 3 "GCS Schematic")
+		(comment 4 "UGV Project")
+		(comment 5 "5")
+		(comment 6 "6")
+		(comment 7 "7")
+		(comment 8 "8")
+		(comment 9 "9")
+	)
 	(lib_symbols
 		(symbol "Device:Battery"
 			(pin_numbers

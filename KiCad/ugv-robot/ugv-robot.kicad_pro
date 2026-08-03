@@ -240,7 +240,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": ""
+      "sch_revision": "1"
     },
     "layer_pairs": [],
     "layer_presets": [],
@@ -656,7 +656,7 @@
         "uuid": "90529edd-bc99-4b19-bdf7-a431d95739a2"
       }
     ],
-    "used_designators": "BT2,#PWR22-25,J2,U5",
+    "used_designators": "",
     "variants": []
   },
   "sheets": [
