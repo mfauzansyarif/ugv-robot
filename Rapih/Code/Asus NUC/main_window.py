@@ -1,7 +1,4 @@
-"""Main window aplikasi GCS. Layout & protokol sesuai dokumentasi/ROS2_BRIEF.md
-section 7 dan dokumentasi/ARDUINO_GCS_BRIEF.md. Beberapa asumsi BELUM
-dikonfirmasi ke user - ditandai TODO di komentar.
-"""
+"""Main window aplikasi GCS Beberapa asumsi belum dikonfirmasi - ditandai TODO."""
 
 import os
 
@@ -28,9 +25,8 @@ class MainWindow(QMainWindow):
 
         self._config = config.load_config()
 
-        # State panel Arduino terbaru (di-update tiap frame_diterima).
-        # x/y: analog 0-1000 (gerak/steering). Pantilt pakai 4 tombol
-        # digital (cam_atas/kanan/bawah/kiri), BUKAN joystick analog kedua.
+        # State panel Arduino, di-update tiap frame_diterima. Pantilt 4
+        # tombol digital, bukan joystick analog kedua.
         self._state_arduino = {
             "x": 500, "y": 500, "lrf": 0,
             "zoomin": 0, "zoomout": 0, "bodyup": 0, "bodydown": 0,
@@ -40,15 +36,12 @@ class MainWindow(QMainWindow):
         self._estop_aktif = False  # tombol virtual E-STOP di samping console log
         self._stm32_status_terakhir = None  # None = belum ada telemetry masuk sama sekali
 
-        # State tombol Raise/Lower di touchscreen (terpisah dari state
-        # Arduino) - -1/0/1, digabung sama tombol fisik Body Up/Down pas
-        # bikin frame (touchscreen menang kalau dua-duanya aktif barengan).
+        # Raise/Lower touchscreen, -1/0/1 - digabung sama tombol fisik Body
+        # Up/Down pas bikin frame (touchscreen menang kalau bentrok).
         self._touch_fbody_bbody = 0  # Raise=1, Lower=-1, lepas=0
 
-        # State command individual/kalibrasi (dari dialog Kontrol Motor
-        # Linear Individual) - ikut di SETIAP frame 14-byte, lihat
-        # ROS2_BRIEF.md & motor_linear_dialog.py buat arti motor_id
-        # (1-2=steering berpasangan, 3-6=body individual).
+        # State dari dialog Kontrol Motor Linear Individual, ikut di SETIAP
+        # frame 14-byte (motor_id: 1-2=steering berpasangan, 3-6=body).
         self._individual_motor_id = 0    # 0 = mode normal, 1-6 = override
         self._individual_arah = 0        # -1/0/1, cuma dipakai kalau motor_id != 0
         self._kalibrasi_trigger = 0      # 0/1, di-pulse sebentar pas tombol Kalibrasi diklik
@@ -64,11 +57,6 @@ class MainWindow(QMainWindow):
         widget_pusat = QWidget()
         self.setCentralWidget(widget_pusat)
         layout_utama = QVBoxLayout(widget_pusat)
-
-        # Baris paling atas: panel connection (kiri, melebar) + Shutdown
-        # ditumpuk sama Settings (kanan mentok, terpisah dari group box
-        # connection biar jelas beda konteks - shutdown/settings itu aksi
-        # level sistem, bukan bagian dari koneksi Arduino/RF).
         baris_atas = QHBoxLayout()
         baris_atas.addWidget(self._buat_panel_koneksi(), stretch=1)
         baris_atas.addLayout(self._buat_tombol_kanan_atas())
@@ -89,10 +77,8 @@ class MainWindow(QMainWindow):
         self.console_log.info("GCS Application Started")
 
     def _buat_tombol_estop(self):
-        """Tombol virtual E-STOP, persegi, di samping kanan console log.
-        Toggle (klik=aktifkan, klik lagi=lepas) - bukan momentary, biar
-        konsisten sama semua tombol lain yang udah diubah ke toggle buat
-        touchscreen ini."""
+        """Tombol virtual E-STOP - toggle (bukan momentary), konsisten sama
+        tombol lain yang dibikin toggle buat touchscreen ini."""
         btn = QPushButton("Emergency\nStop")
         btn.setCheckable(True)
         btn.setFixedSize(150, 150)
@@ -111,11 +97,9 @@ class MainWindow(QMainWindow):
             self.console_log.info("E-STOP released")
 
     def _buat_tombol_kanan_atas(self):
-        """Shutdown (atas) + Settings (bawah) ditumpuk vertikal. Tinggi
-        masing-masing di-override lebih kecil dari default global tombol
-        (60px -> 45px, ~0.75x) via stylesheet per-widget (menang dibanding
-        stylesheet app-level) biar match tinggi panel Connection yang
-        sekarang udah 1 baris doang."""
+        """Shutdown + Settings ditumpuk vertikal, tinggi di-override lebih
+        kecil (60px->45px) via stylesheet per-widget biar match tinggi
+        panel Connection yang cuma 1 baris."""
         layout = QVBoxLayout()
 
         btn_shutdown = QPushButton("⏻ Shutdown")
@@ -135,13 +119,6 @@ class MainWindow(QMainWindow):
     def _buat_panel_koneksi(self):
         group = QGroupBox("Connection")
         layout = QHBoxLayout(group)
-
-        # NOTE: port/nama kamera SENGAJA read-only di sini (cuma label) -
-        # biar gak ke-tap/ke-ubah gak sengaja di touchscreen operator biasa.
-        # Ubah lewat tombol "⚙ Settings" kecil di pojok (buka dialog terpisah).
-        # GCS Board & Telemetry disusun SAMPING-SAMPINGAN (1 baris, bukan
-        # 1 kolom 2 baris) biar panel Connection gak makan tinggi, nyisain
-        # ruang lebih buat Camera Viewer.
         layout_arduino = QHBoxLayout()
         layout_arduino.addWidget(QLabel("GCS Board:"))
         self.label_port_arduino = QLabel(self._config["port_arduino"])
@@ -198,10 +175,9 @@ class MainWindow(QMainWindow):
         baris_slider.addWidget(self.lampu_icon)
         self.slider_lampu = QSlider(Qt.Horizontal)
         self.slider_lampu.setRange(0, 100)
-        self.slider_lampu.setValue(20)  # default rendah, dikalibrasi nanti - lihat ARDUINO_GCS_BRIEF.md
-        # NOTE: slider TETAP bisa digeser walau lampu lagi mati (matiin-nyalain
-        # itu urusan tombol fisik Lampu Switch di panel, bukan slider ini) -
-        # cuma dibikin keliatan redup (opacity), gak di-disable.
+        self.slider_lampu.setValue(20)  # default rendah, dikalibrasi nanti
+        # Slider tetap bisa digeser walau lampu mati (matiin/nyalain itu
+        # tombol fisik di panel) - cuma dibikin redup, gak di-disable.
         self._efek_opacity_slider_lampu = QGraphicsOpacityEffect(self.slider_lampu)
         self.slider_lampu.setGraphicsEffect(self._efek_opacity_slider_lampu)
         baris_slider.addWidget(self.slider_lampu)
@@ -215,19 +191,7 @@ class MainWindow(QMainWindow):
         self._update_tampilan_lampu(nyala=False)
 
         layout.addWidget(QLabel("Body Control"))
-        # NOTE: momentary (aktif selama ditahan, stop pas dilepas) - SAMA
-        # prinsipnya kayak tombol fisik Body Up/Down di panel Arduino.
-        # Raise/Lower gerakin fbody+bbody bareng. State-nya digabung sama
-        # tombol fisik panel (lihat _bangun_frame_gcs) dan DIKIRIM lewat
-        # field BodyUpDown di frame 14-byte GCS->STM32 - Core Node yang
-        # nerjemahin ke gerakan fbody/bbody individual.
-        # (Tombol Widen/Narrow arm DIHAPUS - actuator arm/RArm/LArm udah
-        # dibatalkan, field ArmWidenNarrow juga udah dihapus dari protokol.)
         grid_body = QGridLayout()
-        # Toggle, BUKAN press/hold - touchscreen-nya ternyata gak reliable
-        # deteksi hold (pressed/released), jadi klik = mulai gerak, klik
-        # lagi = berhenti. Klik tombol lawan otomatis matiin yang ini biar
-        # gak dua-duanya aktif bareng (lihat _toggle_body_button).
         self.btn_raise = QPushButton("Raise (↑)")
         self.btn_raise.setCheckable(True)
         grid_body.addWidget(self.btn_raise, 0, 0)
@@ -300,9 +264,6 @@ class MainWindow(QMainWindow):
             self.console_log, self._set_individual_motor, self._trigger_kalibrasi, self
         )
         dialog.exec()
-        # Safety net: pastiin override berhenti begitu dialog ditutup, walau
-        # user nutup pas lagi nahan tombol (harusnya udah kepencet released,
-        # tapi jaga-jaga).
         self._individual_motor_id = 0
         self._individual_arah = 0
 
@@ -388,8 +349,6 @@ class MainWindow(QMainWindow):
             self._arduino_reader.stop()
             self._arduino_reader = None
             self.btn_connect_arduino.setText("Connect")
-            # Ini AKSI OPERATOR (klik Disconnect sengaja), bukan kegagalan -
-            # dulu salah ke-set "Connection Failed" di sini.
             self.label_status_arduino.setText("Disconnected")
             self.console_log.info("GCS Board disconnected (by operator)")
             return
@@ -433,8 +392,6 @@ class MainWindow(QMainWindow):
             self._rf_link.stop()
             self._rf_link = None
             self.btn_connect_rf.setText("Connect")
-            # Ini AKSI OPERATOR (klik Disconnect sengaja), bukan kegagalan -
-            # dulu salah ke-set "Connection Failed" di sini.
             self.label_status_rf.setText("Disconnected")
             self.console_log.info("Telemetry disconnected (by operator)")
             return
@@ -448,11 +405,9 @@ class MainWindow(QMainWindow):
         self.btn_connect_rf.setText("Disconnect")
 
     def _on_rf_error(self, pesan):
-        """Set "Connection Failed" - kalau ternyata link ini SEBELUMNYA udah
-        berhasil connect, _on_jetson_terputus() (disambungkan ke sinyal
-        jetson_terputus yang ikut di-emit RFLink kalau status_connect_sekarang
-        True) bakal nimpa jadi "Disconnected" tepat setelah ini, urutannya
-        emang sengaja."""
+        """Set "Connection Failed" - kalau link ini SEBELUMNYA udah connect,
+        _on_jetson_terputus() bakal nimpa jadi "Disconnected" abis ini,
+        urutannya emang sengaja."""
         self.label_status_rf.setText("Connection Failed")
         self.console_log.error(pesan)
 
@@ -470,20 +425,11 @@ class MainWindow(QMainWindow):
         HARUS cepat & gak blocking."""
         s = self._state_arduino
 
-        # (Mode dihapus dari frame - dari awal gak pernah kepake/gak ada
-        # sumbernya juga, lihat ROS2_BRIEF.md)
         estop = 1 if self._estop_aktif else 0
 
         x1 = self._axis_ke_signed(s["x"])
         y1 = self._axis_ke_signed(s["y"])
 
-        # Pantilt sekarang 4 tombol DIGITAL (cam_atas/kanan/bawah/kiri),
-        # BUKAN joystick analog kedua - diterjemahkan jadi -100/0/100 biar
-        # tetap muat di field XJoystick2/YJoystick2 yang ada di frame 10-byte.
-        # TODO: konfirmasi arah tanda (+/-) ke user, ini asumsi kanan=+X,
-        # atas=+Y. Field XJoystick2/YJoystick2 dipertahankan namanya dari
-        # protokol lama walau sekarang isinya diskrit -100/0/100, bukan
-        # kontinu, biar gak perlu ubah urutan byte yang udah ada.
         x2 = 100 if s["cam_kanan"] else (-100 if s["cam_kiri"] else 0)
         y2 = 100 if s["cam_atas"] else (-100 if s["cam_bawah"] else 0)
 
@@ -491,8 +437,7 @@ class MainWindow(QMainWindow):
 
         lampu_on = bool(s["lampu"])
         flamp = self.slider_lampu.value() if lampu_on else 0
-        # blamp=2 (kedip) pas y1 negatif (mundur) - LOGIC INI SUDAH BENAR
-        # & UDAH WORKS, JANGAN DIUBAH LAGI (dikonfirmasi user 2026-07-31).
+
         if not lampu_on:
             blamp = 0
         elif y1 < 0:
@@ -502,8 +447,6 @@ class MainWindow(QMainWindow):
 
         slip_ring = 1 if self._slip_ring_on else 0
         body_updown = self._hitung_fbody_bbody()   # Raise=1, Lower=-1, diam=0
-        # (field armWidenNarrow & tombol Widen/Narrow UDAH DIHAPUS total -
-        # actuator arm/RArm/LArm dibatalkan, gak relevan lagi)
 
         return (
             estop,

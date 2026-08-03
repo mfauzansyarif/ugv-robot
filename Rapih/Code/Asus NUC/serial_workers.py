@@ -1,17 +1,9 @@
 """Worker QThread buat 2 link serial: Arduino Mega Pro (panel fisik) dan
-RF link ke Jetson. Dijalanin di thread terpisah dari GUI supaya UI gak
+RF link ke STM32. Dijalanin di thread terpisah dari GUI supaya UI gak
 freeze nunggu I/O serial.
 
-Protokol Arduino -> NUC: FINAL (dikonfirmasi user 2026-07-16, panel fisik
-sudah selesai dirakit) - lihat dokumentasi/ARDUINO_GCS_BRIEF.md. 12 field,
-cuma X/Y axis yang analog (0-1000), sisanya digital 0/1. Pantilt pakai 4
-tombol digital (Cam atas/kanan/bawah/kiri) - BUKAN joystick analog kedua
-seperti asumsi draft sebelumnya.
-
-Protokol GCS <-> Jetson (RF, gantian request-response): lihat
-dokumentasi/ROS2_BRIEF.md section 3.5. Estop/Mode encoding-nya BELUM
-dikonfirmasi presisi - masih placeholder di bawah (Estop & Mode dikirim
-0 selalu untuk sekarang, TODO update begitu dikonfirmasi).
+Protokol Arduino->NUC: 12 field, cuma X/Y analog (0-1000), sisanya
+digital 0/1 (pantilt 4 tombol digital, bukan joystick analog kedua).
 """
 
 import struct
@@ -45,9 +37,8 @@ class ArduinoReader(QThread):
         try:
             ser = serial.Serial(self.port, self.baudrate, timeout=0.2)
         except serial.SerialException as e:
-            # Gagal buka port SAMA SEKALI (beda dari 'terputus' - itu buat
-            # yang UDAH connect terus putus) - biar label GUI bisa bedain
-            # "Connection Failed" vs "Disconnected".
+            # Gagal buka port SAMA SEKALI, beda dari 'terputus' (udah
+            # connect terus putus) - biar label GUI bisa bedain keduanya.
             self.error_terjadi.emit(f"Failed to open GCS Board port {self.port}: {e}")
             return
 
@@ -58,8 +49,7 @@ class ArduinoReader(QThread):
             try:
                 baris = ser.readline()
             except serial.SerialException as e:
-                # Sebelumnya di-break diam-diam tanpa sinyal apapun (bug
-                # yang sama kayak RFLink dulu) - sekarang dilaporin.
+                # Laporin dulu sebelum berhenti, biar gak mati diam-diam.
                 self.error_terjadi.emit(f"GCS Board link lost ({self.port}): {e}")
                 if status_connect_sekarang:
                     self.terputus.emit()
@@ -83,10 +73,6 @@ class ArduinoReader(QThread):
 
     @staticmethod
     def _parse_baris(teks):
-        # [X axis] [Y axis] [lrf] [zoom in] [zoom out] [body up] [body down]
-        # [lampu] [Cam atas] [Cam kanan] [Cam bawah] [Cam kiri] - 12 field.
-        # X/Y axis analog 0-1000 (SUDAH dikalibrasi+dihaluskan di Arduino,
-        # lihat ARDUINO_GCS_BRIEF.md), sisanya digital 0/1.
         bagian = teks.split()
         if len(bagian) != 12:
             return None
@@ -109,23 +95,15 @@ class ArduinoReader(QThread):
             return None
 
 
-# Format struct buat frame 16-byte GCS->Jetson - FIXED, SATU bentuk doang
-# (disederhanain 2026-07-16 dari skema 3-jenis-frame+marker-byte sebelumnya,
-# karena bandwidth RF ini masih longgar banget - 13/16 byte @ 20Hz cuma
-# ~5% dari kapasitas 57600 baud, jadi gak ada untungnya bikin protokol
-# bercabang cuma buat "hemat" beberapa byte). Lihat ROS2_BRIEF.md 3.5:
+# Frame 14-byte GCS->STM32, urutan field:
 # Estop(B) XJoy1(b) YJoy1(b) XJoy2(b) YJoy2(b) Zoom(b) LRF(B)
 # FLamp(B) BLamp(B) SlipRing(B) BodyUpDown(b)
 # MotorIndividualID(B) MotorIndividualArah(b) Kalibrasi(B)
-# (Mode & ArmWidenNarrow dihapus - gak pernah dipakai, lihat ROS2_BRIEF.md)
 FORMAT_FRAME_GCS = "=BbbbbbBBBBbBbB"
 
 # Balasan STM32->GCS: 6 byte [marker, stm32_status, lrf_status, lrf_lsb,
-# lrf_msb, checksum]. Link ini lewat RF beneran (bukan kabel langsung kayak
-# waktu testing awal), jadi byte bisa geser/hilang/rusak di udara - marker +
-# checksum (XOR ke-4 byte data) dipakai buat deteksi & buang balasan yang
-# gak valid, biar gak salah baca byte acak sebagai stm32_status (lihat
-# main.c bagian "GCS/RF - USART2" buat sisi STM32-nya).
+# lrf_msb, checksum]. Marker+checksum (XOR ke-4 byte data) buat deteksi
+# balasan yang geser/rusak di udara (link ini lewat RF, bukan kabel).
 GCS_REPLY_MARKER = 0xA5
 GCS_REPLY_LEN = 6
 
@@ -143,13 +121,10 @@ class RFLink(QThread):
     jetson_terputus = Signal()
     error_terjadi = Signal(str)
 
-    # Naik dari 5 (2026-07-31): data lapangan nunjukin RTT sukses aja bisa
-    # sampai ~58ms, dan miss rate normal link RF ini ~75-80% - 5 miss
-    # berturut (250ms nominal) kena berkali-kali tiap detik walau link
-    # sebenarnya masih hidup, cuma lemot/lossy. 10 miss (~1 detik dgn
-    # timeout baru) lebih match sama karakter link asli, cukup buat UGV
-    # (bukan drone) tanpa telat declare disconnect kalau BENERAN putus.
-    AMBANG_MISS_BERTURUT = 10  # sekian kali gagal balasan berturut baru declare disconnect
+    # Miss rate normal link RF ini ~75-80% (RTT sukses bisa sampai ~58ms) -
+    # 10 miss berturut (~1 detik) cukup toleran buat UGV tanpa telat
+    # declare disconnect kalau beneran putus.
+    AMBANG_MISS_BERTURUT = 10
 
     def __init__(self, port, penyedia_frame, baudrate=57600, hz=20, parent=None):
         super().__init__(parent)
@@ -165,27 +140,21 @@ class RFLink(QThread):
 
     def run(self):
         try:
-            # Naik dari 0.05 (2026-07-31): data [RF DEBUG] nunjukin RTT
-            # sukses aja bisa sampai ~58ms - budget 50ms mepet banget,
-            # mayoritas "MISS - 0/6 byte" itu kehabisan waktu tunggu bukan
-            # beneran gak ada balasan. 0.1 kasih headroom ~2x dari RTT
-            # terburuk yang pernah kerekam sukses.
+            # Timeout 0.1s - RTT sukses link RF ini bisa sampai ~58ms,
+            # kasih headroom ~2x biar gak salah declare miss.
             ser = serial.Serial(self.port, self.baudrate, timeout=0.1)
         except serial.SerialException as e:
-            # Cuma error_terjadi (bukan jetson_terputus juga) - ini kasus
-            # "gak pernah kesambung sama sekali", beda dari "udah connect
-            # terus putus" (biar label GUI bisa bedain Connection Failed
-            # vs Disconnected, lihat _on_rf_error di main_window.py).
+            # Gak emit jetson_terputus - ini "gak pernah kesambung", beda
+            # dari "udah connect terus putus" (lihat _on_rf_error di
+            # main_window.py).
             self.error_terjadi.emit(f"Failed to open RF port {self.port}: {e}")
             return
 
         miss_berturut = 0
         status_connect_sekarang = False
 
-        # --- DEBUG SEMENTARA (hapus setelah investigasi "Telemetry not
-        # responding" selesai): ukur round-trip time tiap siklus, biar
-        # ketahuan apakah timeout baca 50ms kekecilan buat radio yang
-        # dipakai, atau linknya emang sering putus fisik.
+        # DEBUG SEMENTARA (hapus kalau investigasi RF timing udah kelar):
+        # ukur RTT tiap siklus buat tuning timeout/ambang miss di atas.
         _debug_rtt_list = []
         _debug_waktu_ringkas = time.monotonic()
 
@@ -195,13 +164,9 @@ class RFLink(QThread):
             nilai = self.penyedia_frame()
             frame = struct.pack(FORMAT_FRAME_GCS, *nilai)
 
-            # SEMUA I/O 1 siklus (reset buffer + tulis + baca) dibungkus 1
-            # try/except - sebelumnya cuma ser.write() yang dijagain, jadi
-            # kalau reset_input_buffer()/ser.read() yang error (port kecabut
-            # fisik, modul RF hang, dll), thread ini mati diam-diam TANPA
-            # ada tanda apapun ke GUI (bug nyata yang kejadian pas testing
-            # RF asli - transmisi berhenti total tapi gak ada error/log sama
-            # sekali). Sekarang exception apapun di sini kelacak & dilaporin.
+            # SEMUA I/O 1 siklus dibungkus 1 try/except - kalau port
+            # kecabut/modul hang di manapun, exception-nya kelacak & lapor
+            # ke GUI, bukan mati diam-diam.
             try:
                 ser.reset_input_buffer()  # buang sisa byte nyasar dari siklus sebelumnya yang gagal/telat
                 ser.write(frame)

@@ -1,9 +1,6 @@
-"""Ikon kecil lampu - MONOCHROME (bukan emoji berwarna), digambar manual
-pakai QPainter biar konsisten di semua sistem (emoji lampu bawaan OS
-biasanya berwarna kuning/oranye, gak bisa dikontrol). Nyala = bohlam
-terisi penuh, mati = bohlam outline polos (dulu ada silang di dalam pas
-mati, dihapus - bohlam polos lebih intuitif buat "mati" daripada icon
-mirip "gak ada lampu"/error).
+"""Ikon lampu MONOCHROME, digambar manual pakai QPainter (emoji lampu
+bawaan OS gak bisa dikontrol warnanya). Nyala = bohlam terisi penuh,
+mati = bohlam outline polos.
 """
 
 from PySide6.QtCore import QRectF, Qt

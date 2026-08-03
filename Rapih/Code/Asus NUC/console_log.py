@@ -1,7 +1,6 @@
-"""Widget Console Log - lihat dokumentasi/ROS2_BRIEF.md section 7.4 buat desain
-lengkapnya. Prinsip: log PERUBAHAN STATUS/EVENT DISKRIT, bukan tiap siklus RF -
-pemanggil widget ini yang tanggung jawab gak nge-log tiap tick, widget ini
-sendiri gak nge-throttle apapun.
+"""Widget Console Log. Prinsip: log PERUBAHAN STATUS/EVENT DISKRIT, bukan
+tiap siklus RF - pemanggil yang tanggung jawab gak nge-log tiap tick,
+widget ini sendiri gak nge-throttle apapun.
 """
 
 from PySide6.QtCore import Qt

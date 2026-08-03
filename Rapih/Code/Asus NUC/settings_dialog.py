@@ -45,8 +45,8 @@ class SettingsDialog(QDialog):
         layout.addWidget(btn_refresh)
 
         self._refresh()
-        # Isi nilai yang lagi aktif SETELAH refresh (biar gak ketimpa kosong
-        # kalau device-nya kebetulan gak lagi kedetect pas dialog dibuka)
+        # Isi nilai aktif SETELAH refresh, biar gak ketimpa kosong kalau
+        # device kebetulan gak kedetect pas dialog dibuka.
         self.combo_port_arduino.setCurrentText(config_sekarang["port_arduino"])
         self.combo_port_rf.setCurrentText(config_sekarang["port_rf"])
         self.combo_camera_name.setCurrentText(config_sekarang["camera_device_name"])
@@ -75,8 +75,8 @@ class SettingsDialog(QDialog):
         self.combo_camera_name.clear()
         self.combo_camera_name.addItems(list_nama_kamera())
 
-        # Balikin teks yang lagi diketik/dipilih user sebelum refresh (kalau
-        # ini dipanggil ulang manual lewat tombol, bukan cuma sekali di awal)
+        # Balikin teks yang lagi diketik/dipilih sebelum refresh (dipanggil
+        # ulang manual lewat tombol, bukan cuma sekali di awal).
         if port_arduino_sekarang:
             self.combo_port_arduino.setCurrentText(port_arduino_sekarang)
         if port_rf_sekarang:

@@ -18,11 +18,9 @@ DEFAULT_CONFIG = {
 
 
 def _direktori_aplikasi():
-    """Kalau udah di-compile jadi .exe (PyInstaller dkk), __file__ nunjuk ke
-    folder temp ekstraksi, BUKAN lokasi exe yang sebenarnya - makanya harus
-    cek sys.frozen dan pakai sys.executable biar config.json kesimpan di
-    sebelah exe yang beneran, bukan ke folder temp yang ilang begitu app
-    ditutup."""
+    """PyInstaller .exe: __file__ nunjuk ke folder temp ekstraksi, bukan
+    lokasi exe asli - pakai sys.executable biar config.json kesimpan di
+    sebelah exe, bukan folder temp yang ilang pas app ditutup."""
     if getattr(sys, "frozen", False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))

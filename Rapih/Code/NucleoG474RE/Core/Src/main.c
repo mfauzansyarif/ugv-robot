@@ -142,9 +142,8 @@ static const ActuatorPin_t actuatorTable[JUMLAH_ACTUATOR] = {
     { LinearR_7_GPIO_Port,  LinearR_7_Pin,  LinearL_7_GPIO_Port,  LinearL_7_Pin  },
 };
 
-/* TODO: proteksi stall - durasi maks HIGH per actuator belum ditentukan.
- * Isi array ini nanti kalau sudah ada angka pasti dari tes fisik, lalu
- * tambah pengecekan di main loop mirip CekWatchdog(). */
+/* TODO: proteksi stall actuator - durasi maks HIGH per index belum
+ * ditentukan, isi kalau udah ada angka pasti dari tes fisik. */
 static uint32_t waktuMulaiAktif[JUMLAH_ACTUATOR];
 static int8_t   arahTerakhir[JUMLAH_ACTUATOR];
 static const int8_t ARAH_FISIK_MOTOR[JUMLAH_MOTOR] = {1, -1, 1, -1};
@@ -154,7 +153,7 @@ uint8_t lampuBelakangBrightness = 0;
 uint32_t waktuBlinkTerakhir = 0;
 uint8_t statusBlinkSekarang = 0;
 
-/* ---- Komunikasi GCS/RF (USART2, 14 byte request / 4 byte reply) ---- */
+/* ---- Komunikasi GCS/RF (USART2, 14 byte request / 6 byte reply) ---- */
 static uint8_t gcsRxBuf[GCS_FRAME_LEN];
 static uint8_t gcsFrameKerja[GCS_FRAME_LEN];
 volatile uint8_t gcsFrameSiap = 0;
@@ -373,12 +372,9 @@ static void Pantilt_Kirim(const uint8_t *payload5) {
     RS485_KirimFrame(frame, 7U);
 }
 
-/* cmd2 itu bitmask arah (ketauan dari pola lama
- * kiri=0x04, kanan=0x02, atas=0x08, bawah=0x10 - masing-masing 1 bit terpisah)
- * jadi horizontal & vertical bisa di-OR bareng buat gerak diagonal.
- * data1=kecepatan horizontal (dipakai kalau ada gerak kiri/kanan)
- * data2=kecepatan vertical (dipakai kalau ada gerak atas/bawah) - keduanya bisa aktif
- * bareng buat diagonal. */
+/* cmd2 = bitmask arah (kiri=0x04, kanan=0x02, atas=0x08, bawah=0x10) -
+ * horizontal & vertical di-OR bareng buat gerak diagonal. data1/data2 =
+ * kecepatan horizontal/vertical, bisa aktif bareng. */
 static void Pantilt_Gerak(int8_t horizontal, int8_t vertical) {
     uint8_t cmd2 = 0x00;
     uint8_t data1 = 0x00;
@@ -409,12 +405,12 @@ static void Pantilt_PowerSlipRing(uint8_t nyala) {
     Pantilt_Kirim(payload5);
 }
 
-/* BELUM DIIMPLEMENTASI (sengaja) - pantilt sebenernya BISA dibaca sudutnya,
- * beda dari command gerak/slip ring yang emang gak pernah balas. Referensi:
+/* BELUM DIIMPLEMENTASI - pantilt BISA dibaca sudutnya, beda dari command
+ * gerak/slip ring yang gak pernah balas. Referensi:
  * Testcode/test_bus_pantilt_kamera_lrf.py -> pantilt_baca_sudut().
  * Kirim payload5 = {0x00,0x00,cmd2,0x00,0x00}, cmd2: 0x51=azimuth, 0x53=elevasi.
- * Baca respons 7 byte (pola sama kayak Pantilt_Kirim, checksum pakai
- * Pantilt_Checksum), payload[3] & payload[4] = data encoder mentah, lalu:
+ * Respons 7 byte (pola sama Pantilt_Kirim, checksum pakai Pantilt_Checksum),
+ * payload[3] & payload[4] = data encoder mentah, lalu:
  *   elevasi = 2.694879023302476*data[3] + 1.1455831934909497*data[4]/100 - 73.36566910656754
  *   azimuth = 2.447221740538158*data[3] + (-2.2315937758949502)*data[4]/100 - 69.7511885011599
  * Kalau nanti mau diimplementasi: butuh field trigger baru di down-frame
@@ -472,13 +468,10 @@ static uint8_t BridgeLrf_Pointer(uint8_t nyala) {
 }
 
 /* ============================================================================
- * GCS/RF - USART2, 57600. STM32 DIDIAMKAN dengerin (interrupt), balas begitu
- * 14 byte lengkap diterima, dengan 6 byte ber-marker+checksum (GCS_REPLY_MARKER
- * + 4 byte status + XOR checksum) - link ini lewat RF beneran (bukan kabel),
- * jadi byte bisa geser/rusak di udara, makanya dikasih proteksi minimal biar
- * gcs_app bisa deteksi & buang balasan yang gak valid alih-alih salah baca
- * byte acak sebagai status. Status yang dibalas diambil dari gcsBalasanCache
- * (diisi Jetson lewat down-frame - lihat JetsonApplyCommand).
+ * GCS/RF - USART2, 57600. Balas 6 byte ber-marker+checksum tiap 14 byte
+ * request diterima - link ini lewat RF beneran, byte bisa geser/rusak di
+ * udara, checksum biar gcs_app bisa buang balasan yang gak valid. Status
+ * diambil dari gcsBalasanCache (diisi Jetson - lihat JetsonApplyCommand).
  * ==========================================================================*/
 
 static void GcsParseFrame(const uint8_t *frame14, GcsCommand_t *out) {
@@ -533,11 +526,8 @@ static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
     Lamp_SetBrightness(&htim1, TIM_CHANNEL_1, cmd->fLamp);
     setLampuBelakang(cmd->bLamp, cmd->bLampMode);
 
-    /* RS485 (pantilt/kamera/slip ring) CUMA dikirim kalau nilainya BERUBAH
-     * dari siklus sebelumnya - bukan tiap ada frame Jetson masuk (~10-20Hz).
-     * Tanpa ini, bus RS485 digempur command identik terus-menerus.
-     * pantiltHorizontal & pantiltVertical BISA aktif bareng (diagonal) -
-     * dikirim ulang kalau SALAH SATU dari keduanya berubah. */
+    /* RS485 cuma dikirim kalau nilainya BERUBAH, bukan tiap frame Jetson
+     * masuk (~10-20Hz) - tanpa ini bus digempur command identik terus. */
     if (cmd->pantiltHorizontal != pantiltHorizontalTerakhir
             || cmd->pantiltVertical != pantiltVerticalTerakhir) {
         Pantilt_Gerak(cmd->pantiltHorizontal, cmd->pantiltVertical);
@@ -572,10 +562,8 @@ static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
             lrfStatusTerakhir = 0U;
         }
     } else if (cmd->lrfTrigger == LRF_TRIGGER_POINTER_ON) {
-        /* State (laser nyala terus sampai dimatiin) - DI-ANTI-SPAM, beda
-         * sama baca jarak. Core Node bebas kirim 2 (pointer on) tiap frame
-         * selama tombol LRF di-hold, STM32 yang nyaring biar RS485 gak
-         * digempur "nyalain laser" berkali-kali per detik. */
+        /* State (laser nyala sampai dimatiin) - DI-ANTI-SPAM beda dari baca
+         * jarak, biar RS485 gak digempur "nyalain laser" tiap frame. */
         if (lrfPointerTerakhir != 1U) {
             BridgeLrf_Pointer(1U);
             lrfPointerTerakhir = 1U;
@@ -607,12 +595,9 @@ static void JetsonBangunUpFrame(uint8_t *frameOut18) {
  * LAYER 4 - komunikasi & housekeeping
  * ==========================================================================*/
 
-/* Pakai ReceiveToIdle (bukan HAL_UART_RxCpltCallback biasa) - ini yang
- * bikin STM32 otomatis "sinkron ulang" tiap ada jeda hening di jalur UART
- * (natural ada karena GCS/Jetson kirim per-siklus, gak nonstop). Kalau byte
- * yang ke-nangkep JUMLAHNYA gak pas, frame itu DIBUANG, bukan dipaksa
- * diproses - jadi gak ada lagi kejadian "kegeser permanen" kayak yang
- * ketemu waktu testing GCS. */
+/* Pakai ReceiveToIdle (bukan HAL_UART_RxCpltCallback) - auto "sinkron
+ * ulang" tiap ada jeda hening di UART. Kalau jumlah byte gak pas, frame
+ * DIBUANG, bukan dipaksa diproses (cegah frame kegeser permanen). */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
     if (huart->Instance == USART2) {
         if (Size == GCS_FRAME_LEN) {
@@ -717,9 +702,8 @@ int main(void)
         }
     }
 
-    /* LED heartbeat - blink terus tiap HEARTBEAT_INTERVAL_MS, bukti main loop
-     * masih jalan (beda sama LED link yang bisa nyala terus walau loop hang,
-     * karena itu cuma ngecek timestamp). */
+    /* LED heartbeat - bukti main loop masih jalan (beda dari LED link
+     * yang bisa nyala terus walau loop hang, itu cuma ngecek timestamp). */
     if (HAL_GetTick() - waktuHeartbeatTerakhir >= HEARTBEAT_INTERVAL_MS) {
         statusHeartbeat = !statusHeartbeat;
         HAL_GPIO_WritePin(LED_Heartbeat_GPIO_Port, LED_Heartbeat_Pin,
@@ -734,13 +718,10 @@ int main(void)
     HAL_GPIO_WritePin(LED_RF_GPIO_Port, LED_RF_Pin,
         (HAL_GetTick() - waktuFrameGcsTerakhir < LINK_TIMEOUT_MS) ? GPIO_PIN_SET : GPIO_PIN_RESET);
 
-    /* FAILSAFE: kalau Jetson gak kirim frame valid selama LINK_TIMEOUT_MS,
-     * paksa berhenti - jangan terus nurut command terakhir tanpa batas
-     * waktu cuma karena link putus (Jetson mati/hang/USB kecabut, dll).
-     * Motor/actuator aman di-stop tiap loop (idempoten, murah). Pantilt/
-     * kamera RS485 SENGAJA dijaga cuma kirim SEKALI pas transisi ke
-     * failsafe (guard pakai tracker anti-spam yang sama) - biar gak balik
-     * spam RS485 gara-gara loop ini muter terus selama link masih putus. */
+    /* FAILSAFE: Jetson gak kirim frame valid selama LINK_TIMEOUT_MS -
+     * paksa stop, jangan nurut command terakhir tanpa batas waktu.
+     * Motor/actuator aman di-stop tiap loop (murah). Pantilt/kamera RS485
+     * SENGAJA cuma kirim SEKALI pas transisi, biar gak spam RS485. */
     if (HAL_GetTick() - waktuFrameJetsonTerakhir >= LINK_TIMEOUT_MS) {
         stopSemuaMotor();
         StopSemuaActuator();

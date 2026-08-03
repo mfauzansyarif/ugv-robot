@@ -14,17 +14,15 @@ from main_window import MainWindow
 def main():
     app = QApplication(sys.argv)
 
-    # Semua teks dibikin 1.25x lebih besar dari font default Qt/OS - diambil
-    # relatif dari app.font() (bukan angka pt fixed) biar tetap proporsional
-    # ke apapun default size di sistem yang dipakai.
+    # Font 1.25x relatif ke app.font() (bukan angka pt fixed) biar
+    # proporsional ke default size sistem manapun.
     font_default = app.font()
     font_default.setPointSizeF(font_default.pointSizeF() * 1.25)
     app.setFont(font_default)
 
-    # Semua tombol dibikin ~2x lebih tinggi dari default Qt (~28-30px jadi
-    # ~60px) - touchscreen susah mencet tombol kecil, beda sama mouse yang
-    # presisi. Global di sini (bukan per-tombol) biar konsisten ke SEMUA
-    # dialog juga (MotorLinearDialog, SettingsDialog), gak cuma MainWindow.
+    # Tombol dibikin lebih tinggi dari default Qt - touchscreen susah
+    # mencet tombol kecil. Global biar konsisten ke semua dialog juga,
+    # bukan cuma MainWindow.
     app.setStyleSheet("QPushButton { min-height: 60px; }")
     window = MainWindow()
     window.resize(1200, 800)

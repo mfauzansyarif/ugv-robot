@@ -1,11 +1,8 @@
-"""Widget Camera Viewer - nampilin video feed dari receiver RF video (lewat
-capture card, muncul sebagai video device biasa ke OpenCV - sama pendekatan
-kayak serialControlApp/cameradisplay.py punya v1 lama, cuma di sini pakai
-QLabel/PySide6 bukan Tkinter Canvas).
+"""Widget Camera Viewer - nampilin video feed dari receiver RF video lewat
+capture card, muncul sebagai video device biasa ke OpenCV.
 
-Requirement tambahan: pip install pygrabber (buat cari device by NAME,
-bukan angka index yang bisa geser kalau urutan enumerasi DirectShow
-Windows berubah - lihat cari_index_kamera()).
+Requirement tambahan: pip install pygrabber (cari device by NAME, bukan
+index yang bisa geser tiap device lain ditambah/dicabut).
 """
 
 import cv2
@@ -31,17 +28,9 @@ def list_nama_kamera():
 
 
 def cari_index_kamera(nama_substring):
-    """Cari index device capture yang namanya MENGANDUNG nama_substring
-    (case-insensitive) lewat DirectShow (pygrabber) - lebih stabil daripada
-    hardcode angka index, karena index numerik bisa geser kalau urutan
-    enumerasi Windows berubah (device lain ditambah/dicabut, dll), sedangkan
-    nama device biasanya tetap.
-
-    Return: (index, daftar_semua_nama)
-      - index = None kalau gak ketemu ATAU pygrabber gak ke-install
-      - daftar_semua_nama = list nama device yang kedetect (buat debug/log,
-        biar user bisa lihat nama persis yang harus dipakai di konstanta)
-    """
+    """Cari index device yang namanya MENGANDUNG nama_substring
+    (case-insensitive). Return: (index, daftar_semua_nama) - index None
+    kalau gak ketemu/pygrabber gak ke-install, daftar_semua_nama buat log."""
     if FilterGraph is None:
         return None, []
     graph = FilterGraph()
@@ -70,8 +59,7 @@ class CameraViewer(QWidget):
         self._timer.timeout.connect(self._ambil_frame)
 
     def mulai(self, index_device):
-        """index_device: nomor device capture card (cek Device Manager/coba
-        angka 0,1,2,... - sama cara kayak video_source di cameradisplay.py lama)."""
+        """index_device: nomor device capture card (cek Device Manager)."""
         self.berhenti()
         self._cap = cv2.VideoCapture(index_device)
         if not self._cap.isOpened():
