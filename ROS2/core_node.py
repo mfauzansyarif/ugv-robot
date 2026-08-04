@@ -212,6 +212,19 @@ class CoreNode(Node):
             act[ACT_FBODY_KANAN] = nilai_body
             act[ACT_BBODY_KIRI] = nilai_body
             act[ACT_BBODY_KANAN] = nilai_body
+        if relay.kalibrasi:
+            arah_steer = -1  # kiri
+            act[ACT_STEER_DEPAN_KIRI] = -100 * arah_steer
+            act[ACT_STEER_DEPAN_KANAN] = 100 * arah_steer
+            act[ACT_STEER_BELAKANG_KIRI] = -100 * arah_steer
+            act[ACT_STEER_BELAKANG_KANAN] = 100 * arah_steer
+
+            nilai_body = 100  # naik/extend
+            act[ACT_FBODY_KIRI] = nilai_body
+            act[ACT_FBODY_KANAN] = nilai_body
+            act[ACT_BBODY_KIRI] = nilai_body
+            act[ACT_BBODY_KANAN] = nilai_body
+
 
         return act
 

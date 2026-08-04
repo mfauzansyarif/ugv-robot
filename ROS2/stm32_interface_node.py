@@ -123,9 +123,18 @@ class Stm32InterfaceNode(Node):
             self.get_logger().error(f'Gagal bangun down-frame: {e}')
             return
 
-        self.serial_conn.write(frame_keluar)
+        try:
+            self.serial_conn.write(frame_keluar)
+            frame_masuk = self.serial_conn.read(SIZE_UP)
+        except serial.SerialException as e:
+            # Ini yang dulu bikin node CRASH TOTAL (exception gak ketangkep,
+            # nembus sampai ke rclpy.spin() dan proses mati). Sekarang
+            # ditangkep di sini: cuma log warning + cek watchdog, skip
+            # siklus ini, node TETAP HIDUP nyoba lagi siklus berikutnya.
+            self.get_logger().warn(f'SerialException: {e}')
+            self._cek_watchdog()
+            return
 
-        frame_masuk = self.serial_conn.read(SIZE_UP)
         if len(frame_masuk) != SIZE_UP:
             # Timeout / STM32 gak balas lengkap -> skip siklus ini, coba lagi
             # siklus berikutnya. NORMAL kalau STM32 restart/link putus -
