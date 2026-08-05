@@ -217,10 +217,14 @@ class CvNode(Node):
         if not self.kamera.isOpened():
             self.get_logger().error('Gagal buka stream kamera')
 
-        # Default aman: manual (0) - gak jalanin inference sampai beneran
-        # ada frame /stm32/gcs_relay masuk yang bilang mode=1 (auto).
+        # Default aman: manual (0), slip ring dianggap OFF - gak jalanin
+        # inference sampai beneran ada frame /stm32/gcs_relay masuk yang
+        # bilang mode=1 (auto) DAN slip_ring=1 (kamera beneran dapet daya -
+        # slip ring mati = kamera padam total secara fisik, gak ada
+        # gunanya nyoba baca frame).
         self._mode = 0
-        self.create_subscription(GcsRelay, '/stm32/gcs_relay', self._callback_mode, 10)
+        self._slip_ring = 0
+        self.create_subscription(GcsRelay, '/stm32/gcs_relay', self._callback_relay, 10)
 
         self.pub_deteksi = self.create_publisher(PersonDetection, '/vision/deteksi', 10)
 
@@ -228,16 +232,18 @@ class CvNode(Node):
         # kamera asli), ngirit CPU Jetson buat kerjaan node lain juga.
         self.timer = self.create_timer(0.1, self._siklus_deteksi)
 
-    def _callback_mode(self, msg: GcsRelay):
+    def _callback_relay(self, msg: GcsRelay):
         self._mode = msg.mode
+        self._slip_ring = msg.slip_ring
 
     def _siklus_deteksi(self):
-        if self._mode != 1:
-            # Mode manual - kamera TETAP kebuka (biar RTSP session sehat,
-            # gak perlu reconnect tiap ganti mode), tapi inference (bagian
-            # BERAT di GPU) di-skip total. Tetap publish "gak terdeteksi"
-            # tiap siklus biar cache di Core Node gak nyangkut ke deteksi
-            # LAMA dari sebelum mode diganti manual.
+        if self._mode != 1 or self._slip_ring != 1:
+            # Manual, ATAU auto tapi slip ring mati (kamera gak dapet daya
+            # sama sekali) - kamera TETAP nyoba reconnect di background
+            # (biar begitu slip ring nyala lagi langsung pulih sendiri),
+            # tapi inference (bagian BERAT di GPU) di-skip total. Tetap
+            # publish "gak terdeteksi" tiap siklus biar cache di Core Node
+            # gak nyangkut ke deteksi LAMA dari sebelum kondisi ini.
             msg = PersonDetection()
             msg.terdeteksi = False
             self.pub_deteksi.publish(msg)
@@ -245,7 +251,14 @@ class CvNode(Node):
 
         frame = self.kamera.read()
         if frame is None:
-            return  # thread baca belum sempat dapat frame pertama
+            # Mode+slip ring udah bener tapi kamera lagi gak ke-reach
+            # (misal baru aja putus, belum sempet reconnect) - tetap
+            # publish False, jangan diem doang, biar cache Core Node gak
+            # nyangkut ke deteksi lama.
+            msg = PersonDetection()
+            msg.terdeteksi = False
+            self.pub_deteksi.publish(msg)
+            return
 
         frame_h, frame_w = frame.shape[:2]
         input_data = preprocess(frame, self.input_size)
