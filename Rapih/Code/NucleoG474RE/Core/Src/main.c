@@ -45,6 +45,7 @@ typedef struct {
     uint8_t motorIndividualId;
     int8_t  motorIndividualArah;
     uint8_t kalibrasi;
+    uint8_t mode; /* 0=manual, 1=auto - placeholder, belum ada tombolnya di GCS */
 } GcsCommand_t;
 
 typedef struct {
@@ -62,6 +63,11 @@ typedef struct {
     uint8_t gcsReplyLrfStatus;
     uint8_t gcsReplyLrfLsb;
     uint8_t gcsReplyLrfMsb;
+    uint8_t gcsReplyBoxTerdeteksi;
+    int8_t  gcsReplyBoxPusatX;
+    int8_t  gcsReplyBoxPusatY;
+    uint8_t gcsReplyBoxLebar;
+    uint8_t gcsReplyBoxTinggi;
 } JetsonCommand_t;
 /* USER CODE END PTD */
 
@@ -85,13 +91,13 @@ typedef struct {
 #define CMD2_BACA_JARAK     0x01U
 #define CMD2_POINTER        0x02U
 
-#define GCS_FRAME_LEN       14U
+#define GCS_FRAME_LEN       15U
 
 #define GCS_REPLY_MARKER    0xA5U
-#define GCS_REPLY_LEN       6U
+#define GCS_REPLY_LEN       11U
 
-#define JETSON_DOWN_LEN     21U
-#define JETSON_UP_LEN       18U
+#define JETSON_DOWN_LEN     26U
+#define JETSON_UP_LEN       19U
 
 #define LRF_TRIGGER_IDLE       0U
 #define LRF_TRIGGER_BACA_JARAK 1U
@@ -153,14 +159,14 @@ uint8_t lampuBelakangBrightness = 0;
 uint32_t waktuBlinkTerakhir = 0;
 uint8_t statusBlinkSekarang = 0;
 
-/* ---- Komunikasi GCS/RF (USART2, 14 byte request / 6 byte reply) ---- */
+/* ---- Komunikasi GCS/RF (USART2, 15 byte request / 11 byte reply) ---- */
 static uint8_t gcsRxBuf[GCS_FRAME_LEN];
 static uint8_t gcsFrameKerja[GCS_FRAME_LEN];
 volatile uint8_t gcsFrameSiap = 0;
 static uint8_t gcsFrameTerakhir[GCS_FRAME_LEN];
-static uint8_t gcsBalasanCache[4] = {1U, 0U, 0U, 0U};
+static uint8_t gcsBalasanCache[9] = {1U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U};
 
-/* ---- Komunikasi Jetson (USART3, 21 byte down / 18 byte up) ---- */
+/* ---- Komunikasi Jetson (USART3, 26 byte down / 18 byte up) ---- */
 static uint8_t jetsonRxBuf[JETSON_DOWN_LEN];
 static uint8_t jetsonFrameKerja[JETSON_DOWN_LEN];
 volatile uint8_t jetsonFrameSiap = 0;
@@ -468,7 +474,7 @@ static uint8_t BridgeLrf_Pointer(uint8_t nyala) {
 }
 
 /* ============================================================================
- * GCS/RF - USART2, 57600. Balas 6 byte ber-marker+checksum tiap 14 byte
+ * GCS/RF - USART2, 57600. Balas 11 byte ber-marker+checksum tiap 15 byte
  * request diterima - link ini lewat RF beneran, byte bisa geser/rusak di
  * udara, checksum biar gcs_app bisa buang balasan yang gak valid. Status
  * diambil dari gcsBalasanCache (diisi Jetson - lihat JetsonApplyCommand).
@@ -489,6 +495,7 @@ static void GcsParseFrame(const uint8_t *frame14, GcsCommand_t *out) {
     out->motorIndividualId    = frame14[11];
     out->motorIndividualArah  = (int8_t)frame14[12];
     out->kalibrasi            = frame14[13];
+    out->mode                 = frame14[14];
 }
 
 /* ============================================================================
@@ -514,6 +521,11 @@ static void JetsonParseFrame(const uint8_t *frame24, JetsonCommand_t *out) {
     out->gcsReplyLrfStatus     = frame24[18];
     out->gcsReplyLrfLsb        = frame24[19];
     out->gcsReplyLrfMsb        = frame24[20];
+    out->gcsReplyBoxTerdeteksi = frame24[21];
+    out->gcsReplyBoxPusatX     = (int8_t)frame24[22];
+    out->gcsReplyBoxPusatY     = (int8_t)frame24[23];
+    out->gcsReplyBoxLebar      = frame24[24];
+    out->gcsReplyBoxTinggi     = frame24[25];
 }
 
 static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
@@ -581,10 +593,15 @@ static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
     gcsBalasanCache[1] = cmd->gcsReplyLrfStatus;
     gcsBalasanCache[2] = cmd->gcsReplyLrfLsb;
     gcsBalasanCache[3] = cmd->gcsReplyLrfMsb;
+    gcsBalasanCache[4] = cmd->gcsReplyBoxTerdeteksi;
+    gcsBalasanCache[5] = (uint8_t)cmd->gcsReplyBoxPusatX;
+    gcsBalasanCache[6] = (uint8_t)cmd->gcsReplyBoxPusatY;
+    gcsBalasanCache[7] = cmd->gcsReplyBoxLebar;
+    gcsBalasanCache[8] = cmd->gcsReplyBoxTinggi;
 }
 
 static void JetsonBangunUpFrame(uint8_t *frameOut18) {
-    memcpy(frameOut18, gcsFrameTerakhir, GCS_FRAME_LEN); /* relay 14 byte GCS APA ADANYA */
+    memcpy(frameOut18, gcsFrameTerakhir, GCS_FRAME_LEN); /* relay 15 byte GCS APA ADANYA */
     frameOut18[GCS_FRAME_LEN + 0] = (uint8_t)(lrfJarakTerakhir & 0xFFU);
     frameOut18[GCS_FRAME_LEN + 1] = (uint8_t)((lrfJarakTerakhir >> 8) & 0xFFU);
     frameOut18[GCS_FRAME_LEN + 2] = lrfStatusTerakhir;
@@ -777,11 +794,14 @@ int main(void)
 
         uint8_t balasanFrame[GCS_REPLY_LEN];
         balasanFrame[0] = GCS_REPLY_MARKER;
-        balasanFrame[1] = gcsBalasanCache[0];
-        balasanFrame[2] = gcsBalasanCache[1];
-        balasanFrame[3] = gcsBalasanCache[2];
-        balasanFrame[4] = gcsBalasanCache[3];
-        balasanFrame[5] = (uint8_t)(balasanFrame[1] ^ balasanFrame[2] ^ balasanFrame[3] ^ balasanFrame[4]);
+        for (uint8_t i = 0; i < 9U; i++) {
+            balasanFrame[1U + i] = gcsBalasanCache[i];
+        }
+        uint8_t checksum = 0U;
+        for (uint8_t i = 1; i < GCS_REPLY_LEN - 1U; i++) {
+            checksum ^= balasanFrame[i];
+        }
+        balasanFrame[GCS_REPLY_LEN - 1U] = checksum;
         HAL_UART_Transmit(&huart2, balasanFrame, GCS_REPLY_LEN, UART_TX_TIMEOUT_MS);
     }
 

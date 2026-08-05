@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'stm32_interface_node = ugv_robot.stm32_interface_node:main',
             'core_node = ugv_robot.core_node:main',
+            'cv_node = ugv_robot.cv_node:main',
         ],
     },
 )

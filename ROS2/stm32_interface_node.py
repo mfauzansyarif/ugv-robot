@@ -23,17 +23,18 @@ from rclpy.node import Node
 
 from ugv_robot_msgs.msg import StmCommand, GcsRelay, LrfStatus, Health
 
-# Down-frame: Jetson -> STM32, 21 byte
+# Down-frame: Jetson -> STM32, 26 byte
 # speed(1) + act[8](8) + fLamp,bLamp,bLampMode(3) + pantiltH,pantiltV,zoom(3)
-# + slipRing,lrfTrigger(2) + gcsReply x4(4) = 21
-FORMAT_DOWN = "=b8bBBBbbbBBBBBB"
+# + slipRing,lrfTrigger(2) + gcsReply x4(4) + gcsReplyBox x5(5) = 26
+FORMAT_DOWN = "=b8bBBBbbbBBBBBBBbbBB"
 
-# Up-frame: STM32 -> Jetson, 18 byte
-# 14 byte relay GCS mentah + lrf_lsb,lrf_msb,lrf_status,stm32_status(4) = 18
-FORMAT_UP = "=BbbbbbBBBBbBbBBBBB"
+# Up-frame: STM32 -> Jetson, 19 byte
+# 15 byte relay GCS mentah (termasuk mode) + lrf_lsb,lrf_msb,lrf_status,
+# stm32_status(4) = 19
+FORMAT_UP = "=BbbbbbBBBBbBbBBBBBB"
 
-SIZE_DOWN = struct.calcsize(FORMAT_DOWN)  # harus = 21
-SIZE_UP = struct.calcsize(FORMAT_UP)      # harus = 18
+SIZE_DOWN = struct.calcsize(FORMAT_DOWN)  # harus = 26
+SIZE_UP = struct.calcsize(FORMAT_UP)      # harus = 19
 
 
 class Stm32InterfaceNode(Node):
@@ -118,6 +119,11 @@ class Stm32InterfaceNode(Node):
                 cmd.gcs_reply_lrf_status,
                 cmd.gcs_reply_lrf_lsb,
                 cmd.gcs_reply_lrf_msb,
+                cmd.gcs_reply_box_terdeteksi,
+                cmd.gcs_reply_box_pusat_x,
+                cmd.gcs_reply_box_pusat_y,
+                cmd.gcs_reply_box_lebar,
+                cmd.gcs_reply_box_tinggi,
             )
         except struct.error as e:
             self.get_logger().error(f'Gagal bangun down-frame: {e}')
@@ -157,20 +163,20 @@ class Stm32InterfaceNode(Node):
             self.get_logger().info('Link STM32 pulih kembali')
             self._link_sehat = True
 
-        # --- Offset 0-13: relay GCS mentah ---
+        # --- Offset 0-14: relay GCS mentah ---
         relay = GcsRelay()
         (relay.estop, relay.x_joy1, relay.y_joy1, relay.x_joy2, relay.y_joy2,
          relay.zoom, relay.lrf, relay.f_lamp, relay.b_lamp, relay.slip_ring,
          relay.body_up_down, relay.motor_individual_id,
-         relay.motor_individual_arah, relay.kalibrasi) = f[0:14]
+         relay.motor_individual_arah, relay.kalibrasi, relay.mode) = f[0:15]
 
-        # --- Offset 14-16: status LRF ---
+        # --- Offset 15-17: status LRF ---
         lrf = LrfStatus()
-        (lrf.jarak_lsb, lrf.jarak_msb, lrf.status) = f[14:17]
+        (lrf.jarak_lsb, lrf.jarak_msb, lrf.status) = f[15:18]
 
-        # --- Offset 17: kesehatan STM32 ---
+        # --- Offset 18: kesehatan STM32 ---
         health = Health()
-        health.stm32_status = f[17]
+        health.stm32_status = f[18]
 
         self.pub_gcs_relay.publish(relay)
         self.pub_lrf_status.publish(lrf)

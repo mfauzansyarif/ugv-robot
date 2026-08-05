@@ -9,6 +9,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/GcsRelay.msg"
   "msg/LrfStatus.msg"
   "msg/Health.msg"
+  "msg/PersonDetection.msg"
 )
 
 ament_package()

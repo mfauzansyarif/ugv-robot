@@ -20,7 +20,7 @@ Index actuator (act[0..7]):
 import rclpy
 from rclpy.node import Node
 
-from ugv_robot_msgs.msg import StmCommand, GcsRelay, LrfStatus, Health
+from ugv_robot_msgs.msg import StmCommand, GcsRelay, LrfStatus, Health, PersonDetection
 
 # Nilai lrf_trigger (harus cocok sama #define di firmware STM32)
 LRF_IDLE = 0
@@ -77,6 +77,7 @@ class CoreNode(Node):
         self._lrf_status = LrfStatus()
         self._health = Health()
         self._health.stm32_status = 1  # default aman: anggap sehat
+        self._deteksi = PersonDetection()  # default: terdeteksi=False
 
         # --- Subscriber ---
         self.create_subscription(GcsRelay, '/stm32/gcs_relay',
@@ -85,6 +86,8 @@ class CoreNode(Node):
                                  self._callback_lrf_status, 10)
         self.create_subscription(Health, '/stm32/health',
                                  self._callback_health, 10)
+        self.create_subscription(PersonDetection, '/vision/deteksi',
+                                 self._callback_deteksi, 10)
 
         # --- Publisher ---
         self.pub_command = self.create_publisher(StmCommand, '/stm32/command', 10)
@@ -99,6 +102,9 @@ class CoreNode(Node):
 
     def _callback_health(self, msg: Health):
         self._health = msg
+
+    def _callback_deteksi(self, msg: PersonDetection):
+        self._deteksi = msg
 
     # ------------------------------------------------------------------
     # INTI: tiap relay GCS masuk -> olah semua field -> publish command
@@ -257,6 +263,14 @@ class CoreNode(Node):
         cmd.gcs_reply_lrf_status = self._lrf_status.status
         cmd.gcs_reply_lrf_lsb = self._lrf_status.jarak_lsb
         cmd.gcs_reply_lrf_msb = self._lrf_status.jarak_msb
+        # Box CV numpang di mekanisme yang sama - cuma buat DITAMPILIN di
+        # GCS (overlay di atas video analog), BELUM dipakai buat keputusan
+        # gerak apapun di sini (lihat TODO sudut pantilt di PersonDetection.msg).
+        cmd.gcs_reply_box_terdeteksi = 1 if self._deteksi.terdeteksi else 0
+        cmd.gcs_reply_box_pusat_x = int(self._deteksi.pusat_x)
+        cmd.gcs_reply_box_pusat_y = int(self._deteksi.pusat_y)
+        cmd.gcs_reply_box_lebar = int(self._deteksi.lebar)
+        cmd.gcs_reply_box_tinggi = int(self._deteksi.tinggi)
 
 
 def main(args=None):

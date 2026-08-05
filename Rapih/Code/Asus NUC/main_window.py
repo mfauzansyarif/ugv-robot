@@ -59,6 +59,11 @@ class MainWindow(QMainWindow):
         self._individual_arah = 0        # -1/0/1, cuma dipakai kalau motor_id != 0
         self._kalibrasi_aktif = False    # True SELAMA toggle Calibrate aktif (bukan pulse)
 
+        # 0=manual, 1=auto - placeholder protokol, BELUM ada tombolnya di
+        # UI (selalu manual buat sekarang). CV Node di Jetson cek field
+        # ini biar gak jalanin inference terus-terusan (hemat GPU/panas).
+        self._mode = 0
+
         self._arduino_reader = None
         self._rf_link = None
 
@@ -471,9 +476,12 @@ class MainWindow(QMainWindow):
             slip_ring, body_updown,
             self._individual_motor_id, self._individual_arah,
             1 if self._kalibrasi_aktif else 0,
+            self._mode,
         )
 
     def _on_telemetry(self, data):
+        self.camera_viewer.set_deteksi_box(data)
+
         stm32_ok = bool(data["stm32_status"])
         if stm32_ok != self._stm32_status_terakhir:
             if stm32_ok:

@@ -1,4 +1,4 @@
-# Down-frame Jetson -> STM32, 21 byte, format "=b8bBBBbbbBBBBBB"
+# Down-frame Jetson -> STM32, 26 byte, format "=b8bBBBbbbBBBBBBBbbBB"
 # Semua field SUDAH FINAL - STM32 tinggal apply, gak mikir apa-apa lagi.
 int8 speed
 int8[8] act
@@ -14,3 +14,8 @@ uint8 gcs_reply_stm32_status
 uint8 gcs_reply_lrf_status
 uint8 gcs_reply_lrf_lsb
 uint8 gcs_reply_lrf_msb
+uint8 gcs_reply_box_terdeteksi
+int8 gcs_reply_box_pusat_x
+int8 gcs_reply_box_pusat_y
+uint8 gcs_reply_box_lebar
+uint8 gcs_reply_box_tinggi

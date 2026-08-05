@@ -95,17 +95,24 @@ class ArduinoReader(QThread):
             return None
 
 
-# Frame 14-byte GCS->STM32, urutan field:
+# Frame 15-byte GCS->STM32, urutan field:
 # Estop(B) XJoy1(b) YJoy1(b) XJoy2(b) YJoy2(b) Zoom(b) LRF(B)
 # FLamp(B) BLamp(B) SlipRing(B) BodyUpDown(b)
-# MotorIndividualID(B) MotorIndividualArah(b) Kalibrasi(B)
-FORMAT_FRAME_GCS = "=BbbbbbBBBBbBbB"
+# MotorIndividualID(B) MotorIndividualArah(b) Kalibrasi(B) Mode(B)
+FORMAT_FRAME_GCS = "=BbbbbbBBBBbBbBB"
 
-# Balasan STM32->GCS: 6 byte [marker, stm32_status, lrf_status, lrf_lsb,
-# lrf_msb, checksum]. Marker+checksum (XOR ke-4 byte data) buat deteksi
-# balasan yang geser/rusak di udara (link ini lewat RF, bukan kabel).
+# Balasan STM32->GCS: 11 byte [marker, stm32_status, lrf_status, lrf_lsb,
+# lrf_msb, box_terdeteksi, box_pusat_x, box_pusat_y, box_lebar, box_tinggi,
+# checksum]. Marker+checksum (XOR ke-9 byte data) buat deteksi balasan
+# yang geser/rusak di udara (link ini lewat RF, bukan kabel).
 GCS_REPLY_MARKER = 0xA5
-GCS_REPLY_LEN = 6
+GCS_REPLY_LEN = 11
+
+
+def _byte_ke_signed(nilai_byte):
+    """uint8 (0-255) -> int8 (-128..127) - box_pusat_x/y dikirim mentah
+    sebagai byte, perlu di-interpretasi ulang jadi signed di sisi Python."""
+    return nilai_byte - 256 if nilai_byte > 127 else nilai_byte
 
 
 class RFLink(QThread):
@@ -181,8 +188,10 @@ class RFLink(QThread):
 
             valid = False
             if len(respons) == GCS_REPLY_LEN and respons[0] == GCS_REPLY_MARKER:
-                checksum_hitung = respons[1] ^ respons[2] ^ respons[3] ^ respons[4]
-                valid = checksum_hitung == respons[5]
+                checksum_hitung = 0
+                for b in respons[1:10]:
+                    checksum_hitung ^= b
+                valid = checksum_hitung == respons[10]
 
             if valid:
                 _debug_rtt_list.append(rtt_ms)
@@ -195,6 +204,11 @@ class RFLink(QThread):
                     "stm32_status": respons[1],
                     "lrf_status": respons[2],
                     "lrf_jarak_meter": jarak_desimeter / 10.0,
+                    "box_terdeteksi": bool(respons[5]),
+                    "box_pusat_x": _byte_ke_signed(respons[6]),
+                    "box_pusat_y": _byte_ke_signed(respons[7]),
+                    "box_lebar": respons[8],
+                    "box_tinggi": respons[9],
                 })
             else:
                 print(f"[RF DEBUG] MISS - {len(respons)}/{GCS_REPLY_LEN} byte diterima, "
