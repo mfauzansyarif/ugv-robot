@@ -17,6 +17,14 @@ except ImportError:
 
 INTERVAL_UPDATE_MS = 33  # ~30fps
 
+# Sisa blanking interval sinyal PAL suka nongol jadi garis/noise warna
+# solid di baris paling BAWAH frame - bukan masalah RF/sinyal, itu emang
+# artefak normal video analog. Angka ini di-tune manual buat capture
+# card & resolusi yang dipakai sekarang (lihat Testcode/test_video_capture.py
+# buat cara re-tune-nya kalau ganti capture card/resolusi: set 0 dulu,
+# lihat berapa px garisnya, sesuaikan).
+CROP_BAWAH_PIXEL = 100
+
 
 def list_nama_kamera():
     """List semua nama device capture yang kedetect DirectShow - buat isi
@@ -111,6 +119,8 @@ class CameraViewer(QWidget):
         if not ret:
             return
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        if CROP_BAWAH_PIXEL > 0:
+            frame_rgb = frame_rgb[:-CROP_BAWAH_PIXEL, :]
         tinggi, lebar, _ = frame_rgb.shape
         self._gambar_box(frame_rgb, lebar, tinggi)
         image = QImage(frame_rgb.data, lebar, tinggi, 3 * lebar, QImage.Format_RGB888)
