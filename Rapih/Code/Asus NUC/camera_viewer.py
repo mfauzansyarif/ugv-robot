@@ -17,13 +17,40 @@ except ImportError:
 
 INTERVAL_UPDATE_MS = 33  # ~30fps
 
-# Sisa blanking interval sinyal PAL suka nongol jadi garis/noise warna
-# solid di baris paling BAWAH frame - bukan masalah RF/sinyal, itu emang
-# artefak normal video analog. Angka ini di-tune manual buat capture
-# card & resolusi yang dipakai sekarang (lihat Testcode/test_video_capture.py
-# buat cara re-tune-nya kalau ganti capture card/resolusi: set 0 dulu,
-# lihat berapa px garisnya, sesuaikan).
-CROP_BAWAH_PIXEL = 100
+# Kamera fisiknya SAMA kayak yang RTSP di Jetson (native 640x360, 16:9),
+# tapi video analog PAL ini native-nya 720x576 (~4:3) - kontennya UDAH
+# match edge-to-edge, cuma buffer-nya ke-stretch taller dari seharusnya.
+# PAKSA_RASIO_16_9 = resize (BUKAN crop) balik ke 16:9, dihitung dari
+# tinggi MENTAH (576) biar scale factor-nya presisi.
+PAKSA_RASIO_16_9 = True
+
+# Box hijau error dari driver capture card - JUMLAH PIXEL di FRAME MENTAH
+# (720x576, SEBELUM di-press). Ditemuin & di-tuning manual pakai
+# Testcode/test_video_capture.py (buka bareng Testcode/test_rtsp_kamera_jetson.py
+# buat dibandingin) - 96 udah kebukti pas ngilangin hijau tanpa motong
+# konten asli. Kalau capture card/resolusi ganti, tuning ulang di situ,
+# BUKAN di sini (lebih gampang tes iteratif pakai script berdiri sendiri).
+CROP_BAWAH_PIXEL_MENTAH = 96
+
+# --- Kalibrasi FOV kiri/kanan/atas (tambahan kalau ternyata masih ada
+# selisih dikit setelah 16:9+crop di atas - dari tes terakhir, framing
+# udah match tanpa perlu ini, dibiarin 0.0). Cara tuning: lihat
+# Testcode/test_video_capture.py, taruh benda di tepi frame RTSP,
+# geser dikit-dikit (misal 0.02 = 2%) sampai posisinya sama di video RF.
+CROP_KIRI_PERSEN = 0.0
+CROP_KANAN_PERSEN = 0.0
+CROP_ATAS_PERSEN = 0.0
+
+
+def press_ke_16_9(frame_rgb):
+    """RESIZE (bukan crop) SELURUH frame mentah ke rasio 16:9 - WAJIB
+    dipanggil ke frame ASLI (belum di-crop apapun), soalnya scale factor
+    yang bener buat ngoreksi stretch itu dihitung dari tinggi ASLI."""
+    tinggi, lebar = frame_rgb.shape[:2]
+    tinggi_target = int(lebar * 9 / 16)
+    if tinggi_target != tinggi:
+        frame_rgb = cv2.resize(frame_rgb, (lebar, tinggi_target), interpolation=cv2.INTER_AREA)
+    return frame_rgb
 
 
 def list_nama_kamera():
@@ -91,26 +118,40 @@ class CameraViewer(QWidget):
         perlu sinkron persis, update-nya udah ~20Hz)."""
         self._box = data_telemetry
 
-    def _gambar_box(self, frame_rgb, lebar_frame, tinggi_frame):
+    def _gambar_box(self, frame_rgb, lebar_acuan, tinggi_acuan, offset_x, offset_y):
         """Overlay kotak deteksi CV dari Jetson di atas video analog RC832.
-        Koordinat dari Jetson itu PERSENTASE (bukan piksel absolut), jadi
-        otomatis nyesuaian ke resolusi video analog ini - TAPI asumsinya
-        field-of-view kamera CV (Jetson) & kamera analog (RC832) MIRIP,
-        jadi posisinya kira-kira pas, bukan presisi piksel sempurna kalau
-        ternyata dua kamera fisiknya beda framing."""
+        Koordinat dari Jetson itu PERSENTASE dari frame 16:9 MURNI (sama
+        skala kayak RTSP di Jetson) - makanya `lebar_acuan`/`tinggi_acuan`
+        itu HARUS dimensi SEBELUM crop hijau/kalibrasi diterapin, BUKAN
+        dimensi frame_rgb yang beneran digambar (yang lebih kecil, abis
+        di-crop). Kalau pakai dimensi abis-crop, skalanya "gepeng" dan box
+        makin meleset makin ke bawah/tepi. `offset_x`/`offset_y` geser
+        hasilnya biar nyocok sama origin frame_rgb yang baru (abis
+        kiri/atas ikut kepotong) - kalau box jatuh di area yang udah
+        kepotong, cv2.rectangle otomatis clip, aman gak error."""
         if self._box is None or not self._box.get("box_terdeteksi"):
             return
 
-        pusat_x_px = (self._box["box_pusat_x"] + 100) / 200 * lebar_frame
-        pusat_y_px = (100 - self._box["box_pusat_y"]) / 200 * tinggi_frame
-        lebar_px = self._box["box_lebar"] / 100 * lebar_frame
-        tinggi_px = self._box["box_tinggi"] / 100 * tinggi_frame
+        pusat_x_px = (self._box["box_pusat_x"] + 100) / 200 * lebar_acuan
+        pusat_y_px = (100 - self._box["box_pusat_y"]) / 200 * tinggi_acuan
+        lebar_px = self._box["box_lebar"] / 100 * lebar_acuan
+        tinggi_px = self._box["box_tinggi"] / 100 * tinggi_acuan
 
-        x1 = int(pusat_x_px - lebar_px / 2)
-        y1 = int(pusat_y_px - tinggi_px / 2)
-        x2 = int(pusat_x_px + lebar_px / 2)
-        y2 = int(pusat_y_px + tinggi_px / 2)
+        x1 = int(pusat_x_px - lebar_px / 2) - offset_x
+        y1 = int(pusat_y_px - tinggi_px / 2) - offset_y
+        x2 = int(pusat_x_px + lebar_px / 2) - offset_x
+        y2 = int(pusat_y_px + tinggi_px / 2) - offset_y
         cv2.rectangle(frame_rgb, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+    def _crop_kalibrasi_fov(self, frame_rgb):
+        tinggi, lebar = frame_rgb.shape[:2]
+        kiri = int(lebar * CROP_KIRI_PERSEN)
+        kanan = lebar - int(lebar * CROP_KANAN_PERSEN)
+        atas = int(tinggi * CROP_ATAS_PERSEN)
+        # .copy() WAJIB - crop kolom (kiri/kanan) bikin array-nya gak lagi
+        # contiguous di memori, padahal QImage butuh buffer contiguous
+        # (kalau gak di-copy, gambar bisa geser/rusak/corrupt).
+        return frame_rgb[atas:, kiri:kanan].copy(), kiri, atas
 
     def _ambil_frame(self):
         if self._cap is None:
@@ -119,10 +160,26 @@ class CameraViewer(QWidget):
         if not ret:
             return
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        if CROP_BAWAH_PIXEL > 0:
-            frame_rgb = frame_rgb[:-CROP_BAWAH_PIXEL, :]
+        tinggi_mentah = frame_rgb.shape[0]
+
+        if PAKSA_RASIO_16_9:
+            frame_rgb = press_ke_16_9(frame_rgb)  # dari frame MENTAH, sebelum crop apapun
+
+        # Dimensi 16:9 MURNI (sama skala kayak RTSP) - direkam SEBELUM
+        # crop hijau/kalibrasi, dipakai buat acuan hitung posisi box.
+        lebar_acuan = frame_rgb.shape[1]
+        tinggi_acuan = frame_rgb.shape[0]
+
+        if CROP_BAWAH_PIXEL_MENTAH > 0:
+            # Skala crop-nya ikut rasio resize di atas, biar tetep pas
+            # motong box hijau yang udah ikut menyusut proporsional.
+            crop_sekarang = int(CROP_BAWAH_PIXEL_MENTAH * frame_rgb.shape[0] / tinggi_mentah)
+            if crop_sekarang > 0:
+                frame_rgb = frame_rgb[:-crop_sekarang, :]
+
+        frame_rgb, offset_x, offset_y = self._crop_kalibrasi_fov(frame_rgb)
+        self._gambar_box(frame_rgb, lebar_acuan, tinggi_acuan, offset_x, offset_y)
         tinggi, lebar, _ = frame_rgb.shape
-        self._gambar_box(frame_rgb, lebar, tinggi)
         image = QImage(frame_rgb.data, lebar, tinggi, 3 * lebar, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(image).scaled(
             self.label_video.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
