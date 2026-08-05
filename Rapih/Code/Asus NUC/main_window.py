@@ -59,9 +59,10 @@ class MainWindow(QMainWindow):
         self._individual_arah = 0        # -1/0/1, cuma dipakai kalau motor_id != 0
         self._kalibrasi_aktif = False    # True SELAMA toggle Calibrate aktif (bukan pulse)
 
-        # 0=manual, 1=auto - placeholder protokol, BELUM ada tombolnya di
-        # UI (selalu manual buat sekarang). CV Node di Jetson cek field
-        # ini biar gak jalanin inference terus-terusan (hemat GPU/panas).
+        # 0=manual, 1=auto - dikontrol tombol Auto (lihat _toggle_mode_auto).
+        # CV Node di Jetson cek field ini biar gak jalanin inference
+        # terus-terusan (hemat GPU/panas) - Jetson JUGA cek slip_ring
+        # sendiri (kamera CV kehilangan daya total kalau slip ring off).
         self._mode = 0
 
         self._arduino_reader = None
@@ -89,10 +90,34 @@ class MainWindow(QMainWindow):
         self.console_log = ConsoleLog()
         self.console_log.setMinimumHeight(150)
         baris_bawah.addWidget(self.console_log, stretch=1)
+        baris_bawah.addWidget(self._buat_tombol_auto())
         baris_bawah.addWidget(self._buat_tombol_estop())
         layout_utama.addLayout(baris_bawah)
 
         self.console_log.info("GCS Application Started")
+
+    def _buat_tombol_auto(self):
+        """Tombol virtual Auto (mode follow-otomatis CV) - toggle, sama
+        ukuran/gaya kayak E-Stop, ditaruh SEBELAH KIRI-nya. Di-disable
+        (gak bisa dipencet) kalau Slip Ring OFF - kamera CV kehilangan
+        daya total lewat slip ring, jadi Auto gak ada gunanya kalau
+        kameranya sendiri padam (lihat _toggle_slip_ring buat logic
+        enable/disable + force-off-nya)."""
+        self.btn_auto = QPushButton("Auto")
+        self.btn_auto.setCheckable(True)
+        self.btn_auto.setFixedSize(150, 150)
+        self.btn_auto.setEnabled(self._slip_ring_on)
+        self.btn_auto.setStyleSheet(
+            "QPushButton { background-color: #1565c0; color: white; font-weight: bold; }"
+            "QPushButton:checked { background-color: #2196f3; border: 4px solid white; }"
+            "QPushButton:disabled { background-color: #444; color: #888; }"
+        )
+        self.btn_auto.clicked.connect(self._toggle_mode_auto)
+        return self.btn_auto
+
+    def _toggle_mode_auto(self):
+        self._mode = 1 if self.btn_auto.isChecked() else 0
+        self.console_log.info(f"Mode: {'AUTO' if self._mode else 'MANUAL'}")
 
     def _buat_tombol_estop(self):
         """Tombol virtual E-STOP - toggle (bukan momentary), konsisten sama
@@ -279,6 +304,16 @@ class MainWindow(QMainWindow):
         self._slip_ring_on = self.btn_slip_ring.isChecked()
         self.btn_slip_ring.setText(f"Slip Ring: {'ON' if self._slip_ring_on else 'OFF'}")
         self.console_log.info(f"Slip ring: {'ON' if self._slip_ring_on else 'OFF'}")
+
+        # Tombol Auto cuma boleh dipencet kalau slip ring ON (kamera CV
+        # dapet daya lewat situ). Kalau slip ring dimatiin SAAT Auto lagi
+        # aktif, paksa Auto off juga - jangan biarin "nyala tapi disabled"
+        # yang ambigu, kamera-nya emang bakal padam beneran.
+        self.btn_auto.setEnabled(self._slip_ring_on)
+        if not self._slip_ring_on and self.btn_auto.isChecked():
+            self.btn_auto.setChecked(False)
+            self._mode = 0
+            self.console_log.warning("Mode Auto dimatikan otomatis - Slip Ring OFF")
 
     def _buka_dialog_motor_individual(self):
         dialog = MotorLinearDialog(

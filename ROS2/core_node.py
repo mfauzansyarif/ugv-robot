@@ -17,6 +17,8 @@ Index actuator (act[0..7]):
   3 = Steer Belakang Kanan 7 = BBody Kanan
 """
 
+import time
+
 import rclpy
 from rclpy.node import Node
 
@@ -47,6 +49,34 @@ ID_FBODY_KANAN = 4
 ID_BBODY_KIRI = 5
 ID_BBODY_KANAN = 6
 
+# Damper `speed` (motor AC) - batasin PERUBAHAN maksimal per siklus (per 1
+# frame /stm32/gcs_relay masuk, ~20Hz ngikut GCS), biar joystick yang
+# tiba-tiba lompat ke 100 gak bikin mobil nyentak maju/mundur mendadak -
+# "speed" beneran itu NGEJAR nilai joystick pelan-pelan, kayak digas.
+# Satuannya: satuan `speed` (-100..100) per siklus. Ganti angka di sini
+# buat atur se-ngedamp apa (angka lebih KECIL = lebih halus/lambat ngejar).
+#
+# GAS dan REM sengaja DIPISAH - umumnya REM (nurunin |speed| ke arah 0,
+# ngerem) lebih aman dibikin lebih CEPAT/responsif daripada GAS (naikin
+# |speed|, akselerasi), jadi robot tetep bisa berhenti gak lama walau
+# akselerasinya dibikin halus.
+DAMPER_GAS_PER_SIKLUS = 5    # naikin |speed| (akselerasi) - PELAN
+DAMPER_REM_PER_SIKLUS = 15   # turunin |speed| (ngerem/berhenti) - CEPAT
+
+# Actuator pas relay.kalibrasi=1 (Fully Extend + Fully Left) - full speed
+# SELAMA tombol Calibrate di GCS ditahan, operator sendiri yang mutusin
+# kapan lepas (liat fisik udah mentok). Angka kiri/kanan steer ngikut
+# konvensi arah_steer=-1 (kiri) di _hitung_actuator normal.
+ACT_KALIBRASI = [0] * 8
+ACT_KALIBRASI[ACT_STEER_DEPAN_KIRI] = 100
+ACT_KALIBRASI[ACT_STEER_DEPAN_KANAN] = -100
+ACT_KALIBRASI[ACT_STEER_BELAKANG_KIRI] = 100
+ACT_KALIBRASI[ACT_STEER_BELAKANG_KANAN] = -100
+ACT_KALIBRASI[ACT_FBODY_KIRI] = 100
+ACT_KALIBRASI[ACT_FBODY_KANAN] = 100
+ACT_KALIBRASI[ACT_BBODY_KIRI] = 100
+ACT_KALIBRASI[ACT_BBODY_KANAN] = 100
+
 
 def tanda(nilai):
     """Ubah nilai apapun jadi -1 / 0 / 1 berdasarkan tandanya doang."""
@@ -67,10 +97,29 @@ class CoreNode(Node):
         self.declare_parameter('steer_threshold', 30)
         self.steer_threshold = self.get_parameter('steer_threshold').value
 
+        # Safety kalibrasi: batas MAKSIMAL kalibrasi boleh nyala TERUS-
+        # TERUSAN (detik) sebelum otomatis dianggap OFF, walau GCS masih
+        # ngirim kalibrasi=1 (misal operator lupa lepas toggle, atau
+        # toggle "nyangkut" di app). Ganti pas jalanin node:
+        #   ros2 run ugv_robot core_node --ros-args -p kalibrasi_maks_durasi_sec:=10.0
+        self.declare_parameter('kalibrasi_maks_durasi_sec', 15.0)
+        self.kalibrasi_maks_durasi_sec = self.get_parameter('kalibrasi_maks_durasi_sec').value
+
         # --- State yang HARUS diinget antar-frame ---
         # Cuma buat deteksi falling edge tombol LRF (1 -> 0 = release).
         # Semua field lain stateless, cukup lihat nilai frame sekarang.
         self._lrf_sebelumnya = 0
+
+        # Timestamp kalibrasi MULAI aktif (None = lagi OFF) - dipakai buat
+        # itung durasi buat safety timeout di atas. Lihat _kalibrasi_masih_boleh.
+        self._kalibrasi_mulai = None
+        self._kalibrasi_timeout_sudah_lapor = False
+
+        # `speed` TERAKHIR yang beneran dikirim (setelah di-damper) - lihat
+        # _damper_speed(). Direset ke 0 tiap kali speed dipaksa 0 (estop/
+        # kalibrasi), biar damper gak "kaget" dari nilai basi begitu balik
+        # ke logic normal.
+        self._speed_terakhir = 0
 
         # Cache status terakhir dari 2 topic lain, dipakai buat isi gcsReply*
         # (Core Node yang mutusin apa yang dibalas ke GCS lewat STM32).
@@ -120,6 +169,7 @@ class CoreNode(Node):
         # ditekan. KONFIRMASI dulu ke tim sebelum dipakai di lapangan.
         if relay.estop:
             cmd.speed = 0
+            self._speed_terakhir = 0  # estop = stop SEKETIKA, jangan didamper
             cmd.act = [0] * 8
             cmd.f_lamp = 0
             cmd.b_lamp = 0
@@ -134,11 +184,39 @@ class CoreNode(Node):
             self.pub_command.publish(cmd)
             return
 
+        # ===== KALIBRASI =====
+        # Prioritas ke-2 (di bawah estop, di atas override individual/logic
+        # normal - return di sini sebelum _hitung_actuator dipanggil sama
+        # sekali, jadi kalibrasi OTOMATIS menang walau motor_individual_id
+        # kebetulan lagi != 0). Motor AC & yang gak relevan dinetralin
+        # biar gak ada gerakan lain nyampur pas actuator lagi dipaksa ke
+        # limit. _kalibrasi_masih_boleh() otomatis jadi False kalau udah
+        # kelewat kalibrasi_maks_durasi_sec - jatuh ke logic normal di
+        # bawah, BUKAN dipaksa diam, biar joystick langsung nyalip balik
+        # kendali.
+        if self._kalibrasi_masih_boleh(relay.kalibrasi):
+            cmd.speed = 0
+            self._speed_terakhir = 0  # jangan sampai damper "nyimpen" nilai basi
+            cmd.act = list(ACT_KALIBRASI)
+            cmd.f_lamp = relay.f_lamp
+            cmd.b_lamp = relay.f_lamp
+            cmd.b_lamp_mode = relay.b_lamp
+            cmd.pantilt_horizontal = 0
+            cmd.pantilt_vertical = 0
+            cmd.kamera_zoom = 0
+            cmd.slip_ring = relay.slip_ring
+            cmd.lrf_trigger = LRF_POINTER_OFF
+            self._isi_gcs_reply(cmd)
+            self._lrf_sebelumnya = relay.lrf
+            self.pub_command.publish(cmd)
+            return
+
         # ===== MOTOR AC =====
-        # Langsung dari y_joy1 (sama-sama -100..100), diterapin SAMA ke
-        # semua 4 motor. Belok itu kerjaan actuator Steer, BUKAN beda
-        # kecepatan roda - kendaraan ini bukan skid-steer.
-        cmd.speed = relay.y_joy1
+        # Dari y_joy1 (sama-sama -100..100), DIDAMPER dulu (lihat
+        # _damper_speed) baru diterapin SAMA ke semua 4 motor. Belok itu
+        # kerjaan actuator Steer, BUKAN beda kecepatan roda - kendaraan
+        # ini bukan skid-steer.
+        cmd.speed = self._damper_speed(relay.y_joy1)
 
         # ===== ACTUATOR LINEAR =====
         cmd.act = self._hitung_actuator(relay)
@@ -165,6 +243,33 @@ class CoreNode(Node):
         self._isi_gcs_reply(cmd)
 
         self.pub_command.publish(cmd)
+
+    # ------------------------------------------------------------------
+    # Safety timeout kalibrasi - True selama kalibrasi=1 DAN belum kelewat
+    # kalibrasi_maks_durasi_sec sejak toggle-nya MULAI aktif. Timer di-
+    # reset (kembali None) begitu GCS kirim kalibrasi=0, jadi ngitungnya
+    # selalu dari nyala-terakhir, bukan akumulasi sepanjang sesi node.
+    # ------------------------------------------------------------------
+    def _kalibrasi_masih_boleh(self, kalibrasi_sekarang):
+        if not kalibrasi_sekarang:
+            self._kalibrasi_mulai = None
+            self._kalibrasi_timeout_sudah_lapor = False
+            return False
+
+        sekarang = time.time()
+        if self._kalibrasi_mulai is None:
+            self._kalibrasi_mulai = sekarang
+
+        durasi = sekarang - self._kalibrasi_mulai
+        if durasi >= self.kalibrasi_maks_durasi_sec:
+            if not self._kalibrasi_timeout_sudah_lapor:
+                self.get_logger().warn(
+                    f'Kalibrasi otomatis DIMATIKAN - kelewat batas '
+                    f'{self.kalibrasi_maks_durasi_sec}s (toggle GCS lupa dilepas?)')
+                self._kalibrasi_timeout_sudah_lapor = True
+            return False
+
+        return True
 
     # ------------------------------------------------------------------
     # Actuator: logic normal (steer + body), lalu di-override individual
@@ -218,21 +323,25 @@ class CoreNode(Node):
             act[ACT_FBODY_KANAN] = nilai_body
             act[ACT_BBODY_KIRI] = nilai_body
             act[ACT_BBODY_KANAN] = nilai_body
-        if relay.kalibrasi:
-            arah_steer = -1  # kiri
-            act[ACT_STEER_DEPAN_KIRI] = -100 * arah_steer
-            act[ACT_STEER_DEPAN_KANAN] = 100 * arah_steer
-            act[ACT_STEER_BELAKANG_KIRI] = -100 * arah_steer
-            act[ACT_STEER_BELAKANG_KANAN] = 100 * arah_steer
-
-            nilai_body = 100  # naik/extend
-            act[ACT_FBODY_KIRI] = nilai_body
-            act[ACT_FBODY_KANAN] = nilai_body
-            act[ACT_BBODY_KIRI] = nilai_body
-            act[ACT_BBODY_KANAN] = nilai_body
-
-
         return act
+
+    # ------------------------------------------------------------------
+    # Damper `speed` - gerakin self._speed_terakhir MENDEKATI target
+    # (joystick), maksimal DAMPER_GAS_PER_SIKLUS (naikin |speed|) atau
+    # DAMPER_REM_PER_SIKLUS (turunin |speed|) per panggilan. Mana yang
+    # kepake ditentuin dari BESAR target dibanding BESAR speed sekarang,
+    # bukan dari tandanya - jadi kerja simetris buat maju MAUPUN mundur.
+    # ------------------------------------------------------------------
+    def _damper_speed(self, target):
+        if abs(target) > abs(self._speed_terakhir):
+            maks_delta = DAMPER_GAS_PER_SIKLUS
+        else:
+            maks_delta = DAMPER_REM_PER_SIKLUS
+
+        delta = target - self._speed_terakhir
+        delta = max(-maks_delta, min(maks_delta, delta))
+        self._speed_terakhir += delta
+        return self._speed_terakhir
 
     # ------------------------------------------------------------------
     # LRF: falling edge detection (butuh state frame sebelumnya)
