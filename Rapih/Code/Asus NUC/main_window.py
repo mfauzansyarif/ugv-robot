@@ -272,14 +272,20 @@ class MainWindow(QMainWindow):
         group = QGroupBox("Camera Viewer")
         layout = QVBoxLayout(group)
         self.camera_viewer = CameraViewer()
-        layout.addWidget(self.camera_viewer)
+        # stretch=1 - video-nya yang GRAB semua ruang lebih (bukan tombol
+        # di bawah), biar video keliatan sebesar mungkin.
+        layout.addWidget(self.camera_viewer, stretch=1)
 
         baris_tombol_kamera = QHBoxLayout()
         btn_stop_kamera = QPushButton("Stop")
+        # Tinggi tombol dikecilin (60px->40px) - biar ruang buat video
+        # di atasnya lebih lega, sama pola kayak Shutdown/Settings.
+        btn_stop_kamera.setStyleSheet("min-height: 40px;")
         btn_stop_kamera.clicked.connect(self._stop_kamera)
         baris_tombol_kamera.addWidget(btn_stop_kamera)
 
         btn_mulai_kamera = QPushButton("Start")
+        btn_mulai_kamera.setStyleSheet("min-height: 40px;")
         btn_mulai_kamera.clicked.connect(self._mulai_kamera)
         baris_tombol_kamera.addWidget(btn_mulai_kamera)
         layout.addLayout(baris_tombol_kamera)
