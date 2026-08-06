@@ -1,0 +1,16 @@
+../Core/Src/main.c:112:13:DebugPrint	144	static
+../Core/Src/main.c:124:13:DebugPrintFrame	96	static
+../Core/Src/main.c:136:16:PelcoD_Checksum	16	static
+../Core/Src/main.c:141:13:KirimResponsPelcoD	32	static
+../Core/Src/main.c:158:16:LRF_Checksum	24	static
+../Core/Src/main.c:172:16:LRF_BacaJarak	64	static
+../Core/Src/main.c:208:16:LRF_Pointer	32	static
+../Core/Src/main.c:240:13:ProsesFramePelcoD	56	static
+../Core/Src/main.c:297:6:HAL_UART_RxCpltCallback	16	static
+../Core/Src/main.c:323:6:HAL_UART_ErrorCallback	16	static
+../Core/Src/main.c:338:5:main	16	static
+../Core/Src/main.c:425:6:SystemClock_Config	88	static
+../Core/Src/main.c:472:13:MX_USART1_UART_Init	8	static
+../Core/Src/main.c:520:13:MX_USART2_UART_Init	8	static
+../Core/Src/main.c:568:13:MX_GPIO_Init	40	static
+../Core/Src/main.c:627:6:Error_Handler	4	static,ignoring_inline_asm
