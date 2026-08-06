@@ -113,6 +113,13 @@ class MainWindow(QMainWindow):
             "QPushButton:disabled { background-color: #444; color: #888; }"
         )
         self.btn_auto.clicked.connect(self._toggle_mode_auto)
+        # SEMENTARA disembunyiin buat demo - cv_node lagi dilepas dulu di
+        # Jetson (freeze/performance issue, belum sempet dituntasin).
+        # Tombol ini gak ada gunanya kalau gak ada yang "denger" mode=1 di
+        # sisi Jetson. Logic-nya (termasuk interlock slip ring) TETAP
+        # utuh, cuma widget-nya disembunyiin - hapus baris .hide() ini
+        # kalau cv_node udah siap dipakai lagi.
+        self.btn_auto.hide()
         return self.btn_auto
 
     def _toggle_mode_auto(self):

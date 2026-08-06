@@ -740,6 +740,11 @@ int main(void)
      * Motor/actuator aman di-stop tiap loop (murah). Pantilt/kamera RS485
      * SENGAJA cuma kirim SEKALI pas transisi, biar gak spam RS485. */
     if (HAL_GetTick() - waktuFrameJetsonTerakhir >= LINK_TIMEOUT_MS) {
+        /* gcsBalasanCache[0] (stm32_status) CUMA di-update pas ada frame
+         * Jetson BARU (lihat JetsonApplyCommand) - kalau gak di-reset di
+         * sini, dia nyangkut "sehat" (1) SELAMANYA walau Jetson-nya udah
+         * putus, dan GCS app gak akan pernah tau ("Controller: OK" palsu). */
+        gcsBalasanCache[0] = 0U;
         stopSemuaMotor();
         StopSemuaActuator();
         if (pantiltHorizontalTerakhir != 0 || pantiltVerticalTerakhir != 0) {
