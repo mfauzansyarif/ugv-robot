@@ -85,6 +85,11 @@ typedef struct {
 #define LAMPU_NYALA         1U
 #define LAMPU_KEDIP         2U
 
+/* Bridge LRF butuh sampai 500ms internal (LRF_TIMEOUT_MS di firmware
+ * bridge-nya) sebelum dia sempat balas ke bus - timeout di sini HARUS
+ * lebih panjang dari itu + overhead transmisi, kalau enggak G474RE bakal
+ * nyerah duluan walau bridge-nya sebenarnya bakal jawab (kejadian nyata:
+ * modul RS485 bridge kelihatan transmit tapi gak pernah nyampe ke sini). */
 #define RS485_TIMEOUT_MS    100U
 #define ALAMAT_KAMERA       1U
 #define ALAMAT_BRIDGE_LRF   2U
@@ -446,16 +451,28 @@ static void Kamera_ZoomOut(void)  { Pelco_Kirim(ALAMAT_KAMERA, 0x00, 0x40, 0x00,
 static void Kamera_ZoomStop(void) { Pelco_Kirim(ALAMAT_KAMERA, 0x00, 0x00, 0x00, 0x00); }
 
 static void BridgeLrf_Kirim(uint8_t cmd2, uint8_t data1, uint8_t data2) {
+    DebugPrint("[RS485] kirim ke bridge LRF (addr=0x%02X) cmd2=0x%02X data1=%02X data2=%02X\r\n",
+               ALAMAT_BRIDGE_LRF, cmd2, data1, data2);
     Pelco_Kirim(ALAMAT_BRIDGE_LRF, 0x00, cmd2, data1, data2);
 }
 
 static uint8_t BridgeLrf_BacaRespons(uint8_t *cmd2Out, uint8_t *data1Out, uint8_t *data2Out) {
     uint8_t frame[7];
-    if (HAL_UART_Receive(&huart1, frame, 7U, RS485_TIMEOUT_MS) != HAL_OK) return 0U;
-    if (Pelco_Checksum(frame[1], frame[2], frame[3], frame[4], frame[5]) != frame[6]) return 0U;
+    HAL_StatusTypeDef status = HAL_UART_Receive(&huart1, frame, 7U, RS485_TIMEOUT_MS);
+    if (status != HAL_OK) {
+        DebugPrint("[RS485] TIMEOUT nunggu respons bridge LRF (status HAL=%d)\r\n", (int)status);
+        return 0U;
+    }
+    if (Pelco_Checksum(frame[1], frame[2], frame[3], frame[4], frame[5]) != frame[6]) {
+        DebugPrint("[RS485] checksum salah dari bridge: %02X %02X %02X %02X %02X %02X %02X\r\n",
+                   frame[0], frame[1], frame[2], frame[3], frame[4], frame[5], frame[6]);
+        return 0U;
+    }
     *cmd2Out  = frame[3];
     *data1Out = frame[4];
     *data2Out = frame[5];
+    DebugPrint("[RS485] respons OK dari addr=0x%02X cmd2=0x%02X data1=%02X data2=%02X\r\n",
+               frame[1], frame[3], frame[4], frame[5]);
     return 1U;
 }
 
