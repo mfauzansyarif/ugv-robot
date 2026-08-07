@@ -203,6 +203,14 @@ static int8_t  kameraZoomTerakhir = 127;
 static uint8_t slipRingTerakhir = 0xFFU;
 static uint8_t lrfPointerTerakhir = 0xFFU;
 
+/* ---- Anti-glitch motor: setPulseFreq() nulis ulang prescaler/ARR timer +
+ * HAL_TIM_OC_Start() tiap dipanggil - kalau dipanggil tiap frame Jetson
+ * (~20Hz) walau nilainya SAMA PERSIS, ini bikin gangguan sesaat di sinyal
+ * PWM (kelihatan di oscilloscope). Sama prinsipnya kayak anti-spam RS485 di
+ * atas, cuma buat motor. */
+static int8_t  speedMotorTerakhir = 127;
+static uint8_t speedTransisiKeNolPending = 0U;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -566,8 +574,36 @@ static void JetsonParseFrame(const uint8_t *frame24, JetsonCommand_t *out) {
 }
 
 static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
-    for (uint8_t i = 0; i < JUMLAH_MOTOR; i++) {
-        setMotor(i, cmd->speed);
+    /* Anti-glitch: cuma re-apply PWM kalau speed BERUBAH - lihat komentar
+     * speedMotorTerakhir di atas.
+     *
+     * Debounce KHUSUS transisi ke 0: kalau speed tiba-tiba 0 padahal
+     * sebelumnya jalan, JANGAN langsung diterapin - tunda 1 frame (~50ms)
+     * buat konfirmasi. Kalau beneran mau stop (joystick dilepas beneran),
+     * frame BERIKUTNYA juga bakal 0 lagi dan baru diterapin di situ. Ini
+     * jaga-jaga kalau ada 1 frame Jetson yang kelewat/rusak/telat bikin
+     * speed kebaca 0 sesaat doang (dicurigai penyebab motor "ngedip mati
+     * sebentar" di oscilloscope pas speed harusnya konstan tinggi).
+     * ESTOP/failsafe TETAP langsung motong tanpa nunggu ini - jalur
+     * terpisah, gak lewat sini sama sekali. */
+    if (cmd->speed == 0 && speedMotorTerakhir != 0) {
+        if (!speedTransisiKeNolPending) {
+            speedTransisiKeNolPending = 1U;
+        } else {
+            for (uint8_t i = 0; i < JUMLAH_MOTOR; i++) {
+                setMotor(i, 0);
+            }
+            speedMotorTerakhir = 0;
+            speedTransisiKeNolPending = 0U;
+        }
+    } else {
+        speedTransisiKeNolPending = 0U;
+        if (cmd->speed != speedMotorTerakhir) {
+            for (uint8_t i = 0; i < JUMLAH_MOTOR; i++) {
+                setMotor(i, cmd->speed);
+            }
+            speedMotorTerakhir = cmd->speed;
+        }
     }
     for (uint8_t i = 0; i < JUMLAH_ACTUATOR; i++) {
         SetActuator(i, cmd->act[i]);
@@ -737,7 +773,7 @@ int main(void)
   __HAL_TIM_SET_AUTORELOAD(&htim1, LAMP_PWM_ARR);
 
   Lamp_SetBrightness(&htim1, TIM_CHANNEL_1, 0);
-  setLampuBelakang(100, LAMPU_NYALA);
+  setLampuBelakang(0, LAMPU_MATI);
 
   memset(gcsFrameTerakhir, 0, GCS_FRAME_LEN);
   HAL_UARTEx_ReceiveToIdle_IT(&huart2, gcsRxBuf, GCS_FRAME_LEN);
@@ -787,6 +823,7 @@ int main(void)
          * putus, dan GCS app gak akan pernah tau ("Controller: OK" palsu). */
         gcsBalasanCache[0] = 0U;
         stopSemuaMotor();
+        speedMotorTerakhir = 0;
         StopSemuaActuator();
         if (pantiltHorizontalTerakhir != 0 || pantiltVerticalTerakhir != 0) {
             Pantilt_Gerak(0, 0);
@@ -862,6 +899,7 @@ int main(void)
      * JetsonApplyCommand() di siklus yang sama. */
     if (HAL_GetTick() - waktuFrameGcsTerakhir >= LINK_TIMEOUT_MS) {
         stopSemuaMotor();
+        speedMotorTerakhir = 0;
         StopSemuaActuator();
         if (pantiltHorizontalTerakhir != 0 || pantiltVerticalTerakhir != 0) {
             Pantilt_Gerak(0, 0);
