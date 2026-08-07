@@ -242,8 +242,8 @@ static void Kamera_ZoomOut(void);
 static void Kamera_ZoomStop(void);
 
 static void BridgeLrf_Kirim(uint8_t cmd2, uint8_t data1, uint8_t data2);
-static uint8_t BridgeLrf_BacaRespons(uint8_t *cmd2Out, uint8_t *data1Out, uint8_t *data2Out);
-static uint8_t BridgeLrf_BacaJarak(uint16_t *jarakDesimeterOut);
+static uint8_t BridgeLrf_BacaRespons(uint8_t *cmd1Out, uint8_t *cmd2Out, uint8_t *data1Out, uint8_t *data2Out);
+static uint8_t BridgeLrf_BacaJarak(uint16_t *jarakDesimeterOut, uint8_t *hasilLrfOut);
 static uint8_t BridgeLrf_Pointer(uint8_t nyala);
 
 static void GcsParseFrame(const uint8_t *frame14, GcsCommand_t *out);
