@@ -85,16 +85,28 @@ typedef struct {
 #define LAMPU_NYALA         1U
 #define LAMPU_KEDIP         2U
 
-/* Bridge LRF butuh sampai 500ms internal (LRF_TIMEOUT_MS di firmware
- * bridge-nya) sebelum dia sempat balas ke bus - timeout di sini HARUS
- * lebih panjang dari itu + overhead transmisi, kalau enggak G474RE bakal
- * nyerah duluan walau bridge-nya sebenarnya bakal jawab (kejadian nyata:
- * modul RS485 bridge kelihatan transmit tapi gak pernah nyampe ke sini). */
-#define RS485_TIMEOUT_MS    100U
+/* Bridge LRF butuh sampai 2000ms internal (LRF_TIMEOUT_MS di firmware
+ * bridge-nya, sekarang pakai mode SMM biasa - ~1.3 detik nominal, tapi
+ * datasheet resmi bilang bisa ~300ms lebih lama di cuaca buruk, jadi
+ * worst-case ~1.6 detik + margin) sebelum dia sempat balas ke bus - timeout
+ * di sini HARUS lebih panjang dari itu + overhead transmisi, kalau enggak
+ * G474RE bakal nyerah duluan walau bridge-nya sebenarnya bakal jawab.
+ * JANGAN diturunin manual - itu udah 2 kali kejadian bikin baca jarak
+ * SELALU timeout gara-gara nilainya balik ke yang lama. */
+#define RS485_TIMEOUT_MS    2300U
 #define ALAMAT_KAMERA       1U
 #define ALAMAT_BRIDGE_LRF   2U
 #define CMD2_BACA_JARAK     0x01U
 #define CMD2_POINTER        0x02U
+
+/* Nilai lrfStatusTerakhir yang di-relay transparan lewat Jetson ke GCS
+ * (byte gcsReplyLrfStatus) - Jetson gak pernah interpretasi isinya, cuma
+ * nge-passing mentah, jadi aman diperluas dari cuma 0/1 tanpa nyentuh kode
+ * Jetson sama sekali. 2/3 dipetakan dari kode hasil LRF_HASIL_* bridge. */
+#define LRF_STATUS_GAGAL_KOMUNIKASI  0U   /* timeout/checksum salah - gak ada jawaban sama sekali */
+#define LRF_STATUS_OK                1U   /* ada target valid */
+#define LRF_STATUS_NO_TARGET         2U   /* bridge jawab, tapi LRF gak nemu target (NT) */
+#define LRF_STATUS_ERROR             3U   /* bridge jawab, tapi LRF lapor ERR/TTE */
 
 #define GCS_FRAME_LEN       15U
 
@@ -456,7 +468,10 @@ static void BridgeLrf_Kirim(uint8_t cmd2, uint8_t data1, uint8_t data2) {
     Pelco_Kirim(ALAMAT_BRIDGE_LRF, 0x00, cmd2, data1, data2);
 }
 
-static uint8_t BridgeLrf_BacaRespons(uint8_t *cmd2Out, uint8_t *data1Out, uint8_t *data2Out) {
+/* cmd1Out dititipin bridge buat kode hasil LRF: 0=OK (ada target valid),
+ * 1=NT (No Targets), 2=ERR/TTE - lihat LRF_HASIL_* di firmware bridge-nya
+ * (Rapih/Code/NucleoG431KB). Byte ini SEBELUMNYA selalu 0x00/gak dipakai. */
+static uint8_t BridgeLrf_BacaRespons(uint8_t *cmd1Out, uint8_t *cmd2Out, uint8_t *data1Out, uint8_t *data2Out) {
     uint8_t frame[7];
     HAL_StatusTypeDef status = HAL_UART_Receive(&huart1, frame, 7U, RS485_TIMEOUT_MS);
     if (status != HAL_OK) {
@@ -468,26 +483,31 @@ static uint8_t BridgeLrf_BacaRespons(uint8_t *cmd2Out, uint8_t *data1Out, uint8_
                    frame[0], frame[1], frame[2], frame[3], frame[4], frame[5], frame[6]);
         return 0U;
     }
+    *cmd1Out  = frame[2];
     *cmd2Out  = frame[3];
     *data1Out = frame[4];
     *data2Out = frame[5];
-    DebugPrint("[RS485] respons OK dari addr=0x%02X cmd2=0x%02X data1=%02X data2=%02X\r\n",
-               frame[1], frame[3], frame[4], frame[5]);
+    DebugPrint("[RS485] respons OK dari addr=0x%02X cmd1=0x%02X cmd2=0x%02X data1=%02X data2=%02X\r\n",
+               frame[1], frame[2], frame[3], frame[4], frame[5]);
     return 1U;
 }
 
-static uint8_t BridgeLrf_BacaJarak(uint16_t *jarakDesimeterOut) {
-    uint8_t cmd2, data1, data2;
+/* hasilLrfOut diisi cmd1 dari bridge (0=OK/1=NT/2=ERR) kalau return 1 -
+ * INDEPENDEN dari return value (return 1 cuma berarti komunikasi sukses,
+ * belum tentu LRF nemu target). */
+static uint8_t BridgeLrf_BacaJarak(uint16_t *jarakDesimeterOut, uint8_t *hasilLrfOut) {
+    uint8_t cmd1, cmd2, data1, data2;
     BridgeLrf_Kirim(CMD2_BACA_JARAK, 0x00, 0x00);
-    if (!BridgeLrf_BacaRespons(&cmd2, &data1, &data2)) return 0U;
+    if (!BridgeLrf_BacaRespons(&cmd1, &cmd2, &data1, &data2)) return 0U;
     *jarakDesimeterOut = (uint16_t)data1 | ((uint16_t)data2 << 8);
+    *hasilLrfOut = cmd1;
     return 1U;
 }
 
 static uint8_t BridgeLrf_Pointer(uint8_t nyala) {
-    uint8_t cmd2, data1, data2;
+    uint8_t cmd1, cmd2, data1, data2;
     BridgeLrf_Kirim(CMD2_POINTER, (uint8_t)(nyala ? 1U : 0U), 0x00);
-    return BridgeLrf_BacaRespons(&cmd2, &data1, &data2);
+    return BridgeLrf_BacaRespons(&cmd1, &cmd2, &data1, &data2);
 }
 
 /* ============================================================================
@@ -584,11 +604,15 @@ static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
         /* Query, SENGAJA gak di-anti-spam - boleh di-request berkali-kali
          * (misal Core Node kirim ini 1 frame doang pas tombol LRF dilepas). */
         uint16_t jarak;
-        if (BridgeLrf_BacaJarak(&jarak)) {
+        uint8_t hasilLrf;
+        if (BridgeLrf_BacaJarak(&jarak, &hasilLrf)) {
             lrfJarakTerakhir = jarak;
-            lrfStatusTerakhir = 1U;
+            /* hasilLrf dari bridge: 0=OK/1=NT/2=ERR -> lrfStatusTerakhir:
+             * 1=OK/2=NO_TARGET/3=ERROR (0 direservasi buat gagal komunikasi
+             * total, gak pernah dikirim balik dari fungsi ini). */
+            lrfStatusTerakhir = (uint8_t)(LRF_STATUS_OK + hasilLrf);
         } else {
-            lrfStatusTerakhir = 0U;
+            lrfStatusTerakhir = LRF_STATUS_GAGAL_KOMUNIKASI;
         }
     } else if (cmd->lrfTrigger == LRF_TRIGGER_POINTER_ON) {
         /* State (laser nyala sampai dimatiin) - DI-ANTI-SPAM beda dari baca
@@ -825,6 +849,37 @@ int main(void)
         }
         balasanFrame[GCS_REPLY_LEN - 1U] = checksum;
         HAL_UART_Transmit(&huart2, balasanFrame, GCS_REPLY_LEN, UART_TX_TIMEOUT_MS);
+    }
+
+    /* FAILSAFE: GCS gak kirim frame valid selama LINK_TIMEOUT_MS - paksa
+     * stop, SAMA PRINSIPNYA kayak failsafe Jetson di atas, tapi ini nutup
+     * celah yang failsafe Jetson GAK bisa tangkep: Jetson bisa tetap sehat
+     * & terus ngirim command LAMA berulang-ulang walau GCS-nya udah
+     * disconnect/mati total (link Jetson<->STM32 gak ikut putus cuma
+     * gara-gara GCS mati) - Jetson gak pernah tau GCS-nya udah gak ngirim
+     * apa-apa lagi. Makanya ini WAJIB diletakkan SETELAH blok
+     * jetsonFrameSiap di atas, biar override apapun yang baru aja di-apply
+     * JetsonApplyCommand() di siklus yang sama. */
+    if (HAL_GetTick() - waktuFrameGcsTerakhir >= LINK_TIMEOUT_MS) {
+        stopSemuaMotor();
+        StopSemuaActuator();
+        if (pantiltHorizontalTerakhir != 0 || pantiltVerticalTerakhir != 0) {
+            Pantilt_Gerak(0, 0);
+            pantiltHorizontalTerakhir = 0;
+            pantiltVerticalTerakhir = 0;
+        }
+        if (kameraZoomTerakhir != 0) {
+            Kamera_ZoomStop();
+            kameraZoomTerakhir = 0;
+        }
+        if (slipRingTerakhir != 0) {
+            Pantilt_PowerSlipRing(0);
+            slipRingTerakhir = 0;
+        }
+        if (lrfPointerTerakhir != 0U) {
+            BridgeLrf_Pointer(0U);
+            lrfPointerTerakhir = 0U;
+        }
     }
 
     /* USER CODE END WHILE */

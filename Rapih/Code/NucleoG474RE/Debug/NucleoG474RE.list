@@ -39,9 +39,9 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  17 .debug_line   0001726e  00000000  00000000  0004dcfc  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00100216  00000000  00000000  00064f6a  2**0
+ 18 .debug_str    00100217  00000000  00000000  00064f6a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  00165180  2**0
+ 19 .comment      00000043  00000000  00000000  00165181  2**0
                   CONTENTS, READONLY
  20 .debug_frame  0000562c  00000000  00000000  001651c4  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
@@ -1469,111 +1469,110 @@ static uint8_t BridgeLrf_BacaRespons(uint8_t *cmd2Out, uint8_t *data1Out, uint8_
     uint8_t frame[7];
     HAL_StatusTypeDef status = HAL_UART_Receive(&huart1, frame, 7U, RS485_TIMEOUT_MS);
  8000cb8:	f107 0110 	add.w	r1, r7, #16
- 8000cbc:	2364      	movs	r3, #100	@ 0x64
- 8000cbe:	2207      	movs	r2, #7
- 8000cc0:	4826      	ldr	r0, [pc, #152]	@ (8000d5c <BridgeLrf_BacaRespons+0xb0>)
- 8000cc2:	f004 fe04 	bl	80058ce <HAL_UART_Receive>
- 8000cc6:	4603      	mov	r3, r0
- 8000cc8:	75fb      	strb	r3, [r7, #23]
+ 8000cbc:	f44f 63e1 	mov.w	r3, #1800	@ 0x708
+ 8000cc0:	2207      	movs	r2, #7
+ 8000cc2:	4826      	ldr	r0, [pc, #152]	@ (8000d5c <BridgeLrf_BacaRespons+0xb0>)
+ 8000cc4:	f004 fe03 	bl	80058ce <HAL_UART_Receive>
+ 8000cc8:	4603      	mov	r3, r0
+ 8000cca:	75fb      	strb	r3, [r7, #23]
     if (status != HAL_OK) {
- 8000cca:	7dfb      	ldrb	r3, [r7, #23]
- 8000ccc:	2b00      	cmp	r3, #0
- 8000cce:	d006      	beq.n	8000cde <BridgeLrf_BacaRespons+0x32>
+ 8000ccc:	7dfb      	ldrb	r3, [r7, #23]
+ 8000cce:	2b00      	cmp	r3, #0
+ 8000cd0:	d006      	beq.n	8000ce0 <BridgeLrf_BacaRespons+0x34>
         DebugPrint("[RS485] TIMEOUT nunggu respons bridge LRF (status HAL=%d)\r\n", (int)status);
- 8000cd0:	7dfb      	ldrb	r3, [r7, #23]
- 8000cd2:	4619      	mov	r1, r3
- 8000cd4:	4822      	ldr	r0, [pc, #136]	@ (8000d60 <BridgeLrf_BacaRespons+0xb4>)
- 8000cd6:	f7ff fe61 	bl	800099c <DebugPrint>
+ 8000cd2:	7dfb      	ldrb	r3, [r7, #23]
+ 8000cd4:	4619      	mov	r1, r3
+ 8000cd6:	4822      	ldr	r0, [pc, #136]	@ (8000d60 <BridgeLrf_BacaRespons+0xb4>)
+ 8000cd8:	f7ff fe60 	bl	800099c <DebugPrint>
         return 0U;
- 8000cda:	2300      	movs	r3, #0
- 8000cdc:	e039      	b.n	8000d52 <BridgeLrf_BacaRespons+0xa6>
+ 8000cdc:	2300      	movs	r3, #0
+ 8000cde:	e039      	b.n	8000d54 <BridgeLrf_BacaRespons+0xa8>
     }
     if (Pelco_Checksum(frame[1], frame[2], frame[3], frame[4], frame[5]) != frame[6]) {
- 8000cde:	7c78      	ldrb	r0, [r7, #17]
- 8000ce0:	7cb9      	ldrb	r1, [r7, #18]
- 8000ce2:	7cfa      	ldrb	r2, [r7, #19]
- 8000ce4:	7d3c      	ldrb	r4, [r7, #20]
- 8000ce6:	7d7b      	ldrb	r3, [r7, #21]
- 8000ce8:	9300      	str	r3, [sp, #0]
- 8000cea:	4623      	mov	r3, r4
- 8000cec:	f7ff ff3f 	bl	8000b6e <Pelco_Checksum>
- 8000cf0:	4603      	mov	r3, r0
- 8000cf2:	461a      	mov	r2, r3
- 8000cf4:	7dbb      	ldrb	r3, [r7, #22]
- 8000cf6:	429a      	cmp	r2, r3
- 8000cf8:	d015      	beq.n	8000d26 <BridgeLrf_BacaRespons+0x7a>
+ 8000ce0:	7c78      	ldrb	r0, [r7, #17]
+ 8000ce2:	7cb9      	ldrb	r1, [r7, #18]
+ 8000ce4:	7cfa      	ldrb	r2, [r7, #19]
+ 8000ce6:	7d3c      	ldrb	r4, [r7, #20]
+ 8000ce8:	7d7b      	ldrb	r3, [r7, #21]
+ 8000cea:	9300      	str	r3, [sp, #0]
+ 8000cec:	4623      	mov	r3, r4
+ 8000cee:	f7ff ff3e 	bl	8000b6e <Pelco_Checksum>
+ 8000cf2:	4603      	mov	r3, r0
+ 8000cf4:	461a      	mov	r2, r3
+ 8000cf6:	7dbb      	ldrb	r3, [r7, #22]
+ 8000cf8:	429a      	cmp	r2, r3
+ 8000cfa:	d015      	beq.n	8000d28 <BridgeLrf_BacaRespons+0x7c>
         DebugPrint("[RS485] checksum salah dari bridge: %02X %02X %02X %02X %02X %02X %02X\r\n",
                    frame[0], frame[1], frame[2], frame[3], frame[4], frame[5], frame[6]);
- 8000cfa:	7c3b      	ldrb	r3, [r7, #16]
+ 8000cfc:	7c3b      	ldrb	r3, [r7, #16]
         DebugPrint("[RS485] checksum salah dari bridge: %02X %02X %02X %02X %02X %02X %02X\r\n",
- 8000cfc:	461c      	mov	r4, r3
+ 8000cfe:	461c      	mov	r4, r3
                    frame[0], frame[1], frame[2], frame[3], frame[4], frame[5], frame[6]);
- 8000cfe:	7c7b      	ldrb	r3, [r7, #17]
+ 8000d00:	7c7b      	ldrb	r3, [r7, #17]
         DebugPrint("[RS485] checksum salah dari bridge: %02X %02X %02X %02X %02X %02X %02X\r\n",
- 8000d00:	461d      	mov	r5, r3
+ 8000d02:	461d      	mov	r5, r3
                    frame[0], frame[1], frame[2], frame[3], frame[4], frame[5], frame[6]);
- 8000d02:	7cbb      	ldrb	r3, [r7, #18]
+ 8000d04:	7cbb      	ldrb	r3, [r7, #18]
         DebugPrint("[RS485] checksum salah dari bridge: %02X %02X %02X %02X %02X %02X %02X\r\n",
- 8000d04:	461e      	mov	r6, r3
+ 8000d06:	461e      	mov	r6, r3
                    frame[0], frame[1], frame[2], frame[3], frame[4], frame[5], frame[6]);
- 8000d06:	7cfb      	ldrb	r3, [r7, #19]
- 8000d08:	7d3a      	ldrb	r2, [r7, #20]
- 8000d0a:	7d79      	ldrb	r1, [r7, #21]
- 8000d0c:	7db8      	ldrb	r0, [r7, #22]
+ 8000d08:	7cfb      	ldrb	r3, [r7, #19]
+ 8000d0a:	7d3a      	ldrb	r2, [r7, #20]
+ 8000d0c:	7d79      	ldrb	r1, [r7, #21]
+ 8000d0e:	7db8      	ldrb	r0, [r7, #22]
         DebugPrint("[RS485] checksum salah dari bridge: %02X %02X %02X %02X %02X %02X %02X\r\n",
- 8000d0e:	9003      	str	r0, [sp, #12]
- 8000d10:	9102      	str	r1, [sp, #8]
- 8000d12:	9201      	str	r2, [sp, #4]
- 8000d14:	9300      	str	r3, [sp, #0]
- 8000d16:	4633      	mov	r3, r6
- 8000d18:	462a      	mov	r2, r5
- 8000d1a:	4621      	mov	r1, r4
- 8000d1c:	4811      	ldr	r0, [pc, #68]	@ (8000d64 <BridgeLrf_BacaRespons+0xb8>)
- 8000d1e:	f7ff fe3d 	bl	800099c <DebugPrint>
+ 8000d10:	9003      	str	r0, [sp, #12]
+ 8000d12:	9102      	str	r1, [sp, #8]
+ 8000d14:	9201      	str	r2, [sp, #4]
+ 8000d16:	9300      	str	r3, [sp, #0]
+ 8000d18:	4633      	mov	r3, r6
+ 8000d1a:	462a      	mov	r2, r5
+ 8000d1c:	4621      	mov	r1, r4
+ 8000d1e:	4811      	ldr	r0, [pc, #68]	@ (8000d64 <BridgeLrf_BacaRespons+0xb8>)
+ 8000d20:	f7ff fe3c 	bl	800099c <DebugPrint>
         return 0U;
- 8000d22:	2300      	movs	r3, #0
- 8000d24:	e015      	b.n	8000d52 <BridgeLrf_BacaRespons+0xa6>
+ 8000d24:	2300      	movs	r3, #0
+ 8000d26:	e015      	b.n	8000d54 <BridgeLrf_BacaRespons+0xa8>
     }
     *cmd2Out  = frame[3];
- 8000d26:	7cfa      	ldrb	r2, [r7, #19]
- 8000d28:	68fb      	ldr	r3, [r7, #12]
- 8000d2a:	701a      	strb	r2, [r3, #0]
+ 8000d28:	7cfa      	ldrb	r2, [r7, #19]
+ 8000d2a:	68fb      	ldr	r3, [r7, #12]
+ 8000d2c:	701a      	strb	r2, [r3, #0]
     *data1Out = frame[4];
- 8000d2c:	7d3a      	ldrb	r2, [r7, #20]
- 8000d2e:	68bb      	ldr	r3, [r7, #8]
- 8000d30:	701a      	strb	r2, [r3, #0]
+ 8000d2e:	7d3a      	ldrb	r2, [r7, #20]
+ 8000d30:	68bb      	ldr	r3, [r7, #8]
+ 8000d32:	701a      	strb	r2, [r3, #0]
     *data2Out = frame[5];
- 8000d32:	7d7a      	ldrb	r2, [r7, #21]
- 8000d34:	687b      	ldr	r3, [r7, #4]
- 8000d36:	701a      	strb	r2, [r3, #0]
+ 8000d34:	7d7a      	ldrb	r2, [r7, #21]
+ 8000d36:	687b      	ldr	r3, [r7, #4]
+ 8000d38:	701a      	strb	r2, [r3, #0]
     DebugPrint("[RS485] respons OK dari addr=0x%02X cmd2=0x%02X data1=%02X data2=%02X\r\n",
                frame[1], frame[3], frame[4], frame[5]);
- 8000d38:	7c7b      	ldrb	r3, [r7, #17]
+ 8000d3a:	7c7b      	ldrb	r3, [r7, #17]
     DebugPrint("[RS485] respons OK dari addr=0x%02X cmd2=0x%02X data1=%02X data2=%02X\r\n",
- 8000d3a:	4619      	mov	r1, r3
+ 8000d3c:	4619      	mov	r1, r3
                frame[1], frame[3], frame[4], frame[5]);
- 8000d3c:	7cfb      	ldrb	r3, [r7, #19]
+ 8000d3e:	7cfb      	ldrb	r3, [r7, #19]
     DebugPrint("[RS485] respons OK dari addr=0x%02X cmd2=0x%02X data1=%02X data2=%02X\r\n",
- 8000d3e:	461a      	mov	r2, r3
+ 8000d40:	461a      	mov	r2, r3
                frame[1], frame[3], frame[4], frame[5]);
- 8000d40:	7d3b      	ldrb	r3, [r7, #20]
+ 8000d42:	7d3b      	ldrb	r3, [r7, #20]
     DebugPrint("[RS485] respons OK dari addr=0x%02X cmd2=0x%02X data1=%02X data2=%02X\r\n",
- 8000d42:	4618      	mov	r0, r3
+ 8000d44:	4618      	mov	r0, r3
                frame[1], frame[3], frame[4], frame[5]);
- 8000d44:	7d7b      	ldrb	r3, [r7, #21]
+ 8000d46:	7d7b      	ldrb	r3, [r7, #21]
     DebugPrint("[RS485] respons OK dari addr=0x%02X cmd2=0x%02X data1=%02X data2=%02X\r\n",
- 8000d46:	9300      	str	r3, [sp, #0]
- 8000d48:	4603      	mov	r3, r0
- 8000d4a:	4807      	ldr	r0, [pc, #28]	@ (8000d68 <BridgeLrf_BacaRespons+0xbc>)
- 8000d4c:	f7ff fe26 	bl	800099c <DebugPrint>
+ 8000d48:	9300      	str	r3, [sp, #0]
+ 8000d4a:	4603      	mov	r3, r0
+ 8000d4c:	4806      	ldr	r0, [pc, #24]	@ (8000d68 <BridgeLrf_BacaRespons+0xbc>)
+ 8000d4e:	f7ff fe25 	bl	800099c <DebugPrint>
     return 1U;
- 8000d50:	2301      	movs	r3, #1
+ 8000d52:	2301      	movs	r3, #1
 }
- 8000d52:	4618      	mov	r0, r3
- 8000d54:	371c      	adds	r7, #28
- 8000d56:	46bd      	mov	sp, r7
- 8000d58:	bdf0      	pop	{r4, r5, r6, r7, pc}
- 8000d5a:	bf00      	nop
+ 8000d54:	4618      	mov	r0, r3
+ 8000d56:	371c      	adds	r7, #28
+ 8000d58:	46bd      	mov	sp, r7
+ 8000d5a:	bdf0      	pop	{r4, r5, r6, r7, pc}
  8000d5c:	2000011c 	.word	0x2000011c
  8000d60:	08008590 	.word	0x08008590
  8000d64:	080085cc 	.word	0x080085cc

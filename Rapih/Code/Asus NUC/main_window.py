@@ -1,9 +1,10 @@
 """Main window aplikasi GCS Beberapa asumsi belum dikonfirmasi - ditandai TODO."""
 
 import os
+import time
 from datetime import datetime
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QDialog, QGraphicsOpacityEffect, QGridLayout, QGroupBox, QHBoxLayout,
     QLabel, QMainWindow, QMessageBox, QPushButton, QSlider, QSpinBox,
@@ -137,6 +138,7 @@ class MainWindow(QMainWindow):
             "QPushButton:checked { background-color: #ff1744; border: 4px solid white; }"
         )
         btn.clicked.connect(self._toggle_estop)
+        self.btn_estop = btn
         return btn
 
     def _toggle_estop(self):
@@ -311,7 +313,16 @@ class MainWindow(QMainWindow):
         )
         if reply == QMessageBox.Yes:
             self.console_log.warning("Shutting down GCS...")
-            os.system("shutdown /s /t 0")
+            # E-STOP dulu SEBELUM beneran shutdown - UGV kalau gak dikasih
+            # tau bakal terus ngejalanin command terakhir tanpa batas waktu
+            # (ini yang kejadian nyata: GCS ditutup, UGV tetep jalan).
+            # QTimer.singleShot (bukan time.sleep) biar loop RFLink (jalan
+            # di thread lain, kirim frame tiap 50ms) sempat beneran ngirim
+            # beberapa frame estop=1 dulu sebelum OS mati.
+            self._estop_aktif = True
+            self.btn_estop.setChecked(True)
+            self.console_log.error("E-STOP ACTIVE (otomatis, sebelum shutdown)")
+            QTimer.singleShot(500, lambda: os.system("shutdown /s /t 0"))
 
     def _toggle_slip_ring(self):
         self._slip_ring_on = self.btn_slip_ring.isChecked()
@@ -545,7 +556,12 @@ class MainWindow(QMainWindow):
 
         jarak = data["lrf_jarak_meter"]
         jarak_valid = 0 <= jarak <= LRF_JARAK_MAKS_METER
-        if data["lrf_status"] and jarak_valid:
+        status = data["lrf_status"]
+        # status: 0=gagal komunikasi, 1=OK (ada target), 2=No Target,
+        # 3=Error LRF - lihat LRF_STATUS_* di Rapih/Code/NucleoG474RE.
+        # SEBELUMNYA cuma dicek truthy/falsy, jadi status 2/3 ke-anggep
+        # "sukses" juga dan nampilin jarak 0.0 m yang menyesatkan.
+        if status == 1 and jarak_valid:
             # STM32 relay nilai CACHE tiap siklus (20Hz), bukan cuma pas ada
             # bacaan baru - jam cuma di-update kalau angkanya BERUBAH, biar
             # gak keliatan seolah "baru aja diukur" padahal itu data lama.
@@ -554,8 +570,12 @@ class MainWindow(QMainWindow):
                 self._lrf_waktu_terakhir = datetime.now()
             waktu = self._lrf_waktu_terakhir.strftime("%H:%M:%S")
             self.label_status_lrf.setText(f"Laser Range Finder: {jarak:.1f} m ({waktu})")
-        elif data["lrf_status"] and not jarak_valid:
+        elif status == 1 and not jarak_valid:
             self.label_status_lrf.setText("Laser Range Finder: -1 (data tidak valid)")
+        elif status == 2:
+            self.label_status_lrf.setText("Laser Range Finder: No Target")
+        elif status == 3:
+            self.label_status_lrf.setText("Laser Range Finder: Error LRF")
         else:
             self.label_status_lrf.setText("Laser Range Finder: tidak ada jawaban")
 
@@ -569,6 +589,17 @@ class MainWindow(QMainWindow):
     # -------------------------------------------------------------- close
 
     def closeEvent(self, event):
+        # E-STOP dulu sebelum benar-benar nutup - jaga-jaga kalau window
+        # ditutup langsung (tombol X/Alt+F4) tanpa lewat tombol Shutdown.
+        # time.sleep singkat di sini aman (app emang lagi mau ditutup) -
+        # kasih waktu thread RFLink (kirim frame tiap 50ms) buat beneran
+        # ngirim beberapa frame estop=1 sebelum link diputus.
+        self._estop_aktif = True
+        if hasattr(self, "btn_estop"):
+            self.btn_estop.setChecked(True)
+        self.console_log.error("E-STOP ACTIVE (otomatis, GCS ditutup)")
+        time.sleep(0.15)
+
         if self._arduino_reader is not None:
             self._arduino_reader.stop()
         if self._rf_link is not None:
