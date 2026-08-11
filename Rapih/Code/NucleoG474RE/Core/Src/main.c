@@ -94,6 +94,18 @@ typedef struct {
  * JANGAN diturunin manual - itu udah 2 kali kejadian bikin baca jarak
  * SELALU timeout gara-gara nilainya balik ke yang lama. */
 #define RS485_TIMEOUT_MS    2300U
+
+/* Batas waktu "anggap link mati total" - dipakai LED status link dan
+ * failsafe (paksa stop motor/actuator kalau kelewat). DIPISAH per link,
+ * BUKAN 1 angka buat semua - Jetson lewat kabel langsung (USART3), harus
+ * tetap ketat. GCS lewat radio RF, yang menurut serial_workers.py
+ * (AMBANG_MISS_BERTURUT) NORMALNYA miss ~75-80% per percobaan dan app-nya
+ * sendiri baru declare disconnect setelah ~1 detik miss beruntun - kalau
+ * STM32 pakai angka seketat Jetson (500ms), motor bisa keburu di-failsafe
+ * padahal dari sudut pandang GCS app link itu masih dianggap sehat. */
+#define JETSON_LINK_TIMEOUT_MS 500U
+#define GCS_LINK_TIMEOUT_MS    1500U
+
 #define ALAMAT_KAMERA       1U
 #define ALAMAT_BRIDGE_LRF   2U
 #define CMD2_BACA_JARAK     0x01U
@@ -113,15 +125,23 @@ typedef struct {
 #define GCS_REPLY_MARKER    0xA5U
 #define GCS_REPLY_LEN       11U
 
-#define JETSON_DOWN_LEN     26U
-#define JETSON_UP_LEN       19U
+#define JETSON_DOWN_LEN     27U   /* 26 data + 1 checksum */
+#define JETSON_UP_LEN       20U   /* 19 data + 1 checksum */
+
+/* Resync frame Jetson (USART3) kalau lagi nampung SEBAGIAN frame (index>0)
+ * tapi udah sekian ms gak ada byte baru masuk - anggap byte-nya beneran
+ * hilang (bukan cuma jeda kecil biasa), buang sisa frame yang gantung,
+ * mulai dari 0 lagi. 26 byte @115200 baud cuma butuh ~2.3ms buat kirim
+ * SEMUA kalau lancar - 30ms udah kasih margin besar buat jeda pengiriman
+ * yang wajar, tapi masih jauh lebih pendek dari jarak antar siklus
+ * Jetson (~100ms) jadi gak bakal ketuker sama "nunggu frame BERIKUTNYA". */
+#define JETSON_RESYNC_TIMEOUT_MS 30U
 
 #define LRF_TRIGGER_IDLE       0U
 #define LRF_TRIGGER_BACA_JARAK 1U
 #define LRF_TRIGGER_POINTER_ON 2U
 #define LRF_TRIGGER_POINTER_OFF 3U
 
-#define LINK_TIMEOUT_MS      500U
 #define HEARTBEAT_INTERVAL_MS 500U
 
 #define UART_TX_TIMEOUT_MS   50U
@@ -183,16 +203,36 @@ volatile uint8_t gcsFrameSiap = 0;
 static uint8_t gcsFrameTerakhir[GCS_FRAME_LEN];
 static uint8_t gcsBalasanCache[9] = {1U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U};
 
-/* ---- Komunikasi Jetson (USART3, 26 byte down / 18 byte up) ---- */
+/* ---- Komunikasi Jetson (USART3, 26 byte down / 19 byte up) ----
+ * SENGAJA hitung-byte-manual (bukan ReceiveToIdle kayak USART2) - link
+ * Jetson ini lewat kabel langsung (bukan radio), dan ReceiveToIdle
+ * ternyata KETERLALU sensitif ke jeda kecil antar byte (misal dari
+ * buffering OS/USB di sisi Jetson) - jeda sekecil itu udah dianggap
+ * "akhir frame", motong 1 frame 26-byte yang UTUH jadi 2 potongan yang
+ * dua-duanya BUKAN 26 byte, akhirnya DIBUANG DUA-DUANYA walau data
+ * aslinya gak rusak sama sekali. Ini yang bikin motor "mati sesaat"
+ * berkala walau input dari Jetson udah stabil. Hitung-byte-manual gak
+ * peduli jeda waktu antar byte SAMA SEKALI - byte boleh nyicil pelan,
+ * tetap ke-anggap 1 frame yang sama selama TOTAL 26 byte akhirnya
+ * lengkap. waktuByteJetsonTerakhir dipakai buat resync kalau BENERAN ada
+ * byte hilang (lihat CekResyncJetson di main loop). */
+static uint8_t jetsonRxByte;
 static uint8_t jetsonRxBuf[JETSON_DOWN_LEN];
+static volatile uint8_t jetsonRxIndex = 0;
 static uint8_t jetsonFrameKerja[JETSON_DOWN_LEN];
 volatile uint8_t jetsonFrameSiap = 0;
+static volatile uint32_t waktuByteJetsonTerakhir = 0;
 static uint16_t lrfJarakTerakhir = 0;
 static uint8_t  lrfStatusTerakhir = 0;
 
 /* ---- LED indikator (heartbeat + status link) ---- */
 static uint32_t waktuFrameJetsonTerakhir = 0;
 static uint32_t waktuFrameGcsTerakhir = 0;
+/* Flag "sudah lapor" biar DebugPrint failsafe cuma sekali pas BARU
+ * masuk kondisi timeout, bukan tiap iterasi while(1) (~ratusan Hz) -
+ * kalau tiap loop, log-nya banjir dan malah gak kebaca. */
+static uint8_t failsafeJetsonSudahLapor = 0U;
+static uint8_t failsafeGcsSudahLapor = 0U;
 static uint32_t waktuHeartbeatTerakhir = 0;
 static uint8_t  statusHeartbeat = 0;
 
@@ -255,9 +295,11 @@ static uint8_t BridgeLrf_BacaJarak(uint16_t *jarakDesimeterOut, uint8_t *hasilLr
 static uint8_t BridgeLrf_Pointer(uint8_t nyala);
 
 static void GcsParseFrame(const uint8_t *frame14, GcsCommand_t *out);
+static uint8_t JetsonChecksum(const uint8_t *data, uint8_t panjang);
 static void JetsonParseFrame(const uint8_t *frame24, JetsonCommand_t *out);
 static void JetsonApplyCommand(const JetsonCommand_t *cmd);
 static void JetsonBangunUpFrame(uint8_t *frameOut18);
+static void CekResyncJetson(void);
 
 /* USER CODE END PFP */
 
@@ -549,6 +591,19 @@ static void GcsParseFrame(const uint8_t *frame14, GcsCommand_t *out) {
  * balas 18 byte (relay GCS terakhir + status LRF real-time).
  * ==========================================================================*/
 
+/* XOR semua byte data (BELUM termasuk byte checksum itu sendiri) - pola
+ * sama kayak checksum balasan GCS, dipakai DUA ARAH di link Jetson (down
+ * dan up frame) buat nutup celah "byte kegeser/kena noise tapi kebetulan
+ * masih diproses seolah valid" yang sebelumnya gak ketahuan sama sekali
+ * (link ini SEBELUMNYA gak ada validasi integritas data sama sekali). */
+static uint8_t JetsonChecksum(const uint8_t *data, uint8_t panjang) {
+    uint8_t checksum = 0U;
+    for (uint8_t i = 0; i < panjang; i++) {
+        checksum ^= data[i];
+    }
+    return checksum;
+}
+
 static void JetsonParseFrame(const uint8_t *frame24, JetsonCommand_t *out) {
     out->speed = (int8_t)frame24[0];
     for (uint8_t i = 0; i < JUMLAH_ACTUATOR; i++) {
@@ -683,15 +738,18 @@ static void JetsonBangunUpFrame(uint8_t *frameOut18) {
     frameOut18[GCS_FRAME_LEN + 1] = (uint8_t)((lrfJarakTerakhir >> 8) & 0xFFU);
     frameOut18[GCS_FRAME_LEN + 2] = lrfStatusTerakhir;
     frameOut18[GCS_FRAME_LEN + 3] = 1U; /* stm32Status: sehat */
+    /* Byte terakhir (index 19) = checksum XOR 19 byte sebelumnya. */
+    frameOut18[JETSON_UP_LEN - 1U] = JetsonChecksum(frameOut18, JETSON_UP_LEN - 1U);
 }
 
 /* ============================================================================
  * LAYER 4 - komunikasi & housekeeping
  * ==========================================================================*/
 
-/* Pakai ReceiveToIdle (bukan HAL_UART_RxCpltCallback) - auto "sinkron
- * ulang" tiap ada jeda hening di UART. Kalau jumlah byte gak pas, frame
- * DIBUANG, bukan dipaksa diproses (cegah frame kegeser permanen). */
+/* USART2 (GCS/RF) - Pakai ReceiveToIdle: auto "sinkron ulang" tiap ada
+ * jeda hening di UART. Kalau jumlah byte gak pas, frame DIBUANG, bukan
+ * dipaksa diproses (cegah frame kegeser permanen). Ini link RADIO,
+ * genuinely butuh proteksi dari noise/byte hilang di udara. */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
     if (huart->Instance == USART2) {
         if (Size == GCS_FRAME_LEN) {
@@ -702,15 +760,24 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
             }
         }
         HAL_UARTEx_ReceiveToIdle_IT(&huart2, gcsRxBuf, GCS_FRAME_LEN);
-    } else if (huart->Instance == USART3) {
-        if (Size == JETSON_DOWN_LEN) {
+    }
+}
+
+/* USART3 (Jetson) - hitung-byte-manual, lihat komentar panjang di
+ * deklarasi jetsonRxBuf soal kenapa BUKAN ReceiveToIdle di link ini. */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == USART3) {
+        waktuByteJetsonTerakhir = HAL_GetTick();
+        jetsonRxBuf[jetsonRxIndex++] = jetsonRxByte;
+        if (jetsonRxIndex >= JETSON_DOWN_LEN) {
             waktuFrameJetsonTerakhir = HAL_GetTick();
             if (jetsonFrameSiap == 0) {
                 memcpy(jetsonFrameKerja, jetsonRxBuf, JETSON_DOWN_LEN);
                 jetsonFrameSiap = 1;
             }
+            jetsonRxIndex = 0;
         }
-        HAL_UARTEx_ReceiveToIdle_IT(&huart3, jetsonRxBuf, JETSON_DOWN_LEN);
+        HAL_UART_Receive_IT(&huart3, &jetsonRxByte, 1U);
     }
 }
 
@@ -718,7 +785,21 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART2) {
         HAL_UARTEx_ReceiveToIdle_IT(&huart2, gcsRxBuf, GCS_FRAME_LEN);
     } else if (huart->Instance == USART3) {
-        HAL_UARTEx_ReceiveToIdle_IT(&huart3, jetsonRxBuf, JETSON_DOWN_LEN);
+        __HAL_UART_CLEAR_OREFLAG(huart);
+        jetsonRxIndex = 0U; /* buang akumulasi frame yang mungkin lagi setengah jalan */
+        HAL_UART_Receive_IT(&huart3, &jetsonRxByte, 1U);
+    }
+}
+
+/* Dipanggil tiap loop utama - kalau lagi nampung SEBAGIAN frame Jetson
+ * (jetsonRxIndex > 0) tapi udah JETSON_RESYNC_TIMEOUT_MS gak ada byte
+ * baru, anggap ada byte yang beneran hilang - buang sisa yang gantung,
+ * biar byte BERIKUTNYA yang masuk mulai ngitung dari 0 lagi (gak
+ * ke-geser permanen). */
+static void CekResyncJetson(void) {
+    if (jetsonRxIndex > 0U &&
+        (HAL_GetTick() - waktuByteJetsonTerakhir) > JETSON_RESYNC_TIMEOUT_MS) {
+        jetsonRxIndex = 0U;
     }
 }
 
@@ -777,7 +858,8 @@ int main(void)
 
   memset(gcsFrameTerakhir, 0, GCS_FRAME_LEN);
   HAL_UARTEx_ReceiveToIdle_IT(&huart2, gcsRxBuf, GCS_FRAME_LEN);
-  HAL_UARTEx_ReceiveToIdle_IT(&huart3, jetsonRxBuf, JETSON_DOWN_LEN);
+  HAL_UART_Receive_IT(&huart3, &jetsonRxByte, 1U);
+  waktuByteJetsonTerakhir = HAL_GetTick();
 
   DebugPrint("\r\n=== motorugv_G474RE Boot OK ===\r\n");
 
@@ -787,6 +869,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    CekResyncJetson();
+
     if (statusLampuBelakang == LAMPU_KEDIP) {
         if (HAL_GetTick() - waktuBlinkTerakhir >= BLINK_INTERVAL_MS) {
             statusBlinkSekarang = !statusBlinkSekarang;
@@ -805,18 +889,23 @@ int main(void)
         waktuHeartbeatTerakhir = HAL_GetTick();
     }
 
-    /* LED status link - nyala kalau ada frame VALID dalam LINK_TIMEOUT_MS
-     * terakhir, mati kalau link putus/timeout. */
+    /* LED status link - nyala kalau ada frame VALID dalam batas timeout
+     * link masing-masing terakhir, mati kalau link putus/timeout. */
     HAL_GPIO_WritePin(LED_Jetson_GPIO_Port, LED_Jetson_Pin,
-        (HAL_GetTick() - waktuFrameJetsonTerakhir < LINK_TIMEOUT_MS) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        (HAL_GetTick() - waktuFrameJetsonTerakhir < JETSON_LINK_TIMEOUT_MS) ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_RF_GPIO_Port, LED_RF_Pin,
-        (HAL_GetTick() - waktuFrameGcsTerakhir < LINK_TIMEOUT_MS) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        (HAL_GetTick() - waktuFrameGcsTerakhir < GCS_LINK_TIMEOUT_MS) ? GPIO_PIN_SET : GPIO_PIN_RESET);
 
-    /* FAILSAFE: Jetson gak kirim frame valid selama LINK_TIMEOUT_MS -
+    /* FAILSAFE: Jetson gak kirim frame valid selama JETSON_LINK_TIMEOUT_MS -
      * paksa stop, jangan nurut command terakhir tanpa batas waktu.
      * Motor/actuator aman di-stop tiap loop (murah). Pantilt/kamera RS485
      * SENGAJA cuma kirim SEKALI pas transisi, biar gak spam RS485. */
-    if (HAL_GetTick() - waktuFrameJetsonTerakhir >= LINK_TIMEOUT_MS) {
+    if (HAL_GetTick() - waktuFrameJetsonTerakhir >= JETSON_LINK_TIMEOUT_MS) {
+        if (!failsafeJetsonSudahLapor) {
+            DebugPrint("[FAILSAFE] JETSON timeout - udah %lums gak ada frame valid\r\n",
+                       HAL_GetTick() - waktuFrameJetsonTerakhir);
+            failsafeJetsonSudahLapor = 1U;
+        }
         /* gcsBalasanCache[0] (stm32_status) CUMA di-update pas ada frame
          * Jetson BARU (lihat JetsonApplyCommand) - kalau gak di-reset di
          * sini, dia nyangkut "sehat" (1) SELAMANYA walau Jetson-nya udah
@@ -842,6 +931,8 @@ int main(void)
             BridgeLrf_Pointer(0U);
             lrfPointerTerakhir = 0U;
         }
+    } else {
+        failsafeJetsonSudahLapor = 0U;
     }
 
     if (jetsonFrameSiap) {
@@ -849,13 +940,21 @@ int main(void)
         memcpy(salinanJetson, jetsonFrameKerja, JETSON_DOWN_LEN);
         jetsonFrameSiap = 0;
 
-        JetsonCommand_t cmd;
-        JetsonParseFrame(salinanJetson, &cmd);
-        JetsonApplyCommand(&cmd);
+        /* Byte terakhir (index 26) = checksum, data aslinya cuma 26 byte
+         * pertama (index 0-25). Checksum salah -> frame ini DIBUANG total
+         * (gak di-apply, gak dibalas) - command LAMA tetap jalan sampai
+         * frame BERIKUTNYA valid atau failsafe Jetson yang ambil alih. */
+        if (salinanJetson[JETSON_DOWN_LEN - 1U] != JetsonChecksum(salinanJetson, JETSON_DOWN_LEN - 1U)) {
+            DebugPrint("[JETSON] checksum salah, frame dibuang\r\n");
+        } else {
+            JetsonCommand_t cmd;
+            JetsonParseFrame(salinanJetson, &cmd);
+            JetsonApplyCommand(&cmd);
 
-        uint8_t upFrame[JETSON_UP_LEN];
-        JetsonBangunUpFrame(upFrame);
-        HAL_UART_Transmit(&huart3, upFrame, JETSON_UP_LEN, UART_TX_TIMEOUT_MS);
+            uint8_t upFrame[JETSON_UP_LEN];
+            JetsonBangunUpFrame(upFrame);
+            HAL_UART_Transmit(&huart3, upFrame, JETSON_UP_LEN, UART_TX_TIMEOUT_MS);
+        }
 
         DebugPrint("Jetson RX: speed=%d flamp=%u blamp=%u pantiltH=%d pantiltV=%d zoom=%d lrfTrig=%u\r\n",
             cmd.speed, cmd.fLamp, cmd.bLamp, cmd.pantiltHorizontal, cmd.pantiltVertical, cmd.kameraZoom, cmd.lrfTrigger);
@@ -888,7 +987,7 @@ int main(void)
         HAL_UART_Transmit(&huart2, balasanFrame, GCS_REPLY_LEN, UART_TX_TIMEOUT_MS);
     }
 
-    /* FAILSAFE: GCS gak kirim frame valid selama LINK_TIMEOUT_MS - paksa
+    /* FAILSAFE: GCS gak kirim frame valid selama GCS_LINK_TIMEOUT_MS - paksa
      * stop, SAMA PRINSIPNYA kayak failsafe Jetson di atas, tapi ini nutup
      * celah yang failsafe Jetson GAK bisa tangkep: Jetson bisa tetap sehat
      * & terus ngirim command LAMA berulang-ulang walau GCS-nya udah
@@ -897,7 +996,12 @@ int main(void)
      * apa-apa lagi. Makanya ini WAJIB diletakkan SETELAH blok
      * jetsonFrameSiap di atas, biar override apapun yang baru aja di-apply
      * JetsonApplyCommand() di siklus yang sama. */
-    if (HAL_GetTick() - waktuFrameGcsTerakhir >= LINK_TIMEOUT_MS) {
+    if (HAL_GetTick() - waktuFrameGcsTerakhir >= GCS_LINK_TIMEOUT_MS) {
+        if (!failsafeGcsSudahLapor) {
+            DebugPrint("[FAILSAFE] GCS timeout - udah %lums gak ada frame valid\r\n",
+                       HAL_GetTick() - waktuFrameGcsTerakhir);
+            failsafeGcsSudahLapor = 1U;
+        }
         stopSemuaMotor();
         speedMotorTerakhir = 0;
         StopSemuaActuator();
@@ -918,6 +1022,8 @@ int main(void)
             BridgeLrf_Pointer(0U);
             lrfPointerTerakhir = 0U;
         }
+    } else {
+        failsafeGcsSudahLapor = 0U;
     }
 
     /* USER CODE END WHILE */

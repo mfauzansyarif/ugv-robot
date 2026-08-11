@@ -228,13 +228,30 @@ class CvNode(Node):
 
         self.pub_deteksi = self.create_publisher(PersonDetection, '/vision/deteksi', 10)
 
-        # 10Hz cukup buat kebutuhan follow (gak perlu ngoyo secepat FPS
-        # kamera asli), ngirit CPU Jetson buat kerjaan node lain juga.
-        self.timer = self.create_timer(0.1, self._siklus_deteksi)
+        # 10Hz itu TARGET MINIMAL jeda ANTAR SIKLUS (bukan target rate
+        # kaku) - self._siklus_deteksi_wrapper() manggil timer.reset() di
+        # UJUNG, SETELAH inference kelar, bukan pakai timer periodik biasa.
+        # Kalau pakai create_timer biasa DOANG, dan 1 siklus inference di
+        # Jetson Nano ternyata lebih lambat dari 100ms, ROS2 bakal manggil
+        # siklus berikutnya LANGSUNG begitu yang sekarang kelar (gak ada
+        # jeda sama sekali) - numpuk beruntun tanpa henti, node jadi gak
+        # sempet proses topic lain (mode/slip_ring), keliatan kayak freeze.
+        self.interval_siklus_s = 0.1
+        self.timer = self.create_timer(self.interval_siklus_s, self._siklus_wrapper)
 
     def _callback_relay(self, msg: GcsRelay):
         self._mode = msg.mode
         self._slip_ring = msg.slip_ring
+
+    def _siklus_wrapper(self):
+        mulai = time.monotonic()
+        self._siklus_deteksi()
+        durasi_ms = (time.monotonic() - mulai) * 1000
+        if durasi_ms > self.interval_siklus_s * 1000:
+            self.get_logger().warn(
+                f'Siklus deteksi {durasi_ms:.0f}ms - lebih lambat dari target '
+                f'{self.interval_siklus_s * 1000:.0f}ms (Jetson kewalahan/GPU throttle?)')
+        self.timer.reset()  # jadwalin siklus berikutnya SEJAK SEKARANG, bukan sejak start
 
     def _siklus_deteksi(self):
         if self._mode != 1 or self._slip_ring != 1:

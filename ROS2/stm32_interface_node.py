@@ -5,10 +5,11 @@ Translator byte <-> topic MURNI. GAK ADA logic/keputusan di sini sama
 sekali - semua keputusan ada di Core Node.
 
 Pola komunikasi SYNCHRONOUS, Jetson yang inisiatif tiap siklus (~10Hz):
-  1. Kirim 21 byte down-frame (command final dari Core Node, dari cache)
-  2. LANGSUNG tunggu balik 18 byte up-frame (STM32 balas seketika tiap
-     terima 1 down-frame valid)
-  3. Pecah up-frame, publish ke 3 topic terpisah
+  1. Kirim 27 byte down-frame (26 data + 1 checksum XOR), command final
+     dari Core Node, dari cache
+  2. LANGSUNG tunggu balik 20 byte up-frame (19 data + 1 checksum XOR,
+     STM32 balas seketika tiap terima 1 down-frame valid & checksum-nya benar)
+  3. Validasi checksum, pecah up-frame, publish ke 3 topic terpisah
 
 Karena STM32 CUMA ngomong setelah ditanya (bukan kirim bebas kapan aja),
 node ini gak butuh thread terpisah - 1 timer callback sudah cukup.
@@ -23,18 +24,30 @@ from rclpy.node import Node
 
 from ugv_robot_msgs.msg import StmCommand, GcsRelay, LrfStatus, Health
 
-# Down-frame: Jetson -> STM32, 26 byte
+# Down-frame: Jetson -> STM32, 26 byte DATA + 1 byte checksum = 27 byte total
 # speed(1) + act[8](8) + fLamp,bLamp,bLampMode(3) + pantiltH,pantiltV,zoom(3)
 # + slipRing,lrfTrigger(2) + gcsReply x4(4) + gcsReplyBox x5(5) = 26
 FORMAT_DOWN = "=b8bBBBbbbBBBBBBBbbBB"
 
-# Up-frame: STM32 -> Jetson, 19 byte
+# Up-frame: STM32 -> Jetson, 19 byte DATA + 1 byte checksum = 20 byte total
 # 15 byte relay GCS mentah (termasuk mode) + lrf_lsb,lrf_msb,lrf_status,
 # stm32_status(4) = 19
 FORMAT_UP = "=BbbbbbBBBBbBbBBBBBB"
 
-SIZE_DOWN = struct.calcsize(FORMAT_DOWN)  # harus = 26
-SIZE_UP = struct.calcsize(FORMAT_UP)      # harus = 19
+SIZE_DOWN_DATA = struct.calcsize(FORMAT_DOWN)  # harus = 26
+SIZE_UP_DATA = struct.calcsize(FORMAT_UP)      # harus = 19
+SIZE_DOWN = SIZE_DOWN_DATA + 1  # + 1 byte checksum = 27
+SIZE_UP = SIZE_UP_DATA + 1      # + 1 byte checksum = 20
+
+
+def _checksum_xor(data: bytes) -> int:
+    """XOR semua byte - pola sama kayak checksum di firmware STM32
+    (JetsonChecksum di main.c). Dipakai DUA ARAH: nempel checksum pas
+    kirim down-frame, validasi checksum pas terima up-frame."""
+    hasil = 0
+    for b in data:
+        hasil ^= b
+    return hasil
 
 
 class Stm32InterfaceNode(Node):
@@ -73,7 +86,7 @@ class Stm32InterfaceNode(Node):
 
         # --- Buka serial ke STM32 ---
         try:
-            self.serial_conn = serial.Serial(port, baud, timeout=0.5)
+            self.serial_conn = serial.Serial(port, baud, timeout=0.05)
             self.get_logger().info(f'Serial terbuka di {port} @ {baud} baud')
         except serial.SerialException as e:
             self.get_logger().error(f'Gagal buka serial {port}: {e}')
@@ -91,7 +104,8 @@ class Stm32InterfaceNode(Node):
         self._command_cache = msg
 
     # ------------------------------------------------------------------
-    # 1 siklus: pack 21 byte -> kirim -> tunggu 18 byte -> pecah -> publish
+    # 1 siklus: pack+checksum 27 byte -> kirim -> tunggu 20 byte -> validasi
+    # checksum -> pecah -> publish
     # ------------------------------------------------------------------
     def _siklus_komunikasi(self):
         cmd = self._command_cache
@@ -103,7 +117,7 @@ class Stm32InterfaceNode(Node):
         self.serial_conn.reset_input_buffer()
 
         try:
-            frame_keluar = struct.pack(
+            frame_data = struct.pack(
                 FORMAT_DOWN,
                 cmd.speed,
                 *cmd.act,                    # unpack 8 nilai act[0..7]
@@ -129,6 +143,8 @@ class Stm32InterfaceNode(Node):
             self.get_logger().error(f'Gagal bangun down-frame: {e}')
             return
 
+        frame_keluar = frame_data + bytes([_checksum_xor(frame_data)])
+
         try:
             self.serial_conn.write(frame_keluar)
             frame_masuk = self.serial_conn.read(SIZE_UP)
@@ -150,8 +166,14 @@ class Stm32InterfaceNode(Node):
             self._cek_watchdog()
             return
 
+        data_bytes, checksum_diterima = frame_masuk[:-1], frame_masuk[-1]
+        if _checksum_xor(data_bytes) != checksum_diterima:
+            self.get_logger().warn('Up-frame checksum salah, dibuang')
+            self._cek_watchdog()
+            return
+
         try:
-            f = struct.unpack(FORMAT_UP, frame_masuk)
+            f = struct.unpack(FORMAT_UP, data_bytes)
         except struct.error as e:
             self.get_logger().warn(f'Up-frame korup, dibuang: {e}')
             self._cek_watchdog()

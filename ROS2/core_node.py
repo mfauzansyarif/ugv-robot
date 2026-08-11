@@ -40,14 +40,19 @@ ACT_FBODY_KANAN = 5
 ACT_BBODY_KIRI = 6
 ACT_BBODY_KANAN = 7
 
-# Arti motor_individual_id (di-REDEFINE dari GCS, lihat brief BAGIAN 2)
+# Arti motor_individual_id (di-REDEFINE dari GCS, lihat brief BAGIAN 2) -
+# SEMUA 8 actuator individual, gak ada lagi yang berpasangan (dulu id 1/2
+# gerakin 2 actuator steering sekaligus - dihapus biar tiap actuator bisa
+# dikalibrasi sendiri-sendiri, lihat _hitung_actuator).
 ID_NORMAL = 0
-ID_STEER_DEPAN = 1
-ID_STEER_BELAKANG = 2
-ID_FBODY_KIRI = 3
-ID_FBODY_KANAN = 4
-ID_BBODY_KIRI = 5
-ID_BBODY_KANAN = 6
+ID_STEER_DEPAN_KIRI = 1
+ID_STEER_DEPAN_KANAN = 2
+ID_STEER_BELAKANG_KIRI = 3
+ID_STEER_BELAKANG_KANAN = 4
+ID_FBODY_KIRI = 5
+ID_FBODY_KANAN = 6
+ID_BBODY_KIRI = 7
+ID_BBODY_KANAN = 8
 
 # Damper `speed` (motor AC) - batasin PERUBAHAN maksimal per siklus (per 1
 # frame /stm32/gcs_relay masuk, ~20Hz ngikut GCS), biar joystick yang
@@ -283,12 +288,13 @@ class CoreNode(Node):
             arah = relay.motor_individual_arah
             mid = relay.motor_individual_id
 
-            if mid == ID_STEER_DEPAN:
-                # BERPASANGAN (bukan individual): 2 actuator berlawanan
-                act[ACT_STEER_DEPAN_KIRI] = -100 * arah
+            if mid == ID_STEER_DEPAN_KIRI:
+                act[ACT_STEER_DEPAN_KIRI] = 100 * arah
+            elif mid == ID_STEER_DEPAN_KANAN:
                 act[ACT_STEER_DEPAN_KANAN] = 100 * arah
-            elif mid == ID_STEER_BELAKANG:
-                act[ACT_STEER_BELAKANG_KIRI] = -100 * arah
+            elif mid == ID_STEER_BELAKANG_KIRI:
+                act[ACT_STEER_BELAKANG_KIRI] = 100 * arah
+            elif mid == ID_STEER_BELAKANG_KANAN:
                 act[ACT_STEER_BELAKANG_KANAN] = 100 * arah
             elif mid == ID_FBODY_KIRI:
                 act[ACT_FBODY_KIRI] = 100 * arah

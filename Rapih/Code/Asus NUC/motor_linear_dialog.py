@@ -4,17 +4,20 @@ SETIAP frame 14-byte yang dikirim RFLink - dialog ini gak perlu tau
 apa-apa soal RF link sama sekali.
 
 Hardware cuma bisa gerakin BENAR-BENAR 1 bagian motor linear dalam satu
-waktu, jadi SEMUA 12 tombol arah (steering + body) saling exclusive
+waktu, jadi SEMUA 16 tombol arah (steering + body) saling exclusive
 global - klik tombol manapun otomatis matiin SEMUA tombol lain, gak
 cuma pasangannya sendiri (lihat _toggle_tombol).
 
-motor_id yang dikirim:
-  1 = Steering Depan    (1=kanan, -1=kiri, 0=stop -> act0+act1 berlawanan)
-  2 = Steering Belakang (sama polanya, act2+act3)
-  3 = FBody Kiri    (individual, 1=extend, -1=retract, 0=stop)
-  4 = FBody Kanan   (individual)
-  5 = BBody Kiri    (individual)
-  6 = BBody Kanan   (individual)
+motor_id yang dikirim - SEMUA individual (1 actuator per id), gak ada
+lagi yang berpasangan, biar tiap actuator bisa dikalibrasi sendiri:
+  1 = Steering Front Left   (1=extend, -1=retract, 0=stop)
+  2 = Steering Front Right  (individual)
+  3 = Steering Rear Left    (individual)
+  4 = Steering Rear Right   (individual)
+  5 = FBody Kiri    (individual)
+  6 = FBody Kanan   (individual)
+  7 = BBody Kiri    (individual)
+  8 = BBody Kanan   (individual)
 """
 
 from PySide6.QtCore import QTimer
@@ -22,7 +25,9 @@ from PySide6.QtWidgets import (
     QDialog, QGridLayout, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
 )
 
-DAFTAR_STEERING = ["Front", "Rear"]
+# Urutan & nama harus sama persis kayak actuatorTable index 0-3 di
+# firmware STM32 (main.c).
+DAFTAR_STEERING = ["Front Left", "Front Right", "Rear Left", "Rear Right"]
 
 # Urutan & nama harus sama persis kayak actuatorTable index 4-7 di
 # firmware STM32 (main.c).
@@ -63,52 +68,18 @@ class MotorLinearDialog(QDialog):
         # itu salah satu yang kita pakai buat "capture" (m=motor_id dst),
         # Qt bakal nimpa nilai capture itu pakai bool checked-nya (True/
         # False kebaca kayak 1/0) - itu penyebab bug "motor id selalu 1".
-        layout_utama.addWidget(QLabel("Steering (berpasangan depan/belakang):"))
+        layout_utama.addWidget(QLabel("Steering (individual per-actuator):"))
         grid_steering = QGridLayout()
-        for baris, nama in enumerate(DAFTAR_STEERING):
-            motor_id = baris + 1
-            grid_steering.addWidget(QLabel(nama), baris, 0)
-
-            btn_kiri = QPushButton("Left")
-            btn_kiri.setCheckable(True)
-            grid_steering.addWidget(btn_kiri, baris, 1)
-
-            btn_kanan = QPushButton("Right")
-            btn_kanan.setCheckable(True)
-            grid_steering.addWidget(btn_kanan, baris, 2)
-
-            btn_kiri.clicked.connect(
-                lambda checked, b=btn_kiri, m=motor_id: self._toggle_tombol(b, m, -1, "left"))
-            btn_kanan.clicked.connect(
-                lambda checked, b=btn_kanan, m=motor_id: self._toggle_tombol(b, m, 1, "right"))
-            self._semua_tombol += [btn_kiri, btn_kanan]
-
+        self._tambah_baris_aktuator(grid_steering, DAFTAR_STEERING, 1)
         layout_utama.addLayout(grid_steering)
 
         layout_utama.addWidget(QLabel("Body (individual per-actuator):"))
         grid_body = QGridLayout()
-        for baris, nama in enumerate(DAFTAR_BODY):
-            motor_id = len(DAFTAR_STEERING) + baris + 1
-            grid_body.addWidget(QLabel(nama), baris, 0)
-
-            btn_retract = QPushButton("Retract")
-            btn_retract.setCheckable(True)
-            grid_body.addWidget(btn_retract, baris, 1)
-
-            btn_extend = QPushButton("Extend")
-            btn_extend.setCheckable(True)
-            grid_body.addWidget(btn_extend, baris, 2)
-
-            btn_retract.clicked.connect(
-                lambda checked, b=btn_retract, m=motor_id: self._toggle_tombol(b, m, -1, "retract"))
-            btn_extend.clicked.connect(
-                lambda checked, b=btn_extend, m=motor_id: self._toggle_tombol(b, m, 1, "extend"))
-            self._semua_tombol += [btn_retract, btn_extend]
-
+        self._tambah_baris_aktuator(grid_body, DAFTAR_BODY, len(DAFTAR_STEERING) + 1)
         layout_utama.addLayout(grid_body)
 
         baris_bawah = QHBoxLayout()
-        # Toggle (bukan pulse) - sama kayak 12 tombol arah di atas, biar
+        # Toggle (bukan pulse) - sama kayak 16 tombol arah di atas, biar
         # actuator jalan TERUS selama operator nahan toggle-nya (Core Node
         # yang mutusin kapan berhenti, lihat ROS2/core_node.py).
         self.btn_kalibrasi = QPushButton("Calibrate (Fully Extend + Fully Left)")
@@ -121,6 +92,28 @@ class MotorLinearDialog(QDialog):
         baris_bawah.addWidget(btn_tutup)
 
         layout_utama.addLayout(baris_bawah)
+
+    def _tambah_baris_aktuator(self, layout, daftar_nama, id_awal):
+        """Bikin 1 baris (label + tombol Retract/Extend) per nama di
+        daftar_nama, motor_id mulai dari id_awal - dipakai buat steering
+        dan body dua-duanya, sekarang polanya sama persis (individual)."""
+        for baris, nama in enumerate(daftar_nama):
+            motor_id = id_awal + baris
+            layout.addWidget(QLabel(nama), baris, 0)
+
+            btn_retract = QPushButton("Retract")
+            btn_retract.setCheckable(True)
+            layout.addWidget(btn_retract, baris, 1)
+
+            btn_extend = QPushButton("Extend")
+            btn_extend.setCheckable(True)
+            layout.addWidget(btn_extend, baris, 2)
+
+            btn_retract.clicked.connect(
+                lambda checked, b=btn_retract, m=motor_id: self._toggle_tombol(b, m, -1, "retract"))
+            btn_extend.clicked.connect(
+                lambda checked, b=btn_extend, m=motor_id: self._toggle_tombol(b, m, 1, "extend"))
+            self._semua_tombol += [btn_retract, btn_extend]
 
     def _kirim(self, motor_id, arah, label_aksi):
         nama_semua = DAFTAR_STEERING + DAFTAR_BODY
@@ -148,7 +141,7 @@ class MotorLinearDialog(QDialog):
             self._kirim(motor_id, 0, "stop")
 
     def _toggle_kalibrasi(self, checked):
-        """Toggle Calibrate - matiin semua 12 tombol arah individual dulu
+        """Toggle Calibrate - matiin semua 16 tombol arah individual dulu
         (kalibrasi menang, gak masuk akal jalan bareng override individual).
         Nyalain juga safety timer - kalau kelewat KALIBRASI_MAKS_DURASI_MS
         dia mati sendiri (lihat _kalibrasi_timeout)."""
