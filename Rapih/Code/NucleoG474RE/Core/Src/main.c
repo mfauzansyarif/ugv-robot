@@ -954,10 +954,10 @@ int main(void)
             uint8_t upFrame[JETSON_UP_LEN];
             JetsonBangunUpFrame(upFrame);
             HAL_UART_Transmit(&huart3, upFrame, JETSON_UP_LEN, UART_TX_TIMEOUT_MS);
-        }
 
-        DebugPrint("Jetson RX: speed=%d flamp=%u blamp=%u pantiltH=%d pantiltV=%d zoom=%d lrfTrig=%u\r\n",
-            cmd.speed, cmd.fLamp, cmd.bLamp, cmd.pantiltHorizontal, cmd.pantiltVertical, cmd.kameraZoom, cmd.lrfTrigger);
+            DebugPrint("Jetson RX: speed=%d flamp=%u blamp=%u pantiltH=%d pantiltV=%d zoom=%d lrfTrig=%u\r\n",
+                cmd.speed, cmd.fLamp, cmd.bLamp, cmd.pantiltHorizontal, cmd.pantiltVertical, cmd.kameraZoom, cmd.lrfTrigger);
+        }
     }
 
     if (gcsFrameSiap) {

@@ -21,9 +21,16 @@ def main():
     app.setFont(font_default)
 
     # Tombol dibikin lebih tinggi dari default Qt - touchscreen susah
-    # mencet tombol kecil. Global biar konsisten ke semua dialog juga,
+    # mencet tombol kecil. Font tombol JUGA di-bold + sedikit lebih besar
+    # (1.15x DI ATAS font_default yang udah 1.25x, dihitung relatif bukan
+    # angka pt fixed - sama prinsipnya kayak font_default di atas) biar
+    # lebih gampang dibaca. Global biar konsisten ke semua dialog juga,
     # bukan cuma MainWindow.
-    app.setStyleSheet("QPushButton { min-height: 60px; }")
+    font_tombol_pt = font_default.pointSizeF() * 1.15
+    app.setStyleSheet(
+        "QPushButton { min-height: 60px; font-weight: bold; "
+        f"font-size: {font_tombol_pt:.1f}pt; }}"
+    )
     window = MainWindow()
     window.resize(1200, 800)
 

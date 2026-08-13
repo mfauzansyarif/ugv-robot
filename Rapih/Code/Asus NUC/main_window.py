@@ -27,7 +27,7 @@ LRF_JARAK_MAKS_METER = 4500
 # gak ada kondisi "switch ON tapi PWM 0%" yang keliatan kayak padam.
 # Sesuaikan angkanya pas tes fisik ke brightness paling redup yang masih
 # keliatan nyala.
-FLAMP_MIN_SAAT_NYALA = 5
+FLAMP_MIN_SAAT_NYALA = 1
 
 
 class MainWindow(QMainWindow):
@@ -45,14 +45,15 @@ class MainWindow(QMainWindow):
             "lampu": 0, "cam_atas": 0, "cam_kanan": 0, "cam_bawah": 0, "cam_kiri": 0,
         }
         self._slip_ring_on = False
+        # Flag "sudah lapor" - LRF/kamera/pantilt SEMUA numpang power lewat
+        # slip ring, jadi kalau operator nekan salah satunya pas slip ring
+        # OFF, log SEKALI doang (bukan spam tiap frame Arduino selama
+        # tombolnya ditahan) - lihat _cek_perlu_slipring().
+        self._sudah_warn_slipring = False
         self._estop_aktif = False  # tombol virtual E-STOP di samping console log
         self._stm32_status_terakhir = None  # None = belum ada telemetry masuk sama sekali
         self._lrf_jarak_terakhir = None   # buat deteksi bacaan BARU vs cache lama STM32
         self._lrf_waktu_terakhir = None   # jam bacaan LRF valid terakhir
-
-        # Raise/Lower touchscreen, -1/0/1 - digabung sama tombol fisik Body
-        # Up/Down pas bikin frame (touchscreen menang kalau bentrok).
-        self._touch_fbody_bbody = 0  # Raise=1, Lower=-1, lepas=0
 
         # State dari dialog Kontrol Motor Linear Individual, ikut di SETIAP
         # frame 14-byte (motor_id: 1-4=steering individual, 5-8=body individual).
@@ -155,13 +156,13 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
 
         btn_shutdown = QPushButton("⏻ Shutdown")
-        btn_shutdown.setMaximumWidth(110)
+        btn_shutdown.setMaximumWidth(140)
         btn_shutdown.setStyleSheet("min-height: 45px;")
         btn_shutdown.clicked.connect(self._shutdown_windows)
         layout.addWidget(btn_shutdown)
 
         btn_settings = QPushButton("⚙ Settings")
-        btn_settings.setMaximumWidth(110)
+        btn_settings.setMaximumWidth(140)
         btn_settings.setStyleSheet("min-height: 45px;")
         btn_settings.clicked.connect(self._buka_settings)
         layout.addWidget(btn_settings)
@@ -171,27 +172,50 @@ class MainWindow(QMainWindow):
     def _buat_panel_koneksi(self):
         group = QGroupBox("Connection")
         layout = QHBoxLayout(group)
-        layout_arduino = QHBoxLayout()
-        layout_arduino.addWidget(QLabel("GCS Board:"))
-        self.label_port_arduino = QLabel(self._config["port_arduino"])
-        layout_arduino.addWidget(self.label_port_arduino)
-        self.btn_connect_arduino = QPushButton("Connect")
-        self.btn_connect_arduino.clicked.connect(self._toggle_arduino)
-        layout_arduino.addWidget(self.btn_connect_arduino)
-        self.label_status_arduino = QLabel("Failed")
-        layout_arduino.addWidget(self.label_status_arduino)
-        layout.addLayout(layout_arduino)
+        layout.setSpacing(10)
 
-        layout_rf = QHBoxLayout()
-        layout_rf.addWidget(QLabel("Telemetry:"))
+        # 3 kolom rata (bukan digrupin ke tengah) - COM/Connect/status
+        # masing-masing dapat 1 kolom sama lebar, di-center DALAM kolomnya
+        # sendiri, biar kebagi merata di lebar kotak.
+        kotak_arduino = QGroupBox("GCS Board")
+        kotak_arduino.setAlignment(Qt.AlignCenter)
+        layout_arduino = QGridLayout(kotak_arduino)
+        layout_arduino.setColumnStretch(0, 1)
+        layout_arduino.setColumnStretch(1, 1)
+        layout_arduino.setColumnStretch(2, 1)
+        self.label_port_arduino = QLabel(self._config["port_arduino"])
+        layout_arduino.addWidget(self.label_port_arduino, 0, 0, Qt.AlignCenter)
+        self.label_status_arduino = QLabel("Failed")
+        layout_arduino.addWidget(self.label_status_arduino, 0, 1, Qt.AlignCenter)
+        self.btn_connect_arduino = QPushButton("Connect")
+        self.btn_connect_arduino.setMinimumWidth(120)
+        self.btn_connect_arduino.clicked.connect(self._toggle_arduino)
+        layout_arduino.addWidget(self.btn_connect_arduino, 0, 2, Qt.AlignCenter)
+        layout.addWidget(kotak_arduino, 2)
+
+        kotak_rf = QGroupBox("Telemetry")
+        kotak_rf.setAlignment(Qt.AlignCenter)
+        layout_rf = QGridLayout(kotak_rf)
+        layout_rf.setColumnStretch(0, 1)
+        layout_rf.setColumnStretch(1, 1)
+        layout_rf.setColumnStretch(2, 1)
         self.label_port_rf = QLabel(self._config["port_rf"])
-        layout_rf.addWidget(self.label_port_rf)
-        self.btn_connect_rf = QPushButton("Connect")
-        self.btn_connect_rf.clicked.connect(self._toggle_rf)
-        layout_rf.addWidget(self.btn_connect_rf)
+        layout_rf.addWidget(self.label_port_rf, 0, 0, Qt.AlignCenter)
         self.label_status_rf = QLabel("Failed")
-        layout_rf.addWidget(self.label_status_rf)
-        layout.addLayout(layout_rf)
+        layout_rf.addWidget(self.label_status_rf, 0, 1, Qt.AlignCenter)
+        self.btn_connect_rf = QPushButton("Connect")
+        self.btn_connect_rf.setMinimumWidth(120)
+        self.btn_connect_rf.clicked.connect(self._toggle_rf)
+        layout_rf.addWidget(self.btn_connect_rf, 0, 2, Qt.AlignCenter)
+        layout.addWidget(kotak_rf, 2)
+
+        kotak_controller = QGroupBox("Controller")
+        kotak_controller.setAlignment(Qt.AlignCenter)
+        layout_controller = QHBoxLayout(kotak_controller)
+        layout_controller.setAlignment(Qt.AlignCenter)
+        self.label_status_stm32 = QLabel("Failed")
+        layout_controller.addWidget(self.label_status_stm32)
+        layout.addWidget(kotak_controller, 1)
 
         return group
 
@@ -245,33 +269,23 @@ class MainWindow(QMainWindow):
         layout.addLayout(baris_slider)
         self._update_tampilan_lampu(nyala=False)
 
-        layout.addWidget(QLabel("Body Control"))
-        grid_body = QGridLayout()
-        self.btn_raise = QPushButton("Raise (↑)")
-        self.btn_raise.setCheckable(True)
-        grid_body.addWidget(self.btn_raise, 0, 0)
-
-        self.btn_lower = QPushButton("Lower (↓)")
-        self.btn_lower.setCheckable(True)
-        grid_body.addWidget(self.btn_lower, 0, 1)
-
-        self.btn_raise.clicked.connect(
-            lambda: self._toggle_body_button(self.btn_raise, self.btn_lower, 1))
-        self.btn_lower.clicked.connect(
-            lambda: self._toggle_body_button(self.btn_lower, self.btn_raise, -1))
-        layout.addLayout(grid_body)
-
-        self.label_status_motor_linear = QLabel("Stopped")
-        layout.addWidget(self.label_status_motor_linear)
-
         btn_detail = QPushButton("Individual Linear Motor Control")
         btn_detail.clicked.connect(self._buka_dialog_motor_individual)
         layout.addWidget(btn_detail)
 
-        layout.addWidget(QLabel("UGV Status"))
-        self.label_status_stm32 = QLabel("Controller: -")
-        layout.addWidget(self.label_status_stm32)
-        self.label_status_lrf = QLabel("Laser Range Finder: -")
+        label_judul_lrf = QLabel("LRF")
+        label_judul_lrf.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label_judul_lrf)
+
+        self.label_status_lrf = QLabel("-")
+        self.label_status_lrf.setAlignment(Qt.AlignCenter)
+        # Lebih besar + bold dari font tombol (yang udah 1.15x lewat
+        # stylesheet global di main.py) - ini "hasil" utama yang mau
+        # paling menonjol di panel ini.
+        font_lrf = self.label_status_lrf.font()
+        font_lrf.setPointSizeF(font_lrf.pointSizeF() * 1.3)
+        font_lrf.setBold(True)
+        self.label_status_lrf.setFont(font_lrf)
         layout.addWidget(self.label_status_lrf)
 
         layout.addStretch()
@@ -364,39 +378,15 @@ class MainWindow(QMainWindow):
         kapan (lihat ROS2/core_node.py)."""
         self._kalibrasi_aktif = aktif
 
-    def _set_touch_fbody_bbody(self, nilai):
-        self._touch_fbody_bbody = nilai
-        self._update_label_motor_linear()
-
-    def _toggle_body_button(self, btn_ditekan, btn_lawan, arah):
-        """Toggle style (klik=mulai, klik lagi=stop) buat Raise/Lower -
-        klik tombol lawan otomatis matiin ini biar gak dua-duanya aktif."""
-        if btn_ditekan.isChecked():
-            btn_lawan.setChecked(False)
-            self._set_touch_fbody_bbody(arah)
-        else:
-            self._set_touch_fbody_bbody(0)
-
     def _hitung_fbody_bbody(self):
-        """Touchscreen (Raise/Lower) menang kalau aktif, kalau enggak jatuh
-        balik ke tombol fisik Body Up/Down di panel Arduino."""
-        if self._touch_fbody_bbody != 0:
-            return self._touch_fbody_bbody
+        """Body Up/Down SEKARANG cuma dari tombol fisik di panel Arduino -
+        tombol Raise/Lower touchscreen udah dihapus (redundan, GCS Board
+        udah punya tombol fisiknya sendiri)."""
         if self._state_arduino["bodyup"]:
             return 1
         if self._state_arduino["bodydown"]:
             return -1
         return 0
-
-    def _update_label_motor_linear(self):
-        fbody_bbody = self._hitung_fbody_bbody()
-
-        bagian = []
-        if fbody_bbody == 1:
-            bagian.append("Raise")
-        elif fbody_bbody == -1:
-            bagian.append("Lower")
-        self.label_status_motor_linear.setText(" + ".join(bagian) if bagian else "Diam")
 
     def _mulai_kamera(self):
         nama_dicari = self._config["camera_device_name"]
@@ -449,8 +439,23 @@ class MainWindow(QMainWindow):
 
     def _on_frame_arduino(self, frame):
         self._state_arduino = frame
-        self._update_label_motor_linear()
         self._update_tampilan_lampu(nyala=bool(frame["lampu"]))
+        self._cek_perlu_slipring(frame)
+
+    def _cek_perlu_slipring(self, frame):
+        """LRF & zoom kamera numpang power lewat slip ring (beda dari
+        pantilt gerak, yang ternyata gak butuh) - kalau operator nekan
+        salah satunya pas slip ring OFF, tombolnya gak bakal ngefek (gak
+        dapet daya). Log SEKALI pas mulai ditekan (bukan tiap frame
+        Arduino selama ditahan, ~banjir kalau gitu)."""
+        ada_yang_ditekan = bool(frame["lrf"] or frame["zoomin"] or frame["zoomout"])
+        if not self._slip_ring_on and ada_yang_ditekan:
+            if not self._sudah_warn_slipring:
+                self.console_log.warning(
+                    "LRF/Camera zoom butuh power dari Slip Ring - nyalain Slip Ring dulu")
+                self._sudah_warn_slipring = True
+        else:
+            self._sudah_warn_slipring = False
 
     def _update_tampilan_lampu(self, nyala):
         self._efek_opacity_slider_lampu.setOpacity(1.0 if nyala else 0.35)
@@ -473,6 +478,7 @@ class MainWindow(QMainWindow):
             self._rf_link = None
             self.btn_connect_rf.setText("Connect")
             self.label_status_rf.setText("Disconnected")
+            self.label_status_stm32.setText("Disconnected")
             self.console_log.info("Telemetry disconnected (by operator)")
             return
 
@@ -489,6 +495,7 @@ class MainWindow(QMainWindow):
         _on_jetson_terputus() bakal nimpa jadi "Disconnected" abis ini,
         urutannya emang sengaja."""
         self.label_status_rf.setText("Connection Failed")
+        self.label_status_stm32.setText("Connection Failed")
         self.console_log.error(pesan)
 
     @staticmethod
@@ -507,7 +514,11 @@ class MainWindow(QMainWindow):
 
         estop = 1 if self._estop_aktif else 0
 
-        x1 = self._axis_ke_signed(s["x"])
+        # Di-invert (-) - joystick fisik ke KANAN kebaca sumbu X POSITIF,
+        # tapi Core Node nge-interpretasi xJoy1>0 sebagai KIRI. Dibalik di
+        # sini aja (bukan di Core Node/STM32) biar gampang di-tuning ulang
+        # kalau nanti hardware joystick-nya diganti/dikalibrasi ulang.
+        x1 = -self._axis_ke_signed(s["x"])
         y1 = self._axis_ke_signed(s["y"])
 
         x2 = 100 if s["cam_kanan"] else (-100 if s["cam_kiri"] else 0)
@@ -550,9 +561,9 @@ class MainWindow(QMainWindow):
             self._stm32_status_terakhir = stm32_ok
 
         if stm32_ok:
-            self.label_status_stm32.setText("Controller: OK")
+            self.label_status_stm32.setText("OK")
         else:
-            self.label_status_stm32.setText("Controller: Disconnected")
+            self.label_status_stm32.setText("Disconnected")
 
         jarak = data["lrf_jarak_meter"]
         jarak_valid = 0 <= jarak <= LRF_JARAK_MAKS_METER
@@ -569,15 +580,15 @@ class MainWindow(QMainWindow):
                 self._lrf_jarak_terakhir = jarak
                 self._lrf_waktu_terakhir = datetime.now()
             waktu = self._lrf_waktu_terakhir.strftime("%H:%M:%S")
-            self.label_status_lrf.setText(f"Laser Range Finder: {jarak:.1f} m ({waktu})")
+            self.label_status_lrf.setText(f"{jarak:.1f} m ({waktu})")
         elif status == 1 and not jarak_valid:
-            self.label_status_lrf.setText("Laser Range Finder: -1 (data tidak valid)")
+            self.label_status_lrf.setText("-1 (data tidak valid)")
         elif status == 2:
-            self.label_status_lrf.setText("Laser Range Finder: No Target")
+            self.label_status_lrf.setText("No Target")
         elif status == 3:
-            self.label_status_lrf.setText("Laser Range Finder: Error LRF")
+            self.label_status_lrf.setText("Error LRF")
         else:
-            self.label_status_lrf.setText("Laser Range Finder: tidak ada jawaban")
+            self.label_status_lrf.setText("tidak ada jawaban")
 
     def _on_jetson_terhubung(self):
         self.label_status_rf.setText("Connected")
@@ -585,6 +596,7 @@ class MainWindow(QMainWindow):
 
     def _on_jetson_terputus(self):
         self.label_status_rf.setText("Disconnected")
+        self.label_status_stm32.setText("Disconnected")
         self.console_log.warning("Telemetry not responding - check RF link or vehicle power")
     # -------------------------------------------------------------- close
 
