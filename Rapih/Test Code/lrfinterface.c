@@ -167,6 +167,25 @@ static uint8_t LRF_Checksum(const uint8_t *payload, uint8_t panjang)
 }
 
 /**
+ * @brief Buang byte nyasar yang mungkin masih ngendon di RX USART2 (LRF) +
+ *        bersihin error flag, sebelum mulai transaksi baru. WAJIB dipanggil
+ *        sebelum tiap kirim command ke LRF - kalau enggak, respons yang
+ *        datang TELAT (misal gara-gara LRF_TIMEOUT_MS kelewat sekali) bakal
+ *        numpuk di buffer dan bikin transaksi BERIKUTNYA salah baca terus-
+ *        terusan (sekali gagal, gagal selamanya). Prinsip yang sama kayak
+ *        ser.reset_input_buffer() di Testcode/test_bus_pantilt_kamera_lrf.py.
+ */
+static void LRF_FlushRx(void)
+{
+    while (__HAL_UART_GET_FLAG(&huart2, UART_FLAG_RXNE)) {
+        (void)huart2.Instance->RDR; /* baca & buang byte nyasar */
+    }
+    __HAL_UART_CLEAR_OREFLAG(&huart2);
+    __HAL_UART_CLEAR_FEFLAG(&huart2);
+    __HAL_UART_CLEAR_NEFLAG(&huart2);
+}
+
+/**
  * @brief Minta LRF baca jarak (Quick SMM1), tunggu respons, validasi checksum.
  * @param jarakKeluar: pointer output, diisi jarak target 1 dalam meter kalau sukses
  * @retval 1 = sukses & valid, 0 = gagal (timeout/checksum salah/header salah)
@@ -178,6 +197,7 @@ static uint8_t LRF_BacaJarak(float *jarakKeluar)
     memcpy(frame, payload, 4);
     frame[4] = LRF_Checksum(payload, 4);
 
+    LRF_FlushRx();
     DebugPrintFrame("[TX LRF] minta jarak", frame, 5U);
     HAL_UART_Transmit(&huart2, frame, sizeof(frame), 100U);
 
@@ -214,6 +234,7 @@ static uint8_t LRF_Pointer(uint8_t nyala)
     memcpy(frame, payload, 2);
     frame[2] = LRF_Checksum(payload, 2);
 
+    LRF_FlushRx();
     DebugPrintFrame("[TX LRF] set pointer", frame, 3U);
     HAL_UART_Transmit(&huart2, frame, sizeof(frame), 100U);
 
@@ -224,8 +245,11 @@ static uint8_t LRF_Pointer(uint8_t nyala)
         return 0U;
     }
     DebugPrintFrame("[RX LRF] ack pointer", respons, 4U);
-    if (respons[0] != 0x59U || respons[2] != 0x3CU) {
-        DebugPrint("[RX LRF] format ack gak sesuai\r\n");
+    uint8_t checksumHitung = LRF_Checksum(respons, 3U);
+    if (respons[0] != 0x59U || respons[1] != 0xC5U ||
+        respons[2] != 0x3CU || respons[3] != checksumHitung) {
+        DebugPrint("[RX LRF] format ack gak sesuai (dpt echo=%02X chk=%02X, harusnya echo=C5 chk=%02X)\r\n",
+                   respons[1], respons[3], checksumHitung);
         return 0U;
     }
     return 1U;

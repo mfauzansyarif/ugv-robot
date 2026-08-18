@@ -188,7 +188,8 @@ CATATAN PENTING
    belum ada di brief, tinggal diubah tanpa edit kode:
        ros2 run ugv_robot core_node --ros-args -p steer_threshold:=20
 
-3. Ukuran frame protokol BARU: 21 byte turun, 18 byte naik.
-   Kalau firmware STM32 diupdate lagi dan ukurannya berubah,
-   FORMAT_DOWN/FORMAT_UP di stm32_interface_node.py DAN file .msg
-   dua-duanya harus ikut diupdate (rawan out-of-sync).
+3. Ukuran frame protokol SAAT INI: 27 byte turun (26 data + 1 checksum
+   XOR), 20 byte naik (19 data + 1 checksum XOR). Kalau firmware STM32
+   diupdate lagi dan ukurannya berubah, FORMAT_DOWN/FORMAT_UP di
+   stm32_interface_node.py DAN file .msg dua-duanya harus ikut diupdate
+   (rawan out-of-sync).

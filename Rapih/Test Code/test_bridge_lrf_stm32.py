@@ -126,8 +126,12 @@ def emulasi_balas_jarak(ser_lrf, jarak_meter):
 
 
 def emulasi_balas_ack(ser_lrf):
-    """Susun & kirim 'standard ack' native LRF PALSU (4 byte)."""
-    frame = bytes([0x59, 0x00, 0x3C, 0x00])
+    """Susun & kirim 'standard ack' native LRF PALSU (4 byte) - HARUS echo command
+    byte asli (0xC5) + checksum valid, bukan asal 0x00, karena bridge sekarang
+    validasi penuh (echo + checksum), bukan cuma sync+ack byte doang."""
+    badan = bytes([0x59, 0xC5, 0x3C])
+    checksum = lrf_checksum(list(badan))
+    frame = badan + bytes([checksum])
     ser_lrf.write(frame)
     print(f"[TX lrf-emulasi] balas ack: {frame.hex(' ').upper()}")
 
@@ -142,8 +146,8 @@ def uji_baca_jarak(ser_bus, ser_lrf, jarak_palsu=12.3):
     if cmd_native is None:
         print("HASIL: GAGAL di step forward command (USART1 -> USART2 bridge)")
         return False
-    if cmd_native[0] != 0xCC or cmd_native[1] != 0x10:
-        print(f"HASIL: GAGAL, opcode native gak sesuai ekspektasi (harusnya CC 10 ..): {cmd_native.hex(' ').upper()}")
+    if cmd_native[0] != 0xCC or cmd_native[1] != 0x00:
+        print(f"HASIL: GAGAL, opcode native gak sesuai ekspektasi (harusnya CC 00 .. - SMM biasa): {cmd_native.hex(' ').upper()}")
         return False
     if lrf_checksum(list(cmd_native[:4])) != cmd_native[4]:
         print(f"HASIL: GAGAL, checksum command native gak valid: {cmd_native.hex(' ').upper()}")

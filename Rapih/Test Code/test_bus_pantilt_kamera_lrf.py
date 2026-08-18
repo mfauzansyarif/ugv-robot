@@ -64,6 +64,31 @@ def pilih_port():
     return ports[int(idx)].device
 
 
+def cari_sync_byte(ser):
+    """Buang byte apapun sebelum sync byte (0xFF) ketemu - kalau langsung
+    `ser.read(7)` tanpa ini, sisa byte nyasar di buffer (dari respons
+    sebelumnya yang gagal/telat) bisa bikin baca "geser" dan checksum
+    ketauan gak cocok padahal device-nya sendiri sebenernya jawab bener."""
+    while True:
+        b = ser.read(1)
+        if not b:
+            return None  # timeout, gak ada apa-apa masuk
+        if b[0] == 0xFF:
+            return b[0]
+
+
+def baca_frame_7byte(ser):
+    """Cari sync byte dulu, baru baca 6 byte sisanya - dipakai bareng buat
+    respons pantilt & bridge-LRF (dua-duanya format 7 byte yang sama)."""
+    sync = cari_sync_byte(ser)
+    if sync is None:
+        return None
+    sisa = ser.read(6)
+    if len(sisa) != 6:
+        return None
+    return bytes([sync]) + sisa
+
+
 # ============================= PANTILT (custom, dari test_rs485.py) =============================
 
 M_VERT1, M_VERT2, B_VERT = 2.694879023302476, 1.1455831934909497, -73.36566910656754
@@ -77,18 +102,22 @@ def pantilt_checksum(payload):
 def pantilt_kirim(ser, payload, label=""):
     checksum = pantilt_checksum(payload)
     frame = bytes([0xFF] + payload + [checksum])
+    # Buang sisa byte nyasar SEBELUM kirim - biar baca respons abis ini
+    # dijamin mulai dari balasan yang BARU kita kirim, bukan nyambung ke
+    # sisa byte siklus sebelumnya yang gagal/telat.
+    ser.reset_input_buffer()
     print(f"[TX pantilt] {label}: {frame.hex(' ').upper()}")
     ser.write(frame)
 
 
 def pantilt_baca_respons(ser):
-    respons = ser.read(7)
-    if len(respons) != 7:
-        print(f"[RX pantilt] Respons gak lengkap ({len(respons)} byte, harusnya 7)")
+    respons = baca_frame_7byte(ser)
+    if respons is None:
+        print("[RX pantilt] Respons gak lengkap/timeout")
         return None
     payload = list(respons[1:6])
     if respons[6] != pantilt_checksum(payload):
-        print("[RX pantilt] Checksum mismatch")
+        print(f"[RX pantilt] Checksum mismatch: {respons.hex(' ').upper()}")
         return None
     return payload
 
@@ -198,6 +227,10 @@ def pelco_frame(alamat, cmd1, cmd2, data1=0x00, data2=0x00):
 def kamera_kirim(ser, nama, alamat=ALAMAT_KAMERA_DEFAULT):
     cmd1, cmd2 = PERINTAH_KAMERA[nama]
     frame = pelco_frame(alamat, cmd1, cmd2)
+    # Kamera gak pernah bales, tapi tetep flush buffer - jaga-jaga ada
+    # sisa byte nyasar dari device LAIN di bus yang bisa ganggu baca
+    # respons berikutnya (pantilt/LRF).
+    ser.reset_input_buffer()
     ser.write(frame)
     print(f"[TX kamera Pelco-D] {nama}: {frame.hex(' ').upper()}")
 
@@ -281,6 +314,10 @@ CMD2_POINTER = 0x02
 
 def bridge_lrf_kirim(ser, cmd2, data1=0x00, data2=0x00, label=""):
     frame = pelco_frame(ALAMAT_BRIDGE_LRF, 0x00, cmd2, data1, data2)
+    # Buang sisa byte nyasar SEBELUM kirim - biar baca respons abis ini
+    # dijamin mulai dari balasan yang BARU kita kirim, bukan nyambung ke
+    # sisa byte siklus sebelumnya yang gagal/telat.
+    ser.reset_input_buffer()
     ser.write(frame)
     print(f"[TX bridge-LRF] {label}: {frame.hex(' ').upper()}")
 
@@ -290,14 +327,14 @@ def bridge_lrf_baca_respons(ser, label=""):
     SENGAJA gak kirim apa-apa balik (lihat ProsesFramePelcoD di
     lrfinterface.c) - jadi respons kosong di sini itu NORMAL, bukan
     berarti bus/wiring rusak. Coba ulang aja."""
-    respons = ser.read(7)
-    if len(respons) != 7:
-        print(f"[RX bridge-LRF] {label}: gak ada respons ({len(respons)} byte) - "
+    respons = baca_frame_7byte(ser)
+    if respons is None:
+        print(f"[RX bridge-LRF] {label}: gak ada respons - "
               f"LRF mungkin gagal baca/timeout di sisi bridge, coba ulang")
         return None
     alamat, cmd1, cmd2, data1, data2, checksum = respons[1:7]
     if pelco_checksum(alamat, cmd1, cmd2, data1, data2) != checksum:
-        print(f"[RX bridge-LRF] {label}: checksum mismatch")
+        print(f"[RX bridge-LRF] {label}: checksum mismatch: {respons.hex(' ').upper()}")
         return None
     return cmd2, data1, data2
 
@@ -414,7 +451,12 @@ def main():
     port = pilih_port()
 
     print(f"\nMembuka {port} @ {BAUDRATE_BUS} baud (bus bersama)...")
-    with serial.Serial(port, BAUDRATE_BUS, timeout=1) as ser:
+    # timeout 2.5s - bridge LRF sekarang pakai mode SMM biasa (~1.3 detik
+    # nominal, tapi datasheet resmi LRF127 bilang bisa ~300ms lebih lama di
+    # cuaca buruk, jadi worst-case ~1.6 detik) + overhead. Timeout pendek
+    # kepotong duluan sebelum bridge sempat balas (respons-nya beneran
+    # nyampe, cuma telat dari sudut pandang baca yang keburu nyerah).
+    with serial.Serial(port, BAUDRATE_BUS, timeout=2.5) as ser:
         ser.dtr = False
         ser.rts = False
         print("Terhubung.")

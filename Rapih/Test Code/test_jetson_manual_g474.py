@@ -1,12 +1,24 @@
 """Kontrol manual Jetson->STM32 buat verifikasi fisik pakai osiloskop - laptop
-pura-pura jadi Jetson, tapi nilai down-frame-nya diatur MANUAL lewat command
-yang kamu ketik, BUKAN auto-siklus kayak test_jetson_stm32_g474.py.
+pura-pura jadi Jetson LEWAT USB-to-TTL LANGSUNG (bukan Jetson asli), tapi
+nilai down-frame-nya diatur MANUAL lewat command yang kamu ketik.
 
-Cocok buat nahan 1 nilai (misal speed=50, atau act[3]=-80) tetap konstan,
-biar bisa diukur tenang pakai osiloskop (hitung frekuensi pulsa motor, cek
-level tegangan pin arah, dll) tanpa nilai berubah-ubah tiap 500ms.
+Dipakai juga buat ISOLASI masalah "pulse motor AC mati-mati sesaat" TANPA
+butuh Jetson asli (berguna kalau lagi susah akses Jetson) - siklus
+kirim/tunggu-balasan di sini SENGAJA dibikin sama persis kayak
+ROS2/stm32_interface_node.py (kirim 27 byte termasuk checksum, langsung
+blocking baca 20 byte termasuk checksum, 10Hz) buat se-representatif
+mungkin sama kondisi asli. Kalau gejala "mati
+sesaat" TETAP muncul di sini (padahal jalur laptop->USB-TTL ini gak lewat
+OS/driver Linux Jetson sama sekali), itu ngebuktiin masalahnya BUKAN
+spesifik ke Jetson/Linux - kemungkinan besar STM32 sendiri yang sensitif ke
+jeda waktu antar byte (lihat diskusi ReceiveToIdle vs hitung-byte-manual).
+Kalau gejalanya HILANG di sini, itu ngarah ke Jetson/Linux-nya yang jadi
+sumber jedanya.
 
-Wiring & format frame SAMA PERSIS kayak test_jetson_stm32_g474.py:
+Cocok juga buat nahan 1 nilai (misal speed=50, atau act[3]=-80) tetap
+konstan, biar bisa diukur tenang pakai osiloskop.
+
+Wiring:
   USB-to-serial RX -> STM32 PB10 (Jetson_TX)
   USB-to-serial TX -> STM32 PB11 (Jetson_RX)
   GND ke GND, VCC jangan disambung, adapter di-set 3.3V.
@@ -46,14 +58,27 @@ import serial.tools.list_ports
 BAUDRATE = 115200
 KIRIM_INTERVAL_S = 0.1  # 10Hz, cukup buat "heartbeat" tanpa spam bus
 
-FORMAT_DOWN = "=b8bBBBbbbBBBBBB"        # 21 byte
-FORMAT_GCS_RELAY = "=BbbbbbBBBBbBbB"    # 14 byte (bagian awal up-frame)
-FORMAT_UP_TAIL = "=BBBB"                # 4 byte (bagian akhir up-frame)
+# Sama persis kayak FORMAT_DOWN/FORMAT_UP di ROS2/stm32_interface_node.py -
+# tiap frame sekarang +1 byte checksum XOR di paling akhir (lihat
+# _checksum_xor di stm32_interface_node.py / JetsonChecksum di main.c).
+FORMAT_DOWN = "=b8bBBBbbbBBBBBBBbbBB"   # 26 byte data (+1 checksum = 27 total)
+FORMAT_GCS_RELAY = "=BbbbbbBBBBbBbBB"   # 15 byte (bagian awal up-frame, termasuk mode)
+FORMAT_UP_TAIL = "=BBBB"                # 4 byte (lrf_lsb, lrf_msb, lrf_status, stm32_status)
 
-SIZE_DOWN = struct.calcsize(FORMAT_DOWN)
+SIZE_DOWN_DATA = struct.calcsize(FORMAT_DOWN)
 SIZE_GCS_RELAY = struct.calcsize(FORMAT_GCS_RELAY)
-SIZE_UP = SIZE_GCS_RELAY + struct.calcsize(FORMAT_UP_TAIL)
-assert SIZE_DOWN == 21 and SIZE_UP == 18
+SIZE_UP_DATA = SIZE_GCS_RELAY + struct.calcsize(FORMAT_UP_TAIL)
+SIZE_DOWN = SIZE_DOWN_DATA + 1  # 27 (26 data + 1 checksum)
+SIZE_UP = SIZE_UP_DATA + 1      # 20 (19 data + 1 checksum)
+assert SIZE_DOWN_DATA == 26 and SIZE_UP_DATA == 19
+
+
+def _checksum_xor(data):
+    """XOR semua byte - pola sama persis kayak firmware STM32 & stm32_interface_node.py."""
+    hasil = 0
+    for b in data:
+        hasil ^= b
+    return hasil
 
 PANTILT_HORIZONTAL = {"kiri": -1, "stop": 0, "kanan": 1}
 PANTILT_VERTICAL = {"bawah": -1, "stop": 0, "atas": 1}
@@ -92,22 +117,29 @@ def pilih_port():
 
 def bangun_frame():
     with lock:
-        return struct.pack(
+        frame_data = struct.pack(
             FORMAT_DOWN,
             state["speed"], *state["act"], state["f_lamp"], state["b_lamp"],
             state["b_lamp_mode"], state["pantilt_horizontal"], state["pantilt_vertical"],
             state["kamera_zoom"], state["slip_ring"], state["lrf_trigger"],
-            1, 0, 0, 0,  # gcsReply* - dummy, gak relevan buat kontrol manual
+            1, 0, 0, 0,      # gcsReply stm32_status/lrf_status/lrf_lsb/lrf_msb - dummy
+            0, 0, 0, 0, 0,   # gcsReplyBox terdeteksi/pusat_x/pusat_y/lebar/tinggi - dummy
         )
+    return frame_data + bytes([_checksum_xor(frame_data)])
 
 
-def urai_up_frame(raw18):
-    gcs = struct.unpack(FORMAT_GCS_RELAY, raw18[:SIZE_GCS_RELAY])
+def urai_up_frame(raw20):
+    """raw20: 19 byte data + 1 byte checksum. Return None kalau checksum salah."""
+    data, checksum_diterima = raw20[:-1], raw20[-1]
+    if _checksum_xor(data) != checksum_diterima:
+        return None
+    gcs = struct.unpack(FORMAT_GCS_RELAY, data[:SIZE_GCS_RELAY])
     lrf_lsb, lrf_msb, lrf_status, stm32_status = struct.unpack(
-        FORMAT_UP_TAIL, raw18[SIZE_GCS_RELAY:])
+        FORMAT_UP_TAIL, data[SIZE_GCS_RELAY:])
     return {
         "estop_relay_gcs": gcs[0],
         "xJoy1_relay_gcs": gcs[1],
+        "mode_relay_gcs": gcs[14],
         "lrf_status": lrf_status,
         "jarak_meter": (lrf_lsb | (lrf_msb << 8)) / 10.0,
         "stm32_status": stm32_status,
@@ -121,7 +153,9 @@ def thread_kirim(ser):
         ser.write(frame)
         balasan = ser.read(SIZE_UP)
         if len(balasan) == SIZE_UP:
-            balasan_terakhir = urai_up_frame(balasan)
+            hasil = urai_up_frame(balasan)
+            if hasil is not None:  # None = checksum salah, buang, pertahankan nilai lama
+                balasan_terakhir = hasil
         time.sleep(KIRIM_INTERVAL_S)
 
 

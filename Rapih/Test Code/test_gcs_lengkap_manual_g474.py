@@ -3,7 +3,7 @@ fungsional STM32 & ROS2 pakai osiloskop, SATU field diubah dalam satu waktu
 biar gampang diisolasi output-nya.
 
 Beda dari test_gcs_manual_g474.py (yang langsung set field level PROTOKOL
-14-byte, level "GCS sudah selesai olah data") dan test_arduino_simulasi_g474.py
+15-byte, level "GCS sudah selesai olah data") dan test_arduino_simulasi_g474.py
 (yang cuma simulasi Arduino, butuh gcs_app beneran jalan buat nerjemahin ke
 protokol) - script INI simulasi 2 lapis SEKALIGUS dalam 1 proses:
   1. State mentah "Arduino" (x/y 0-1000, tombol 0/1) + state mentah widget
@@ -11,7 +11,7 @@ protokol) - script INI simulasi 2 lapis SEKALIGUS dalam 1 proses:
      motor, kalibrasi) - INI yang kamu ubah manual pakai command "set".
   2. Logic penerjemah `_bangun_frame_gcs()` dari gcs_app/main_window.py
      DIREPLIKASI PERSIS di sini (lihat fungsi bangun_frame_gcs di bawah) -
-     jadi frame 14-byte yang dikirim ke STM32 itu hasil TERJEMAHAN, bukan
+     jadi frame 15-byte yang dikirim ke STM32 itu hasil TERJEMAHAN, bukan
      kamu ngetik nilai protokol mentah langsung.
 
 Tujuannya: verifikasi ENTAH itu logic terjemahan gcs_app YANG BENER, ENTAH
@@ -46,8 +46,11 @@ Field "widget touchscreen gcs_app" (bukan dari Arduino):
   slipring       0/1        toggle switch Slip Ring di GUI
   raiselower     -1/0/1     tombol touchscreen Raise(1)/Lower(-1) - MENANG
                              dibanding bodyup/bodydown fisik kalau aktif
-  motorid        0-6        dialog Kontrol Motor Linear Individual (lihat
-                             gcs_app/motor_linear_dialog.py)
+  motorid        0-10       dialog Kontrol Motor Linear Individual - 1-4
+                             steering individual, 5-8 body individual,
+                             9-10 steer BERPASANGAN belakang/depan (kanan+
+                             kiri 1 axle, buat kenyamanan) - lihat
+                             gcs_app/motor_linear_dialog.py
   motorarah      -1/0/1     cuma efektif kalau motorid != 0
   kalibrasi      0/1        di gcs_app asli cuma di-pulse ~200ms, di sini
                              tetap ON sampai kamu set balik ke 0
@@ -77,12 +80,12 @@ import serial.tools.list_ports
 BAUDRATE = 57600
 KIRIM_INTERVAL_S = 0.05  # 20Hz, samain kayak RFLink asli di gcs_app
 
-FORMAT_REQUEST = "=BbbbbbBBBBbBbB"    # 14 byte, SAMA kayak gcs_app/serial_workers.py
+FORMAT_REQUEST = "=BbbbbbBBBBbBbBB"   # 15 byte, SAMA kayak gcs_app/serial_workers.py
 GCS_REPLY_MARKER = 0xA5
-SIZE_RESPONSE = 6                      # marker+stm32_status+lrf_status+lrf_lsb+lrf_msb+checksum
+SIZE_RESPONSE = 11                     # marker + 9 byte data + checksum(XOR 9 byte data)
 
 SIZE_REQUEST = struct.calcsize(FORMAT_REQUEST)
-assert SIZE_REQUEST == 14
+assert SIZE_REQUEST == 15
 
 # (nama_field, ("range", (min,max)) ATAU ("choices", (nilai_valid,...)))
 FIELDS = [
@@ -101,7 +104,7 @@ FIELDS = [
     ("flamplevel", "range", (0, 100)),
     ("slipring", "choices", (0, 1)),
     ("raiselower", "choices", (-1, 0, 1)),
-    ("motorid", "range", (0, 6)),
+    ("motorid", "range", (0, 10)),
     ("motorarah", "choices", (-1, 0, 1)),
     ("kalibrasi", "choices", (0, 1)),
 ]
@@ -155,6 +158,8 @@ def bangun_frame_gcs(s):
     minus bagian yang emang butuh objek Qt (slider widget dkk - di sini
     diganti field manual "flamplevel"/"raiselower")."""
     estop = 0  # gak ada sumbernya di panel Arduino, gcs_app juga selalu 0
+    mode = 0   # gcs_app asli JUGA belum punya tombolnya, di-hardcode 0 terus
+               # (lihat "Catatan soal mode" di dokumentasi/ROS2_BRIEF.md)
 
     x1 = axis_ke_signed(s["x"])
     y1 = axis_ke_signed(s["y"])
@@ -190,25 +195,37 @@ def bangun_frame_gcs(s):
         "zoom": zoom, "lrf": s["lrf"], "flamp": flamp, "blamp": blamp,
         "slip_ring": slip_ring, "body_updown": body_updown,
         "motorid": s["motorid"], "motorarah": s["motorarah"], "kalibrasi": s["kalibrasi"],
+        "mode": mode,
     }
     frame = struct.pack(
         FORMAT_REQUEST,
         estop, x1, y1, x2, y2, zoom, s["lrf"], flamp, blamp,
-        slip_ring, body_updown, s["motorid"], s["motorarah"], s["kalibrasi"],
+        slip_ring, body_updown, s["motorid"], s["motorarah"], s["kalibrasi"], mode,
     )
     return frame, terjemahan
 
 
-def urai_balasan(raw6):
-    if raw6[0] != GCS_REPLY_MARKER:
+def _byte_ke_signed(b):
+    return b - 256 if b >= 128 else b
+
+
+def urai_balasan(raw11):
+    if raw11[0] != GCS_REPLY_MARKER:
         return None
-    stm32_status, lrf_status, jarak_lsb, jarak_msb, checksum = raw6[1], raw6[2], raw6[3], raw6[4], raw6[5]
-    if (stm32_status ^ lrf_status ^ jarak_lsb ^ jarak_msb) != checksum:
+    checksum_hitung = 0
+    for b in raw11[1:10]:
+        checksum_hitung ^= b
+    if checksum_hitung != raw11[10]:
         return None
     return {
-        "stm32_status": stm32_status,
-        "lrf_status": lrf_status,
-        "jarak_meter": (jarak_lsb | (jarak_msb << 8)) / 10.0,
+        "stm32_status": raw11[1],
+        "lrf_status": raw11[2],
+        "jarak_meter": (raw11[3] | (raw11[4] << 8)) / 10.0,
+        "box_terdeteksi": bool(raw11[5]),
+        "box_pusat_x": _byte_ke_signed(raw11[6]),
+        "box_pusat_y": _byte_ke_signed(raw11[7]),
+        "box_lebar": raw11[8],
+        "box_tinggi": raw11[9],
     }
 
 
@@ -241,11 +258,11 @@ def cetak_state():
         print("  Mentah : " + ", ".join(f"{n}={state[n]}" for n in NAMA_FIELD))
     if terjemahan_terakhir is not None:
         t = terjemahan_terakhir
-        print(f"  Frame 14-byte hasil terjemahan (yang beneran dikirim ke STM32):")
+        print(f"  Frame 15-byte hasil terjemahan (yang beneran dikirim ke STM32):")
         print(f"    estop={t['estop']} xJoy1={t['x1']} yJoy1={t['y1']} xJoy2={t['x2']} yJoy2={t['y2']} "
               f"zoom={t['zoom']} lrf={t['lrf']} fLamp={t['flamp']} bLamp={t['blamp']}")
         print(f"    slipRing={t['slip_ring']} bodyUpDown={t['body_updown']} "
-              f"motorId={t['motorid']} motorArah={t['motorarah']} kalibrasi={t['kalibrasi']}")
+              f"motorId={t['motorid']} motorArah={t['motorarah']} kalibrasi={t['kalibrasi']} mode={t['mode']}")
     if balasan_terakhir is None:
         print("  Belum ada balasan valid dari STM32.")
     else:

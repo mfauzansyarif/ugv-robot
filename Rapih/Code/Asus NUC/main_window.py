@@ -56,8 +56,10 @@ class MainWindow(QMainWindow):
         self._lrf_waktu_terakhir = None   # jam bacaan LRF valid terakhir
 
         # State dari dialog Kontrol Motor Linear Individual, ikut di SETIAP
-        # frame 14-byte (motor_id: 1-4=steering individual, 5-8=body individual).
-        self._individual_motor_id = 0    # 0 = mode normal, 1-8 = override
+        # frame 14-byte (motor_id: 1-4=steering individual, 5-8=body
+        # individual, 9-10=steer berpasangan depan/belakang - lihat
+        # motor_linear_dialog.py).
+        self._individual_motor_id = 0    # 0 = mode normal, 1-10 = override
         self._individual_arah = 0        # -1/0/1, cuma dipakai kalau motor_id != 0
         self._kalibrasi_aktif = False    # True SELAMA toggle Calibrate aktif (bukan pulse)
 
@@ -366,8 +368,9 @@ class MainWindow(QMainWindow):
 
     def _set_individual_motor(self, motor_id, arah):
         """Dipanggil dari MotorLinearDialog - motor_id 0 berarti gak ada
-        override (mode normal), 1-8 lagi override, SEMUA individual
-        (1-4=steering, 5-8=body - lihat motor_linear_dialog.py)."""
+        override (mode normal), 1-10 lagi override (1-4=steering
+        individual, 5-8=body individual, 9-10=steer berpasangan
+        depan/belakang - lihat motor_linear_dialog.py)."""
         self._individual_motor_id = motor_id if arah != 0 else 0
         self._individual_arah = arah
 

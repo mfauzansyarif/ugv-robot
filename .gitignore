@@ -22,3 +22,6 @@ STM32Cube/**/.mxproject
 # Python bytecode cache
 **/__pycache__/
 **/*.pyc
+
+# CMake build output at repo root (VSCode CMake extension default dir)
+/build/

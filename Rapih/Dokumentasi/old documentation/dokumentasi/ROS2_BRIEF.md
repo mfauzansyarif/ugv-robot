@@ -56,20 +56,24 @@ punya keputusan apapun buat digantungin ke node lain.
 
 ## Tanggung jawab
 1. Buka serial ke STM32 (USART3 @ **115200 baud**)
-2. **Kirim** (subscribe topic dari Core Node, pack jadi 26 byte, tulis serial) - berkala **~10-20Hz**, Jetson yang inisiatif
-3. **Terima** (baca serial, unpack up-frame 19 byte, publish ke beberapa topic) - STM32 balas LANGSUNG tiap kali terima 1 down-frame valid
+2. **Kirim** (subscribe topic dari Core Node, pack jadi 26 byte data + 1 byte
+   checksum XOR = 27 byte, tulis serial) - berkala **~10-20Hz**, Jetson yang
+   inisiatif
+3. **Terima** (baca serial, unpack up-frame 19 byte data + 1 byte checksum =
+   20 byte, validasi checksum, publish ke beberapa topic) - STM32 balas
+   LANGSUNG tiap kali terima 1 down-frame valid & checksum-nya benar
 4. **TIDAK BOLEH** interpretasi/putusin apapun dari isi frame - itu kerjaan Core Node
 
 ## Topic yang node ini urus
 
 | Topic | Arah | Isi |
 |---|---|---|
-| `/stm32/command` | **Subscribe** (dari Core Node) | Semua 26 field down-frame, sudah final, tinggal di-`struct.pack` dan kirim |
+| `/stm32/command` | **Subscribe** (dari Core Node) | Semua 26 field down-frame, sudah final, tinggal di-`struct.pack` (checksum XOR-nya ditempel otomatis oleh Interface Node, bukan tanggung jawab Core Node) |
 | `/stm32/gcs_relay` | **Publish** (ke Core Node) | 15 field relay GCS mentah dari up-frame offset 0-14 |
 | `/stm32/lrf_status` | **Publish** (ke Core Node) | Jarak LRF real-time + status baca, dari up-frame offset 15-17 |
 | `/stm32/health` | **Publish** (ke Core Node) | `stm32Status`, dari up-frame offset 18 |
 
-## Down-frame yang HARUS dikirim: Jetson → STM32, 26 byte (`"=b8bBBBbbbBBBBBBBbbBB"`)
+## Down-frame yang HARUS dikirim: Jetson → STM32, 26 byte data (`"=b8bBBBbbbBBBBBBBbbBB"`) + 1 byte checksum = 27 byte total
 
 | Offset | Field | Tipe | Range |
 |---|---|---|---|
@@ -92,6 +96,7 @@ punya keputusan apapun buat digantungin ke node lain.
 | 23 | gcsReplyBoxPusatY | int8 | -100..100 |
 | 24 | gcsReplyBoxLebar | uint8 | 0-100 |
 | 25 | gcsReplyBoxTinggi | uint8 | 0-100 |
+| 26 | checksum | uint8 | XOR byte 0-25 (`_checksum_xor()` di Interface Node / `JetsonChecksum()` di firmware) |
 
 **`gcsReplyBox*` (offset 21-25)** numpang mekanisme yang SAMA persis kayak
 `gcsReplyLrf*` - Core Node isi dari hasil CV Node (`/vision/deteksi`),
@@ -107,7 +112,7 @@ STM32 nge-OR bitmask keduanya ke 1 command RS485. Beda dari sebelumnya
 (Arti/efek tiap field ada di BAGIAN 2 - Interface Node gak perlu tau
 artinya, cuma perlu tau cara pack-nya benar)
 
-## Up-frame yang HARUS diterima & di-publish: STM32 → Jetson, 19 byte
+## Up-frame yang HARUS diterima & di-publish: STM32 → Jetson, 19 byte data + 1 byte checksum = 20 byte total
 
 | Offset | Field | Tipe | Publish ke topic |
 |---|---|---|---|
@@ -130,6 +135,7 @@ artinya, cuma perlu tau cara pack-nya benar)
 | 16 | lrfJarakMsb | uint8 | `/stm32/lrf_status` |
 | 17 | lrfStatus | uint8 | `/stm32/lrf_status` |
 | 18 | stm32Status | uint8 | `/stm32/health` |
+| 19 | checksum | uint8 | TIDAK dipublish - divalidasi doang (XOR byte 0-18), frame dibuang kalau salah |
 
 **`mode` (offset 14)**: 0=manual, 1=auto. Placeholder protokol - GCS app
 BELUM punya tombolnya (selalu kirim 0). CV Node subscribe `/stm32/gcs_relay`
@@ -138,8 +144,19 @@ buat baca ini, dipakai buat gerbang: inference YOLO cuma jalan kalau
 throttle) pas robot lagi dikendalikan manual dan fitur follow gak dipakai.
 
 ## Framing
-`HAL_UARTEx_ReceiveToIdle_IT` di sisi STM32 - frame HARUS pas ukurannya
-(26 byte down / 19 byte up), kalau kepotong/lebih otomatis dibuang. Gak
+Link Jetson (USART3) di sisi STM32 pakai **hitung-byte-manual**
+(`HAL_UART_Receive_IT` per-byte + watchdog resync 30ms kalau ada byte yang
+kelamaan gak nyusul), **BUKAN** `HAL_UARTEx_ReceiveToIdle_IT` - link ini
+lewat kabel langsung (bukan radio), dan `ReceiveToIdle` ternyata KETERLALU
+sensitif ke jeda kecil antar byte (misal dari buffering OS/USB di sisi
+Jetson), bisa motong 1 frame utuh jadi 2 potongan yang dua-duanya dibuang
+walau data aslinya gak rusak. Beda dari link GCS (USART2, radio RF
+beneran) yang masih pakai `ReceiveToIdle` karena genuinely butuh proteksi
+dari byte hilang di udara.
+
+Selain itu ukuran frame HARUS pas (27 byte down / 20 byte up) DAN
+checksum XOR-nya HARUS cocok (byte terakhir tiap frame) - kalau salah
+satu gak sesuai, frame dibuang total (gak diproses, gak dibalas). Gak
 perlu sync byte khusus di sisi Python, `pyserial` baca blocking aja cukup
 selama ukurannya pas.
 
@@ -173,7 +190,7 @@ dibahas/disepakati - JANGAN asal nebak nilainya, konfirmasi dulu.
 | `speed` | `yJoy1` | **[PASTI]** `speed = yJoy1` langsung (sama-sama -100..100), diterapin SAMA ke semua 4 motor AC (gak ada diferensial kiri-kanan - protokol emang cuma punya 1 field `speed` buat semua motor). Belokan murni kerjaan actuator Steer (baris di bawah), bukan beda kecepatan motor - kendaraan ini bukan skid-steer |
 | `act0..act3` (Steer) | `xJoy1`, KECUALI `motorIndividualId` override | **[PASTI]** `xJoy1` di-**threshold jadi digital arah** (-1/0/1 - kiri/lurus/kanan, BUKAN dipakai analog penuh). Kalau kanan(+1): `act0`(Depan Kiri)=`-100`(retract), `act1`(Depan Kanan)=`+100`(extend), `act2`(Belakang Kiri)=`-100`(retract), `act3`(Belakang Kanan)=`+100`(extend). Kalau kiri(-1): kebalikan semua tanda. Lurus (dalam threshold): semua `=0` |
 | `act4..act7` (FBody/BBody) | `bodyUpDown`, KECUALI `motorIndividualId` override | **[PASTI]** Ke-4 actuator body GERAK BARENG SEMUA (gak beda-beda): `bodyUpDown=1` → `act4=act5=act6=act7=100` (extend semua), `bodyUpDown=-1` → semua `=-100` (retract semua), `bodyUpDown=0` → semua `=0` (diam) |
-Override individual (prioritas di atas logic normal) | `motorIndividualId` + `motorIndividualArah` | **[PASTI]** Kalau `motorIndividualId != 0`, abaikan logic normal buat actuator terkait, ganti pakai ini (arti `motorIndividualId` di-REDEFINE dari GCS - lihat `Rapih/Code/Asus NUC/motor_linear_dialog.py`): <br>**1 = Steering Depan** (BERPASANGAN, bukan individual): `arah=1`(kanan)→`act0=-100,act1=+100`; `arah=-1`(kiri)→`act0=+100,act1=-100`; `arah=0`→keduanya `0` <br>**2 = Steering Belakang**: sama polanya, ganti `act2`/`act3` <br>**3 = FBody Kiri**: `act4 = motorIndividualArah*100` (individual) <br>**4 = FBody Kanan**: `act5 = motorIndividualArah*100` <br>**5 = BBody Kiri**: `act6 = motorIndividualArah*100` <br>**6 = BBody Kanan**: `act7 = motorIndividualArah*100` <br>`motorIndividualId=0` → semua actuator balik ke logic normal (baris `speed`/Steer/body di atas) |
+Override individual (prioritas di atas logic normal) | `motorIndividualId` + `motorIndividualArah` | **[PASTI]** Kalau `motorIndividualId != 0`, abaikan logic normal buat actuator terkait, ganti pakai ini (arti `motorIndividualId` di-REDEFINE dari GCS - lihat `Rapih/Code/Asus NUC/motor_linear_dialog.py`) - 1-8 individual per-actuator, 9-10 steer BERPASANGAN (buat kenyamanan, bukan kalibrasi presisi): <br>**1 = Steering Depan Kiri**: `act0 = motorIndividualArah*100` <br>**2 = Steering Depan Kanan**: `act1 = motorIndividualArah*100` <br>**3 = Steering Belakang Kiri**: `act2 = motorIndividualArah*100` <br>**4 = Steering Belakang Kanan**: `act3 = motorIndividualArah*100` <br>**5 = FBody Kiri**: `act4 = motorIndividualArah*100` <br>**6 = FBody Kanan**: `act5 = motorIndividualArah*100` <br>**7 = BBody Kiri**: `act6 = motorIndividualArah*100` <br>**8 = BBody Kanan**: `act7 = motorIndividualArah*100` <br>**9 = Steer Belakang bersama** (`ID_STEER_BELAKANG_BERSAMA`): `act2 = -motorIndividualArah*100, act3 = motorIndividualArah*100` (sign berlawanan, sama kayak logic normal) <br>**10 = Steer Depan bersama** (`ID_STEER_DEPAN_BERSAMA`): `act0 = -motorIndividualArah*100, act1 = motorIndividualArah*100` <br>`motorIndividualId=0` → semua actuator balik ke logic normal (baris `speed`/Steer/body di atas) |
 | `fLamp` | `fLamp` | **[PASTI]** Passthrough langsung, sama-sama 0-100 |
 | `bLamp` | `fLamp` (BUKAN `bLamp`!) | **[PASTI]** `bLamp (down) = fLamp (relay)` - COPY nilai fLamp, karena `bLamp` di relay itu MODE bukan brightness (lihat baris di bawah) |
 | `bLampMode` | `bLamp` (relay) | **[PASTI]** Passthrough langsung, sama-sama 0/1/2. GCS udah ngitung ini sendiri (`2` kalau `yJoy1<0`/mundur, `1` kalau nyala biasa, `0` kalau mati) |
@@ -289,5 +306,6 @@ app BELUM punya tombolnya, field ini masih di-hardcode `0` terus.)
 | `ROS2/core_node.py` | **CURRENT** - satu-satunya tempat logic/keputusan |
 | `ROS2/cv_node.py` | **CURRENT** - CV Node, deteksi YOLO (TensorRT) dari kamera RTSP, publish `/vision/deteksi` |
 | `ROS2/*.msg` | Definisi message custom (`StmCommand`, `GcsRelay`, `LrfStatus`, `Health`, `PersonDetection`) |
-| `Testcode/test_jetson_stm32_g474.py`, `test_jetson_manual_g474.py`, `test_gcs_stm32_g474.py`, `test_gcs_manual_g474.py`, `test_rs485_stm32_g474.py`, `test_rs485_manual_g474.py` | Referensi Python format `struct.pack`/`unpack` versi LAMA (sebelum `mode`+box relay ditambah) - masih valid buat ngerti pola dasarnya, tapi ukuran frame di file-file ini SUDAH GAK MATCH protokol saat ini, jangan asal contek angkanya mentah-mentah |
+| `Testcode/test_jetson_manual_g474.py`, `test_gcs_manual_g474.py`, `test_gcs_lengkap_manual_g474.py` | **CURRENT** - format `struct.pack`/`unpack`-nya UDAH MATCH protokol saat ini (termasuk checksum & `motorid` 0-8 individual), aman dicontek langsung |
+| `Testcode/test_jetson_stm32_g474.py`, `test_gcs_stm32_g474.py`, `test_rs485_stm32_g474.py`, `test_rs485_manual_g474.py` | Referensi Python format `struct.pack`/`unpack` versi LAMA (sebelum `mode`+box relay+checksum ditambah) - masih valid buat ngerti pola dasarnya, tapi ukuran frame di file-file ini SUDAH GAK MATCH protokol saat ini, jangan asal contek angkanya mentah-mentah |
 | `Testcode/test_jetson_stm32_g474_lama_arm.py` | Versi LAMA BANGET (down-frame 24-byte/12-actuator) - CUMA arsip, TIDAK nyambung ke STM32 asli sama sekali |

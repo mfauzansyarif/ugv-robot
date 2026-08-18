@@ -8,9 +8,8 @@ waktu, jadi SEMUA 16 tombol arah (steering + body) saling exclusive
 global - klik tombol manapun otomatis matiin SEMUA tombol lain, gak
 cuma pasangannya sendiri (lihat _toggle_tombol).
 
-motor_id yang dikirim - SEMUA individual (1 actuator per id), gak ada
-lagi yang berpasangan, biar tiap actuator bisa dikalibrasi sendiri:
-  1 = Steering Front Left   (1=extend, -1=retract, 0=stop)
+motor_id yang dikirim:
+  1 = Steering Front Left   (1=extend, -1=retract, 0=stop, individual)
   2 = Steering Front Right  (individual)
   3 = Steering Back Left    (individual)
   4 = Steering Back Right   (individual)
@@ -18,6 +17,13 @@ lagi yang berpasangan, biar tiap actuator bisa dikalibrasi sendiri:
   6 = FBody Kanan   (individual)
   7 = BBody Kiri    (individual)
   8 = BBody Kanan   (individual)
+  9 = Steer Belakang BERPASANGAN (kanan+kiri bareng, 1=kanan/-1=kiri,
+      sign berlawanan antar sisi - SAMA kayak logic normal joystick,
+      lihat ROS2/core_node.py::_hitung_actuator ID_STEER_BELAKANG_BERSAMA)
+  10 = Steer Depan BERPASANGAN (sama polanya, ID_STEER_DEPAN_BERSAMA)
+
+9/10 buat KENYAMANAN (1 tombol gerakin 1 axle sekaligus), BUKAN buat
+kalibrasi presisi per-actuator - itu tetep pakai 1-4.
 
 Layout tiap grup (Steering/Body) 2 kolom kiri-kanan, 1 baris per
 pasangan depan/belakang - Left di kolom kiri (Extend lalu Retract),
@@ -36,6 +42,15 @@ DAFTAR_STEERING = ["Front Left", "Front Right", "Back Left", "Back Right"]
 
 # Sama persis kayak actuatorTable index 4-7 di firmware STM32 (main.c).
 DAFTAR_BODY = ["Front Left", "Front Right", "Back Left", "Back Right"]
+
+# id 9/10 - steer BERPASANGAN (kanan+kiri 1 axle bareng), lihat docstring
+# atas & ID_STEER_*_BERSAMA di ROS2/core_node.py.
+MOTOR_ID_STEER_BELAKANG_BERSAMA = 9
+MOTOR_ID_STEER_DEPAN_BERSAMA = 10
+NAMA_MOTOR_BERSAMA = {
+    MOTOR_ID_STEER_BELAKANG_BERSAMA: "Steer Belakang (bersama)",
+    MOTOR_ID_STEER_DEPAN_BERSAMA: "Steer Depan (bersama)",
+}
 
 # Safety: kalau tombol Calibrate nyala terus-terusan lebih lama dari ini
 # (ms), otomatis mati sendiri - jaga-jaga operator lupa lepas toggle-nya.
@@ -103,6 +118,14 @@ class MotorLinearDialog(QDialog):
         grid_body.setVerticalSpacing(JARAK_TOMBOL)
         self._tambah_baris_aktuator(grid_body, DAFTAR_BODY, len(DAFTAR_STEERING) + 1)
         baris_grup.addWidget(kotak_body)
+
+        kotak_bersama = QGroupBox("Steer Together (← →)")
+        kotak_bersama.setAlignment(Qt.AlignCenter)
+        grid_bersama = QGridLayout(kotak_bersama)
+        grid_bersama.setHorizontalSpacing(JARAK_TOMBOL)
+        grid_bersama.setVerticalSpacing(JARAK_TOMBOL)
+        self._tambah_baris_bersama(grid_bersama)
+        baris_grup.addWidget(kotak_bersama)
 
         layout_utama.addLayout(baris_grup)
 
@@ -179,9 +202,37 @@ class MotorLinearDialog(QDialog):
 
         layout.setColumnMinimumWidth(3, JARAK_KOLOM)
 
+    def _tambah_baris_bersama(self, layout):
+        """2 baris steer BERPASANGAN (id 9/10, lihat docstring atas) -
+        beda dari _tambah_baris_aktuator (per-actuator individual), ini
+        cuma tombol Left/Right yang gerakin 1 axle (2 actuator) bareng
+        dengan sign berlawanan, buat kenyamanan bukan kalibrasi presisi."""
+        baris_data = [
+            ("Front", MOTOR_ID_STEER_DEPAN_BERSAMA),
+            ("Back", MOTOR_ID_STEER_BELAKANG_BERSAMA),
+        ]
+        for baris, (nama, motor_id) in enumerate(baris_data):
+            layout.addWidget(QLabel(nama), baris, 0)
+
+            btn_kiri = self._tombol_aktuator("Left")
+            layout.addWidget(btn_kiri, baris, 1)
+
+            btn_kanan = self._tombol_aktuator("Right")
+            layout.addWidget(btn_kanan, baris, 2)
+
+            btn_kiri.clicked.connect(
+                lambda checked, b=btn_kiri, m=motor_id: self._toggle_tombol(b, m, -1, "left"))
+            btn_kanan.clicked.connect(
+                lambda checked, b=btn_kanan, m=motor_id: self._toggle_tombol(b, m, 1, "right"))
+
+            self._semua_tombol += [btn_kiri, btn_kanan]
+
     def _kirim(self, motor_id, arah, label_aksi):
         nama_semua = DAFTAR_STEERING + DAFTAR_BODY
-        nama = nama_semua[motor_id - 1]
+        if motor_id in NAMA_MOTOR_BERSAMA:
+            nama = NAMA_MOTOR_BERSAMA[motor_id]
+        else:
+            nama = nama_semua[motor_id - 1]
         self.set_individual(motor_id, arah)
         self.console_log.info(f"[Individual] {nama}: {label_aksi}")
 
