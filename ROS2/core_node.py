@@ -53,6 +53,7 @@ ID_FBODY_KANAN = 6
 ID_BBODY_KIRI = 7
 ID_BBODY_KANAN = 8
 ID_STEER_BELAKANG_PASANGAN = 9
+ID_STEER_DEPAN_PASANGAN = 10
 
 DAMPER_GAS_PER_SIKLUS = 5
 DAMPER_REM_PER_SIKLUS = 15
@@ -224,6 +225,9 @@ class CoreNode(Node):
                 # bisa dipakai buat belok cepat lewat tombol individual.
                 act[ACT_STEER_BELAKANG_KIRI] = -100 * arah
                 act[ACT_STEER_BELAKANG_KANAN] = 100 * arah
+            elif mid == ID_STEER_DEPAN_PASANGAN:
+                act[ACT_STEER_DEPAN_KIRI] = -100 * arah
+                act[ACT_STEER_DEPAN_KANAN] = 100 * arah
 
             return act
 
