@@ -1,0 +1,222 @@
+[1.759s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build', '--symlink-install', '--packages-select', 'ugv_robot', 'ugv_robot_msgs']
+[1.759s] DEBUG:colcon:Parsed command line arguments: Namespace(ament_cmake_args=None, base_paths=['.'], build_base='build', catkin_cmake_args=None, catkin_skip_building_tests=False, cmake_args=None, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, cmake_target=None, cmake_target_skip_unavailable=False, continue_on_error=False, event_handlers=None, executor='parallel', ignore_user_meta=False, install_base='install', log_base=None, log_level=None, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0x7f8198a9b0>>, merge_install=False, metas=['./colcon.meta'], packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_end=None, packages_ignore=None, packages_ignore_regex=None, packages_select=['ugv_robot', 'ugv_robot_msgs'], packages_select_build_failed=False, packages_select_by_dep=None, packages_select_regex=None, packages_select_test_failures=False, packages_skip=None, packages_skip_build_finished=False, packages_skip_by_dep=None, packages_skip_regex=None, packages_skip_test_passed=False, packages_skip_up_to=None, packages_start=None, packages_up_to=None, packages_up_to_regex=None, parallel_workers=4, paths=None, symlink_install=True, test_result_base=None, verb_extension=<colcon_core.verb.build.BuildVerb object at 0x7f8198a9b0>, verb_name='build', verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0x7f81858400>)
+[1.859s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[1.860s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[1.860s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[1.860s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[1.861s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[1.862s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[1.862s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/workspace'
+[1.863s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[1.863s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[1.864s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[1.864s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[1.864s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[1.864s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[1.864s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[1.865s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[1.865s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[2.058s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[2.058s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[2.059s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[2.059s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[2.059s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[2.060s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[2.060s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[2.060s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[2.062s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[2.063s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[2.063s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[2.064s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[2.064s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[2.064s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[2.065s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extensions ['ignore', 'ignore_ament_install']
+[2.065s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extension 'ignore'
+[2.066s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extension 'ignore_ament_install'
+[2.066s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extensions ['colcon_pkg']
+[2.066s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extension 'colcon_pkg'
+[2.066s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extensions ['colcon_meta']
+[2.067s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extension 'colcon_meta'
+[2.067s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extensions ['ros']
+[2.067s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extension 'ros'
+[2.068s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extensions ['cmake', 'python']
+[2.068s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extension 'cmake'
+[2.068s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extension 'python'
+[2.069s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extensions ['python_setup_py']
+[2.069s] Level 1:colcon.colcon_core.package_identification:_identify(models) by extension 'python_setup_py'
+[2.070s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ignore', 'ignore_ament_install']
+[2.070s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore'
+[2.071s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore_ament_install'
+[2.071s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_pkg']
+[2.071s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_pkg'
+[2.072s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_meta']
+[2.072s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_meta'
+[2.072s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ros']
+[2.073s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ros'
+[2.073s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['cmake', 'python']
+[2.074s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'cmake'
+[2.074s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python'
+[2.074s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['python_setup_py']
+[2.074s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python_setup_py'
+[2.075s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot) by extensions ['ignore', 'ignore_ament_install']
+[2.075s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot) by extension 'ignore'
+[2.076s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot) by extension 'ignore_ament_install'
+[2.076s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot) by extensions ['colcon_pkg']
+[2.076s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot) by extension 'colcon_pkg'
+[2.076s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot) by extensions ['colcon_meta']
+[2.077s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot) by extension 'colcon_meta'
+[2.077s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot) by extensions ['ros']
+[2.077s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot) by extension 'ros'
+[2.091s] DEBUG:colcon.colcon_core.package_identification:Package 'src/ugv_robot' with type 'ros.ament_python' and name 'ugv_robot'
+[2.091s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot_msgs) by extensions ['ignore', 'ignore_ament_install']
+[2.092s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot_msgs) by extension 'ignore'
+[2.092s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot_msgs) by extension 'ignore_ament_install'
+[2.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot_msgs) by extensions ['colcon_pkg']
+[2.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot_msgs) by extension 'colcon_pkg'
+[2.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot_msgs) by extensions ['colcon_meta']
+[2.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot_msgs) by extension 'colcon_meta'
+[2.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot_msgs) by extensions ['ros']
+[2.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/ugv_robot_msgs) by extension 'ros'
+[2.098s] DEBUG:colcon.colcon_core.package_identification:Package 'src/ugv_robot_msgs' with type 'ros.ament_cmake' and name 'ugv_robot_msgs'
+[2.098s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[2.100s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[2.100s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[2.100s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[2.100s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[2.203s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot_msgs' build argument 'cmake_args' from command line to 'None'
+[2.203s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot_msgs' build argument 'cmake_target' from command line to 'None'
+[2.203s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot_msgs' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[2.204s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot_msgs' build argument 'cmake_clean_cache' from command line to 'False'
+[2.204s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot_msgs' build argument 'cmake_clean_first' from command line to 'False'
+[2.204s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot_msgs' build argument 'cmake_force_configure' from command line to 'False'
+[2.204s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot_msgs' build argument 'ament_cmake_args' from command line to 'None'
+[2.204s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot_msgs' build argument 'catkin_cmake_args' from command line to 'None'
+[2.204s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot_msgs' build argument 'catkin_skip_building_tests' from command line to 'False'
+[2.205s] DEBUG:colcon.colcon_core.verb:Building package 'ugv_robot_msgs' with the following arguments: {'ament_cmake_args': None, 'build_base': '/workspace/build/ugv_robot_msgs', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/workspace/install/ugv_robot_msgs', 'merge_install': False, 'path': '/workspace/src/ugv_robot_msgs', 'symlink_install': True, 'test_result_base': None}
+[2.207s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot' build argument 'cmake_args' from command line to 'None'
+[2.207s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot' build argument 'cmake_target' from command line to 'None'
+[2.208s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[2.208s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot' build argument 'cmake_clean_cache' from command line to 'False'
+[2.208s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot' build argument 'cmake_clean_first' from command line to 'False'
+[2.208s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot' build argument 'cmake_force_configure' from command line to 'False'
+[2.208s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot' build argument 'ament_cmake_args' from command line to 'None'
+[2.208s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot' build argument 'catkin_cmake_args' from command line to 'None'
+[2.209s] Level 5:colcon.colcon_core.verb:set package 'ugv_robot' build argument 'catkin_skip_building_tests' from command line to 'False'
+[2.209s] DEBUG:colcon.colcon_core.verb:Building package 'ugv_robot' with the following arguments: {'ament_cmake_args': None, 'build_base': '/workspace/build/ugv_robot', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/workspace/install/ugv_robot', 'merge_install': False, 'path': '/workspace/src/ugv_robot', 'symlink_install': True, 'test_result_base': None}
+[2.210s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[2.215s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[2.217s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/workspace/src/ugv_robot_msgs' with build type 'ament_cmake'
+[2.218s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/workspace/src/ugv_robot_msgs'
+[2.229s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[2.231s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[2.231s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[2.307s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/workspace/build/ugv_robot_msgs': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/workspace/install/ugv_robot /usr/local/bin/cmake --build /workspace/build/ugv_robot_msgs -- -j4 -l4
+[35.765s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/workspace/build/ugv_robot_msgs' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/workspace/install/ugv_robot /usr/local/bin/cmake --build /workspace/build/ugv_robot_msgs -- -j4 -l4
+[36.494s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/workspace/build/ugv_robot_msgs': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/workspace/install/ugv_robot /usr/local/bin/cmake --install /workspace/build/ugv_robot_msgs
+[37.156s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(ugv_robot_msgs)
+[37.160s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/workspace/build/ugv_robot_msgs' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/workspace/install/ugv_robot /usr/local/bin/cmake --install /workspace/build/ugv_robot_msgs
+[37.171s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs' for CMake module files
+[37.175s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs' for CMake config files
+[37.179s] Level 1:colcon.colcon_core.shell:create_environment_hook('ugv_robot_msgs', 'cmake_prefix_path')
+[37.181s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/cmake_prefix_path.ps1'
+[37.185s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/cmake_prefix_path.dsv'
+[37.188s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/cmake_prefix_path.sh'
+[37.194s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs/lib'
+[37.194s] Level 1:colcon.colcon_core.shell:create_environment_hook('ugv_robot_msgs', 'ld_library_path_lib')
+[37.196s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/ld_library_path_lib.ps1'
+[37.198s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/ld_library_path_lib.dsv'
+[37.199s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/ld_library_path_lib.sh'
+[37.201s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs/bin'
+[37.202s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs/lib/pkgconfig/ugv_robot_msgs.pc'
+[37.202s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs/lib/python3.6/site-packages'
+[37.203s] Level 1:colcon.colcon_core.shell:create_environment_hook('ugv_robot_msgs', 'pythonpath')
+[37.204s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/pythonpath.ps1'
+[37.206s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/pythonpath.dsv'
+[37.207s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/pythonpath.sh'
+[37.210s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs/bin'
+[37.212s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.ps1'
+[37.218s] INFO:colcon.colcon_core.shell:Creating package descriptor '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.dsv'
+[37.222s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.sh'
+[37.226s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.bash'
+[37.231s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.zsh'
+[37.235s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/workspace/install/ugv_robot_msgs/share/colcon-core/packages/ugv_robot_msgs)
+[37.801s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(ugv_robot_msgs)
+[37.803s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs' for CMake module files
+[37.808s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs' for CMake config files
+[37.812s] Level 1:colcon.colcon_core.shell:create_environment_hook('ugv_robot_msgs', 'cmake_prefix_path')
+[37.813s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/cmake_prefix_path.ps1'
+[37.815s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/cmake_prefix_path.dsv'
+[37.817s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/cmake_prefix_path.sh'
+[37.822s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs/lib'
+[37.823s] Level 1:colcon.colcon_core.shell:create_environment_hook('ugv_robot_msgs', 'ld_library_path_lib')
+[37.824s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/ld_library_path_lib.ps1'
+[37.826s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/ld_library_path_lib.dsv'
+[37.828s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/ld_library_path_lib.sh'
+[37.830s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs/bin'
+[37.830s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs/lib/pkgconfig/ugv_robot_msgs.pc'
+[37.831s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs/lib/python3.6/site-packages'
+[37.831s] Level 1:colcon.colcon_core.shell:create_environment_hook('ugv_robot_msgs', 'pythonpath')
+[37.833s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/pythonpath.ps1'
+[37.835s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/pythonpath.dsv'
+[37.836s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/hook/pythonpath.sh'
+[37.839s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot_msgs/bin'
+[37.843s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.ps1'
+[37.848s] INFO:colcon.colcon_core.shell:Creating package descriptor '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.dsv'
+[37.852s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.sh'
+[37.855s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.bash'
+[37.858s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.zsh'
+[37.860s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/workspace/install/ugv_robot_msgs/share/colcon-core/packages/ugv_robot_msgs)
+[37.862s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/workspace/src/ugv_robot' with build type 'ament_python'
+[37.863s] Level 1:colcon.colcon_core.shell:create_environment_hook('ugv_robot', 'ament_prefix_path')
+[37.864s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot/share/ugv_robot/hook/ament_prefix_path.ps1'
+[37.868s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/workspace/install/ugv_robot/share/ugv_robot/hook/ament_prefix_path.dsv'
+[37.871s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot/share/ugv_robot/hook/ament_prefix_path.sh'
+[37.874s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[37.874s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[39.485s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/workspace/src/ugv_robot'
+[39.487s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[39.488s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[41.832s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/workspace/build/ugv_robot': CMAKE_PREFIX_PATH=/workspace/install/ugv_robot_msgs:/opt/ros/foxy/install LD_LIBRARY_PATH=/workspace/install/ugv_robot_msgs/lib:/opt/ros/foxy/install/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/install/lib:/usr/local/cuda/lib64:/usr/local/cuda-10.2/targets/aarch64-linux/lib PYTHONPATH=/workspace/build/ugv_robot/prefix_override:/workspace/install/ugv_robot/lib/python3.6/site-packages:/workspace/install/ugv_robot_msgs/lib/python3.6/site-packages:/opt/ros/foxy/install/lib/python3.6/site-packages:/workspace/build/ugv_robot:/workspace/install/ugv_robot/lib/python3.6/site-packages /usr/bin/python3 setup.py develop --editable --build-directory /workspace/build/ugv_robot/build --no-deps install_data
+[44.195s] Level 1:colcon.colcon_core.shell:create_environment_hook('ugv_robot', 'pythonpath_develop')
+[44.199s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/build/ugv_robot/share/ugv_robot/hook/pythonpath_develop.ps1'
+[44.203s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/workspace/build/ugv_robot' returned '0': CMAKE_PREFIX_PATH=/workspace/install/ugv_robot_msgs:/opt/ros/foxy/install LD_LIBRARY_PATH=/workspace/install/ugv_robot_msgs/lib:/opt/ros/foxy/install/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/install/lib:/usr/local/cuda/lib64:/usr/local/cuda-10.2/targets/aarch64-linux/lib PYTHONPATH=/workspace/build/ugv_robot/prefix_override:/workspace/install/ugv_robot/lib/python3.6/site-packages:/workspace/install/ugv_robot_msgs/lib/python3.6/site-packages:/opt/ros/foxy/install/lib/python3.6/site-packages:/workspace/build/ugv_robot:/workspace/install/ugv_robot/lib/python3.6/site-packages /usr/bin/python3 setup.py develop --editable --build-directory /workspace/build/ugv_robot/build --no-deps install_data
+[44.205s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/workspace/build/ugv_robot/share/ugv_robot/hook/pythonpath_develop.dsv'
+[44.207s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/build/ugv_robot/share/ugv_robot/hook/pythonpath_develop.sh'
+[44.210s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot' for CMake module files
+[44.213s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot' for CMake config files
+[44.217s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot/lib'
+[44.218s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot/bin'
+[44.218s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot/lib/pkgconfig/ugv_robot.pc'
+[44.219s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot/lib/python3.6/site-packages'
+[44.220s] Level 1:colcon.colcon_core.shell:create_environment_hook('ugv_robot', 'pythonpath')
+[44.221s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot/share/ugv_robot/hook/pythonpath.ps1'
+[44.223s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/workspace/install/ugv_robot/share/ugv_robot/hook/pythonpath.dsv'
+[44.224s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspace/install/ugv_robot/share/ugv_robot/hook/pythonpath.sh'
+[44.226s] Level 1:colcon.colcon_core.environment:checking '/workspace/install/ugv_robot/bin'
+[44.227s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(ugv_robot)
+[44.229s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot/share/ugv_robot/package.ps1'
+[44.232s] INFO:colcon.colcon_core.shell:Creating package descriptor '/workspace/install/ugv_robot/share/ugv_robot/package.dsv'
+[44.234s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot/share/ugv_robot/package.sh'
+[44.236s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot/share/ugv_robot/package.bash'
+[44.237s] INFO:colcon.colcon_core.shell:Creating package script '/workspace/install/ugv_robot/share/ugv_robot/package.zsh'
+[44.239s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/workspace/install/ugv_robot/share/colcon-core/packages/ugv_robot)
+[44.240s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[44.242s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[44.243s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[44.243s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[44.272s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.notify_send': Could not find 'notify-send'
+[44.272s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[44.273s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[44.273s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[44.273s] DEBUG:colcon.colcon_notification.desktop_notification.notify2:Failed to initialize notify2: org.freedesktop.DBus.Error.NotSupported: Unable to autolaunch a dbus-daemon without a $DISPLAY for X11
+[44.274s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[44.276s] INFO:colcon.colcon_core.shell:Creating prefix script '/workspace/install/local_setup.ps1'
+[44.282s] INFO:colcon.colcon_core.shell:Creating prefix util module '/workspace/install/_local_setup_util_ps1.py'
+[44.292s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/workspace/install/setup.ps1'
+[44.299s] INFO:colcon.colcon_core.shell:Creating prefix script '/workspace/install/local_setup.sh'
+[44.303s] INFO:colcon.colcon_core.shell:Creating prefix util module '/workspace/install/_local_setup_util_sh.py'
+[44.305s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/workspace/install/setup.sh'
+[44.311s] INFO:colcon.colcon_core.shell:Creating prefix script '/workspace/install/local_setup.bash'
+[44.314s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/workspace/install/setup.bash'
+[44.320s] INFO:colcon.colcon_core.shell:Creating prefix script '/workspace/install/local_setup.zsh'
+[44.322s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/workspace/install/setup.zsh'

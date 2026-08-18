@@ -1,0 +1,25 @@
+[3.963s] Invoking command in '/workspace/build/ugv_robot': CMAKE_PREFIX_PATH=/workspace/install/ugv_robot_msgs:/opt/ros/foxy/install LD_LIBRARY_PATH=/workspace/install/ugv_robot_msgs/lib:/opt/ros/foxy/install/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/install/lib:/usr/local/cuda/lib64:/usr/local/cuda-10.2/targets/aarch64-linux/lib PYTHONPATH=/workspace/build/ugv_robot/prefix_override:/workspace/install/ugv_robot/lib/python3.6/site-packages:/workspace/install/ugv_robot_msgs/lib/python3.6/site-packages:/opt/ros/foxy/install/lib/python3.6/site-packages:/workspace/build/ugv_robot:/workspace/install/ugv_robot/lib/python3.6/site-packages /usr/bin/python3 setup.py develop --editable --build-directory /workspace/build/ugv_robot/build --no-deps install_data
+[5.120s] /usr/local/lib/python3.6/dist-packages/setuptools/dist.py:726: UserWarning: Usage of dash-separated 'script-dir' will not be supported in future versions. Please use the underscore name 'script_dir' instead
+[5.120s]   % (opt, underscore_opt)
+[5.371s] running develop
+[5.374s] /usr/local/lib/python3.6/dist-packages/setuptools/command/easy_install.py:159: EasyInstallDeprecationWarning: easy_install command is deprecated. Use build and pip and other standards-based tools.
+[5.375s]   EasyInstallDeprecationWarning,
+[5.379s] /usr/local/lib/python3.6/dist-packages/setuptools/command/install.py:37: SetuptoolsDeprecationWarning: setup.py install is deprecated. Use build and pip and other standards-based tools.
+[5.380s]   setuptools.SetuptoolsDeprecationWarning,
+[5.930s] running egg_info
+[5.930s] writing ugv_robot.egg-info/PKG-INFO
+[5.931s] writing dependency_links to ugv_robot.egg-info/dependency_links.txt
+[5.932s] writing entry points to ugv_robot.egg-info/entry_points.txt
+[5.932s] writing requirements to ugv_robot.egg-info/requires.txt
+[5.933s] writing top-level names to ugv_robot.egg-info/top_level.txt
+[5.945s] reading manifest file 'ugv_robot.egg-info/SOURCES.txt'
+[5.950s] writing manifest file 'ugv_robot.egg-info/SOURCES.txt'
+[6.177s] running build_ext
+[6.178s] Creating /workspace/install/ugv_robot/lib/python3.6/site-packages/ugv-robot.egg-link (link to .)
+[6.182s] Installing core_node script to /workspace/install/ugv_robot/lib/ugv_robot
+[6.183s] Installing cv_node script to /workspace/install/ugv_robot/lib/ugv_robot
+[6.184s] Installing stm32_interface_node script to /workspace/install/ugv_robot/lib/ugv_robot
+[6.185s] 
+[6.185s] Installed /workspace/build/ugv_robot
+[6.187s] running install_data
+[6.334s] Invoked command in '/workspace/build/ugv_robot' returned '0': CMAKE_PREFIX_PATH=/workspace/install/ugv_robot_msgs:/opt/ros/foxy/install LD_LIBRARY_PATH=/workspace/install/ugv_robot_msgs/lib:/opt/ros/foxy/install/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/install/lib:/usr/local/cuda/lib64:/usr/local/cuda-10.2/targets/aarch64-linux/lib PYTHONPATH=/workspace/build/ugv_robot/prefix_override:/workspace/install/ugv_robot/lib/python3.6/site-packages:/workspace/install/ugv_robot_msgs/lib/python3.6/site-packages:/opt/ros/foxy/install/lib/python3.6/site-packages:/workspace/build/ugv_robot:/workspace/install/ugv_robot/lib/python3.6/site-packages /usr/bin/python3 setup.py develop --editable --build-directory /workspace/build/ugv_robot/build --no-deps install_data

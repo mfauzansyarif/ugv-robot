@@ -1,0 +1,1 @@
+/workspace/src/ugv_robot_msgs/msg/StmCommand.msg

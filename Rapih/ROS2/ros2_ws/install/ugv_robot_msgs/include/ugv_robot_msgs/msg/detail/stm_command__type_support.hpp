@@ -1,0 +1,1 @@
+/workspace/build/ugv_robot_msgs/rosidl_generator_cpp/ugv_robot_msgs/msg/detail/stm_command__type_support.hpp

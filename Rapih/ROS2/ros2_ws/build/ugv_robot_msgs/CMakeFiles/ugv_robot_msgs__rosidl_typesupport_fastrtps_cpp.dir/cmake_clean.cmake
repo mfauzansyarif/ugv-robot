@@ -1,0 +1,29 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/gcs_relay__type_support.cpp.o"
+  "CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/gcs_relay__type_support.cpp.o.d"
+  "CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/health__type_support.cpp.o"
+  "CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/health__type_support.cpp.o.d"
+  "CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/lrf_status__type_support.cpp.o"
+  "CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/lrf_status__type_support.cpp.o.d"
+  "CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/person_detection__type_support.cpp.o"
+  "CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/person_detection__type_support.cpp.o.d"
+  "CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/stm_command__type_support.cpp.o"
+  "CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/stm_command__type_support.cpp.o.d"
+  "libugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.pdb"
+  "libugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.so"
+  "rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/gcs_relay__type_support.cpp"
+  "rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/health__type_support.cpp"
+  "rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/lrf_status__type_support.cpp"
+  "rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/person_detection__type_support.cpp"
+  "rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/stm_command__type_support.cpp"
+  "rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/gcs_relay__rosidl_typesupport_fastrtps_cpp.hpp"
+  "rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/health__rosidl_typesupport_fastrtps_cpp.hpp"
+  "rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/lrf_status__rosidl_typesupport_fastrtps_cpp.hpp"
+  "rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/person_detection__rosidl_typesupport_fastrtps_cpp.hpp"
+  "rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/stm_command__rosidl_typesupport_fastrtps_cpp.hpp"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

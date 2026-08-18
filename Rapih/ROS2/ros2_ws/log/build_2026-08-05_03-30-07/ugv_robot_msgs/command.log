@@ -1,0 +1,2 @@
+Invoking command in '/workspace/build/ugv_robot_msgs': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/workspace/install/ugv_robot /usr/local/bin/cmake --build /workspace/build/ugv_robot_msgs -- -j4 -l4
+Invoked command in '/workspace/build/ugv_robot_msgs' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/workspace/install/ugv_robot /usr/local/bin/cmake --build /workspace/build/ugv_robot_msgs -- -j4 -l4

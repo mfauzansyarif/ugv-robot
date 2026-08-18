@@ -1,0 +1,734 @@
+[0.000000] (-) TimerEvent: {}
+[0.000510] (ugv_robot_msgs) JobQueued: {'identifier': 'ugv_robot_msgs', 'dependencies': OrderedDict()}
+[0.001343] (ugv_robot) JobQueued: {'identifier': 'ugv_robot', 'dependencies': OrderedDict([('ugv_robot_msgs', '/workspace/install/ugv_robot_msgs')])}
+[0.001628] (ugv_robot_msgs) JobStarted: {'identifier': 'ugv_robot_msgs'}
+[0.074742] (ugv_robot_msgs) JobProgress: {'identifier': 'ugv_robot_msgs', 'progress': 'cmake'}
+[0.075821] (ugv_robot_msgs) Command: {'cmd': ['/usr/local/bin/cmake', '/workspace/src/ugv_robot_msgs', '-DAMENT_CMAKE_SYMLINK_INSTALL=1', '-DCMAKE_INSTALL_PREFIX=/workspace/install/ugv_robot_msgs'], 'cwd': '/workspace/build/ugv_robot_msgs', 'env': OrderedDict([('OPENBLAS_CORETYPE', 'ARMV8'), ('PYTHONIOENCODING', 'utf-8'), ('HOSTNAME', 'respatijetson-desktop'), ('LD_LIBRARY_PATH', '/opt/ros/foxy/install/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/install/lib:/usr/local/cuda-10.2/targets/aarch64-linux/lib:'), ('SHLVL', '1'), ('HOME', '/root'), ('OLDPWD', '/workspace/src/ugv_robot'), ('ROS_PYTHON_VERSION', '3'), ('COLCON_PREFIX_PATH', '/opt/ros/foxy/install'), ('ROS_DISTRO', 'foxy'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('NVIDIA_DRIVER_CAPABILITIES', 'all'), ('PKG_CONFIG_PATH', '/opt/ros/foxy/install/lib/aarch64-linux-gnu/pkgconfig:/opt/ros/foxy/install/lib/pkgconfig'), ('TERM', 'xterm'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/opt/ros/foxy/install/bin:/usr/local/cuda-10.2/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'), ('LANG', 'en_US.UTF-8'), ('RMW_IMPLEMENTATION', 'rmw_cyclonedds_cpp'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('ROS_ROOT', '/opt/ros/foxy'), ('AMENT_PREFIX_PATH', '/opt/ros/foxy/install'), ('DEBIAN_FRONTEND', 'noninteractive'), ('SHELL', '/bin/bash'), ('PWD', '/workspace/build/ugv_robot_msgs'), ('PYTHONPATH', '/opt/ros/foxy/install/lib/python3.6/site-packages'), ('NVIDIA_VISIBLE_DEVICES', 'all'), ('COLCON', '1'), ('CMAKE_PREFIX_PATH', '/opt/ros/foxy/install')]), 'shell': False}
+[0.096065] (-) TimerEvent: {}
+[0.197030] (-) TimerEvent: {}
+[0.297784] (-) TimerEvent: {}
+[0.398628] (-) TimerEvent: {}
+[0.406245] (ugv_robot_msgs) StdoutLine: {'line': b'-- The C compiler identification is GNU 7.5.0\n'}
+[0.498819] (-) TimerEvent: {}
+[0.599736] (-) TimerEvent: {}
+[0.612958] (ugv_robot_msgs) StdoutLine: {'line': b'-- The CXX compiler identification is GNU 7.5.0\n'}
+[0.680250] (ugv_robot_msgs) StdoutLine: {'line': b'-- Detecting C compiler ABI info\n'}
+[0.699952] (-) TimerEvent: {}
+[0.800783] (-) TimerEvent: {}
+[0.901622] (-) TimerEvent: {}
+[0.907863] (ugv_robot_msgs) StdoutLine: {'line': b'-- Detecting C compiler ABI info - done\n'}
+[0.959934] (ugv_robot_msgs) StdoutLine: {'line': b'-- Check for working C compiler: /usr/bin/cc - skipped\n'}
+[0.961068] (ugv_robot_msgs) StdoutLine: {'line': b'-- Detecting C compile features\n'}
+[0.963102] (ugv_robot_msgs) StdoutLine: {'line': b'-- Detecting C compile features - done\n'}
+[1.001856] (-) TimerEvent: {}
+[1.006966] (ugv_robot_msgs) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info\n'}
+[1.102059] (-) TimerEvent: {}
+[1.203149] (-) TimerEvent: {}
+[1.267550] (ugv_robot_msgs) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info - done\n'}
+[1.303374] (-) TimerEvent: {}
+[1.323013] (ugv_robot_msgs) StdoutLine: {'line': b'-- Check for working CXX compiler: /usr/bin/c++ - skipped\n'}
+[1.324254] (ugv_robot_msgs) StdoutLine: {'line': b'-- Detecting CXX compile features\n'}
+[1.326428] (ugv_robot_msgs) StdoutLine: {'line': b'-- Detecting CXX compile features - done\n'}
+[1.340358] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found ament_cmake: 0.9.12 (/opt/ros/foxy/install/share/ament_cmake/cmake)\n'}
+[1.361208] (ugv_robot_msgs) StderrLine: {'line': b'\x1b[33mCMake Warning (dev) at /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/python.cmake:22 (find_package):\n'}
+[1.362020] (ugv_robot_msgs) StderrLine: {'line': b'  Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules\n'}
+[1.362550] (ugv_robot_msgs) StderrLine: {'line': b'  are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use\n'}
+[1.363181] (ugv_robot_msgs) StderrLine: {'line': b'  the cmake_policy command to set the policy and suppress this warning.\n'}
+[1.363768] (ugv_robot_msgs) StderrLine: {'line': b'\n'}
+[1.364271] (ugv_robot_msgs) StderrLine: {'line': b'Call Stack (most recent call first):\n'}
+[1.364741] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/all.cmake:53 (include)\n'}
+[1.365297] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_core-extras.cmake:17 (include)\n'}
+[1.365937] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_coreConfig.cmake:41 (include)\n'}
+[1.366607] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmake_export_dependencies-extras.cmake:15 (find_package)\n'}
+[1.367187] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmakeConfig.cmake:41 (include)\n'}
+[1.367654] (ugv_robot_msgs) StderrLine: {'line': b'  CMakeLists.txt:4 (find_package)\n'}
+[1.368104] (ugv_robot_msgs) StderrLine: {'line': b'This warning is for project developers.  Use -Wno-dev to suppress it.\n'}
+[1.368558] (ugv_robot_msgs) StderrLine: {'line': b'\x1b[0m\n'}
+[1.403543] (-) TimerEvent: {}
+[1.436057] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found PythonInterp: /usr/bin/python3 (found suitable version "3.6.9", minimum required is "3") \n'}
+[1.440292] (ugv_robot_msgs) StdoutLine: {'line': b'-- Using PYTHON_EXECUTABLE: /usr/bin/python3\n'}
+[1.503730] (-) TimerEvent: {}
+[1.604543] (-) TimerEvent: {}
+[1.705350] (-) TimerEvent: {}
+[1.806068] (-) TimerEvent: {}
+[1.906775] (-) TimerEvent: {}
+[2.007513] (-) TimerEvent: {}
+[2.108220] (-) TimerEvent: {}
+[2.209022] (-) TimerEvent: {}
+[2.309704] (-) TimerEvent: {}
+[2.410465] (-) TimerEvent: {}
+[2.471453] (ugv_robot_msgs) StdoutLine: {'line': b'-- Override CMake install command with custom implementation using symlinks instead of copying resources\n'}
+[2.510706] (-) TimerEvent: {}
+[2.597908] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found rosidl_default_generators: 1.0.1 (/opt/ros/foxy/install/share/rosidl_default_generators/cmake)\n'}
+[2.610894] (-) TimerEvent: {}
+[2.614157] (ugv_robot_msgs) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[2.653444] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found rosidl_adapter: 1.3.1 (/opt/ros/foxy/install/share/rosidl_adapter/cmake)\n'}
+[2.711133] (-) TimerEvent: {}
+[2.811898] (-) TimerEvent: {}
+[2.912636] (-) TimerEvent: {}
+[2.982199] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found OpenSSL: /usr/lib/aarch64-linux-gnu/libcrypto.so (found version "1.1.1")  \n'}
+[3.012827] (-) TimerEvent: {}
+[3.071974] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found FastRTPS: /opt/ros/foxy/install/include  \n'}
+[3.113078] (-) TimerEvent: {}
+[3.213833] (-) TimerEvent: {}
+[3.314621] (-) TimerEvent: {}
+[3.415458] (-) TimerEvent: {}
+[3.439432] (ugv_robot_msgs) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[3.515653] (-) TimerEvent: {}
+[3.594561] (ugv_robot_msgs) StderrLine: {'line': b'\x1b[33mCMake Warning (dev) at /opt/ros/foxy/install/share/rosidl_adapter/cmake/rosidl_adapt_interfaces.cmake:40 (find_package):\n'}
+[3.595282] (ugv_robot_msgs) StderrLine: {'line': b'  Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules\n'}
+[3.595808] (ugv_robot_msgs) StderrLine: {'line': b'  are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use\n'}
+[3.596286] (ugv_robot_msgs) StderrLine: {'line': b'  the cmake_policy command to set the policy and suppress this warning.\n'}
+[3.596757] (ugv_robot_msgs) StderrLine: {'line': b'\n'}
+[3.597397] (ugv_robot_msgs) StderrLine: {'line': b'Call Stack (most recent call first):\n'}
+[3.597887] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:130 (rosidl_adapt_interfaces)\n'}
+[3.598348] (ugv_robot_msgs) StderrLine: {'line': b'  CMakeLists.txt:7 (rosidl_generate_interfaces)\n'}
+[3.598841] (ugv_robot_msgs) StderrLine: {'line': b'This warning is for project developers.  Use -Wno-dev to suppress it.\n'}
+[3.599331] (ugv_robot_msgs) StderrLine: {'line': b'\x1b[0m\n'}
+[3.615873] (-) TimerEvent: {}
+[3.671185] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found PythonInterp: /usr/bin/python3 (found version "3.6.9") \n'}
+[3.716061] (-) TimerEvent: {}
+[3.816832] (-) TimerEvent: {}
+[3.917552] (-) TimerEvent: {}
+[4.018265] (-) TimerEvent: {}
+[4.119101] (-) TimerEvent: {}
+[4.219858] (-) TimerEvent: {}
+[4.320557] (-) TimerEvent: {}
+[4.421421] (-) TimerEvent: {}
+[4.522104] (-) TimerEvent: {}
+[4.622832] (-) TimerEvent: {}
+[4.684031] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found ament_cmake_ros: 0.9.2 (/opt/ros/foxy/install/share/ament_cmake_ros/cmake)\n'}
+[4.723052] (-) TimerEvent: {}
+[4.823777] (-) TimerEvent: {}
+[4.924565] (-) TimerEvent: {}
+[5.025390] (-) TimerEvent: {}
+[5.078634] (ugv_robot_msgs) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[5.118731] (ugv_robot_msgs) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[5.125722] (-) TimerEvent: {}
+[5.130570] (ugv_robot_msgs) StderrLine: {'line': b'\x1b[33mCMake Warning (dev) at /opt/ros/foxy/install/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:20 (find_package):\n'}
+[5.131322] (ugv_robot_msgs) StderrLine: {'line': b'  Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules\n'}
+[5.131847] (ugv_robot_msgs) StderrLine: {'line': b'  are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use\n'}
+[5.132374] (ugv_robot_msgs) StderrLine: {'line': b'  the cmake_policy command to set the policy and suppress this warning.\n'}
+[5.132865] (ugv_robot_msgs) StderrLine: {'line': b'\n'}
+[5.133461] (ugv_robot_msgs) StderrLine: {'line': b'Call Stack (most recent call first):\n'}
+[5.133957] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)\n'}
+[5.134428] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)\n'}
+[5.134911] (ugv_robot_msgs) StderrLine: {'line': b'  CMakeLists.txt:7 (rosidl_generate_interfaces)\n'}
+[5.135451] (ugv_robot_msgs) StderrLine: {'line': b'This warning is for project developers.  Use -Wno-dev to suppress it.\n'}
+[5.135982] (ugv_robot_msgs) StderrLine: {'line': b'\x1b[0m\n'}
+[5.209331] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found PythonInterp: /usr/bin/python3 (found suitable version "3.6.9", minimum required is "3.5") \n'}
+[5.218222] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found python_cmake_module: 0.8.1 (/opt/ros/foxy/install/share/python_cmake_module/cmake)\n'}
+[5.220211] (ugv_robot_msgs) StderrLine: {'line': b'\x1b[33mCMake Warning (dev) at /opt/ros/foxy/install/share/python_cmake_module/cmake/Modules/FindPythonExtra.cmake:45 (find_package):\n'}
+[5.221036] (ugv_robot_msgs) StderrLine: {'line': b'  Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules\n'}
+[5.221621] (ugv_robot_msgs) StderrLine: {'line': b'  are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use\n'}
+[5.222142] (ugv_robot_msgs) StderrLine: {'line': b'  the cmake_policy command to set the policy and suppress this warning.\n'}
+[5.222659] (ugv_robot_msgs) StderrLine: {'line': b'\n'}
+[5.223170] (ugv_robot_msgs) StderrLine: {'line': b'Call Stack (most recent call first):\n'}
+[5.223680] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:23 (find_package)\n'}
+[5.224154] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)\n'}
+[5.224617] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)\n'}
+[5.225221] (ugv_robot_msgs) StderrLine: {'line': b'  CMakeLists.txt:7 (rosidl_generate_interfaces)\n'}
+[5.225717] (-) TimerEvent: {}
+[5.227026] (ugv_robot_msgs) StderrLine: {'line': b'This warning is for project developers.  Use -Wno-dev to suppress it.\n'}
+[5.227835] (ugv_robot_msgs) StderrLine: {'line': b'\x1b[0m\n'}
+[5.300041] (ugv_robot_msgs) StderrLine: {'line': b'\x1b[33mCMake Warning (dev) at /opt/ros/foxy/install/share/python_cmake_module/cmake/Modules/FindPythonExtra.cmake:133 (find_package):\n'}
+[5.301039] (ugv_robot_msgs) StderrLine: {'line': b'  Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules\n'}
+[5.301579] (ugv_robot_msgs) StderrLine: {'line': b'  are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use\n'}
+[5.302035] (ugv_robot_msgs) StderrLine: {'line': b'  the cmake_policy command to set the policy and suppress this warning.\n'}
+[5.302480] (ugv_robot_msgs) StderrLine: {'line': b'\n'}
+[5.302921] (ugv_robot_msgs) StderrLine: {'line': b'Call Stack (most recent call first):\n'}
+[5.303365] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:23 (find_package)\n'}
+[5.303807] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)\n'}
+[5.304234] (ugv_robot_msgs) StderrLine: {'line': b'  /opt/ros/foxy/install/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)\n'}
+[5.304675] (ugv_robot_msgs) StderrLine: {'line': b'  CMakeLists.txt:7 (rosidl_generate_interfaces)\n'}
+[5.305210] (ugv_robot_msgs) StderrLine: {'line': b'This warning is for project developers.  Use -Wno-dev to suppress it.\n'}
+[5.305662] (ugv_robot_msgs) StderrLine: {'line': b'\x1b[0m\n'}
+[5.315266] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found PythonLibs: /usr/lib/aarch64-linux-gnu/libpython3.6m.so (found suitable version "3.6.9", minimum required is "3.5") \n'}
+[5.316177] (ugv_robot_msgs) StdoutLine: {'line': b'-- Using PYTHON_EXECUTABLE: /usr/bin/python3\n'}
+[5.317256] (ugv_robot_msgs) StdoutLine: {'line': b'-- Using PYTHON_INCLUDE_DIRS: /usr/include/python3.6m\n'}
+[5.318067] (ugv_robot_msgs) StdoutLine: {'line': b'-- Using PYTHON_LIBRARIES: /usr/lib/aarch64-linux-gnu/libpython3.6m.so\n'}
+[5.325897] (-) TimerEvent: {}
+[5.392833] (ugv_robot_msgs) StdoutLine: {'line': b'-- Found PythonExtra: .so  \n'}
+[5.426073] (-) TimerEvent: {}
+[5.526864] (-) TimerEvent: {}
+[5.627623] (-) TimerEvent: {}
+[5.728440] (-) TimerEvent: {}
+[5.832472] (-) TimerEvent: {}
+[5.933272] (-) TimerEvent: {}
+[6.033984] (-) TimerEvent: {}
+[6.134711] (-) TimerEvent: {}
+[6.204122] (ugv_robot_msgs) StdoutLine: {'line': b'-- Using numpy include directory: /usr/local/lib/python3.6/dist-packages/numpy/core/include\n'}
+[6.234898] (-) TimerEvent: {}
+[6.300255] (ugv_robot_msgs) StdoutLine: {'line': b'-- Configuring done (6.1s)\n'}
+[6.335105] (-) TimerEvent: {}
+[6.436013] (-) TimerEvent: {}
+[6.479781] (ugv_robot_msgs) StdoutLine: {'line': b'-- Generating done (0.1s)\n'}
+[6.493591] (ugv_robot_msgs) StdoutLine: {'line': b'-- Build files have been written to: /workspace/build/ugv_robot_msgs\n'}
+[6.536281] (-) TimerEvent: {}
+[6.542471] (ugv_robot_msgs) CommandEnded: {'returncode': 0}
+[6.545379] (ugv_robot_msgs) JobProgress: {'identifier': 'ugv_robot_msgs', 'progress': 'build'}
+[6.552584] (ugv_robot_msgs) Command: {'cmd': ['/usr/local/bin/cmake', '--build', '/workspace/build/ugv_robot_msgs', '--', '-j4', '-l4'], 'cwd': '/workspace/build/ugv_robot_msgs', 'env': OrderedDict([('OPENBLAS_CORETYPE', 'ARMV8'), ('PYTHONIOENCODING', 'utf-8'), ('HOSTNAME', 'respatijetson-desktop'), ('LD_LIBRARY_PATH', '/opt/ros/foxy/install/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/install/lib:/usr/local/cuda-10.2/targets/aarch64-linux/lib:'), ('SHLVL', '1'), ('HOME', '/root'), ('OLDPWD', '/workspace/src/ugv_robot'), ('ROS_PYTHON_VERSION', '3'), ('COLCON_PREFIX_PATH', '/opt/ros/foxy/install'), ('ROS_DISTRO', 'foxy'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('NVIDIA_DRIVER_CAPABILITIES', 'all'), ('PKG_CONFIG_PATH', '/opt/ros/foxy/install/lib/aarch64-linux-gnu/pkgconfig:/opt/ros/foxy/install/lib/pkgconfig'), ('TERM', 'xterm'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/opt/ros/foxy/install/bin:/usr/local/cuda-10.2/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'), ('LANG', 'en_US.UTF-8'), ('RMW_IMPLEMENTATION', 'rmw_cyclonedds_cpp'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('ROS_ROOT', '/opt/ros/foxy'), ('AMENT_PREFIX_PATH', '/opt/ros/foxy/install'), ('DEBIAN_FRONTEND', 'noninteractive'), ('SHELL', '/bin/bash'), ('PWD', '/workspace/build/ugv_robot_msgs'), ('PYTHONPATH', '/opt/ros/foxy/install/lib/python3.6/site-packages'), ('NVIDIA_VISIBLE_DEVICES', 'all'), ('COLCON', '1'), ('CMAKE_PREFIX_PATH', '/opt/ros/foxy/install')]), 'shell': False}
+[6.636493] (-) TimerEvent: {}
+[6.737528] (-) TimerEvent: {}
+[6.748469] (ugv_robot_msgs) StdoutLine: {'line': b'[  1%] \x1b[34m\x1b[1mGenerating C code for ROS interfaces\x1b[0m\n'}
+[6.768106] (ugv_robot_msgs) StdoutLine: {'line': b'[  3%] \x1b[34m\x1b[1mGenerating C++ code for ROS interfaces\x1b[0m\n'}
+[6.837699] (-) TimerEvent: {}
+[6.938478] (-) TimerEvent: {}
+[7.039188] (-) TimerEvent: {}
+[7.140817] (-) TimerEvent: {}
+[7.241571] (-) TimerEvent: {}
+[7.342314] (-) TimerEvent: {}
+[7.443138] (-) TimerEvent: {}
+[7.543839] (-) TimerEvent: {}
+[7.644546] (-) TimerEvent: {}
+[7.745303] (-) TimerEvent: {}
+[7.846030] (-) TimerEvent: {}
+[7.946787] (-) TimerEvent: {}
+[8.047607] (-) TimerEvent: {}
+[8.148357] (-) TimerEvent: {}
+[8.249192] (-) TimerEvent: {}
+[8.349935] (-) TimerEvent: {}
+[8.450629] (-) TimerEvent: {}
+[8.551379] (-) TimerEvent: {}
+[8.652189] (-) TimerEvent: {}
+[8.752876] (-) TimerEvent: {}
+[8.853650] (-) TimerEvent: {}
+[8.954352] (-) TimerEvent: {}
+[9.055131] (-) TimerEvent: {}
+[9.155836] (-) TimerEvent: {}
+[9.256636] (-) TimerEvent: {}
+[9.357391] (-) TimerEvent: {}
+[9.458120] (-) TimerEvent: {}
+[9.558824] (-) TimerEvent: {}
+[9.659597] (-) TimerEvent: {}
+[9.686492] (ugv_robot_msgs) StdoutLine: {'line': b'[  3%] Built target ugv_robot_msgs__cpp\n'}
+[9.705211] (ugv_robot_msgs) StdoutLine: {'line': b'[  5%] \x1b[34m\x1b[1mGenerating C++ type support dispatch for ROS interfaces\x1b[0m\n'}
+[9.713700] (ugv_robot_msgs) StdoutLine: {'line': b'[  7%] \x1b[34m\x1b[1mGenerating C++ type support for eProsima Fast-RTPS\x1b[0m\n'}
+[9.720033] (ugv_robot_msgs) StdoutLine: {'line': b'[  9%] \x1b[34m\x1b[1mGenerating C++ introspection for ROS interfaces\x1b[0m\n'}
+[9.759793] (-) TimerEvent: {}
+[9.864868] (-) TimerEvent: {}
+[9.966059] (-) TimerEvent: {}
+[10.066939] (-) TimerEvent: {}
+[10.167791] (-) TimerEvent: {}
+[10.271383] (-) TimerEvent: {}
+[10.351414] (ugv_robot_msgs) StdoutLine: {'line': b'[ 10%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_generator_c.dir/rosidl_generator_c/ugv_robot_msgs/msg/detail/stm_command__functions.c.o\x1b[0m\n'}
+[10.371742] (-) TimerEvent: {}
+[10.475030] (-) TimerEvent: {}
+[10.600262] (-) TimerEvent: {}
+[10.704680] (-) TimerEvent: {}
+[10.749873] (ugv_robot_msgs) StdoutLine: {'line': b'[ 12%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_generator_c.dir/rosidl_generator_c/ugv_robot_msgs/msg/detail/gcs_relay__functions.c.o\x1b[0m\n'}
+[10.804875] (-) TimerEvent: {}
+[10.905733] (-) TimerEvent: {}
+[11.007279] (-) TimerEvent: {}
+[11.021124] (ugv_robot_msgs) StdoutLine: {'line': b'[ 14%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_generator_c.dir/rosidl_generator_c/ugv_robot_msgs/msg/detail/lrf_status__functions.c.o\x1b[0m\n'}
+[11.107523] (-) TimerEvent: {}
+[11.208281] (-) TimerEvent: {}
+[11.271986] (ugv_robot_msgs) StdoutLine: {'line': b'[ 16%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_generator_c.dir/rosidl_generator_c/ugv_robot_msgs/msg/detail/health__functions.c.o\x1b[0m\n'}
+[11.308817] (-) TimerEvent: {}
+[11.409788] (-) TimerEvent: {}
+[11.479388] (ugv_robot_msgs) StdoutLine: {'line': b'[ 18%] \x1b[32m\x1b[1mLinking C shared library libugv_robot_msgs__rosidl_generator_c.so\x1b[0m\n'}
+[11.509964] (-) TimerEvent: {}
+[11.610816] (-) TimerEvent: {}
+[11.634892] (ugv_robot_msgs) StdoutLine: {'line': b'[ 18%] Built target ugv_robot_msgs__rosidl_generator_c\n'}
+[11.672121] (ugv_robot_msgs) StdoutLine: {'line': b'[ 20%] \x1b[34m\x1b[1mGenerating C introspection for ROS interfaces\x1b[0m\n'}
+[11.710993] (-) TimerEvent: {}
+[11.812654] (-) TimerEvent: {}
+[11.914013] (-) TimerEvent: {}
+[12.020024] (-) TimerEvent: {}
+[12.122624] (-) TimerEvent: {}
+[12.225035] (-) TimerEvent: {}
+[12.327403] (-) TimerEvent: {}
+[12.371475] (ugv_robot_msgs) StdoutLine: {'line': b'[ 21%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/ugv_robot_msgs/msg/stm_command__type_support.cpp.o\x1b[0m\n'}
+[12.427663] (-) TimerEvent: {}
+[12.451953] (ugv_robot_msgs) StdoutLine: {'line': b'[ 23%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/ugv_robot_msgs/msg/detail/stm_command__type_support.cpp.o\x1b[0m\n'}
+[12.527844] (-) TimerEvent: {}
+[12.630002] (-) TimerEvent: {}
+[12.730777] (-) TimerEvent: {}
+[12.831593] (-) TimerEvent: {}
+[12.933842] (-) TimerEvent: {}
+[13.036167] (-) TimerEvent: {}
+[13.120364] (ugv_robot_msgs) StdoutLine: {'line': b'[ 25%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/stm_command__type_support.cpp.o\x1b[0m\n'}
+[13.136379] (-) TimerEvent: {}
+[13.238698] (-) TimerEvent: {}
+[13.339614] (-) TimerEvent: {}
+[13.442414] (-) TimerEvent: {}
+[13.544798] (-) TimerEvent: {}
+[13.651192] (-) TimerEvent: {}
+[13.706842] (ugv_robot_msgs) StdoutLine: {'line': b'[ 27%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/ugv_robot_msgs/msg/gcs_relay__type_support.cpp.o\x1b[0m\n'}
+[13.750850] (-) TimerEvent: {}
+[13.851650] (-) TimerEvent: {}
+[13.861499] (ugv_robot_msgs) StdoutLine: {'line': b'[ 29%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/ugv_robot_msgs/msg/detail/gcs_relay__type_support.cpp.o\x1b[0m\n'}
+[13.951857] (-) TimerEvent: {}
+[14.053372] (-) TimerEvent: {}
+[14.154249] (-) TimerEvent: {}
+[14.255322] (-) TimerEvent: {}
+[14.356332] (-) TimerEvent: {}
+[14.459869] (-) TimerEvent: {}
+[14.561799] (-) TimerEvent: {}
+[14.664159] (-) TimerEvent: {}
+[14.766996] (-) TimerEvent: {}
+[14.869073] (-) TimerEvent: {}
+[14.915868] (ugv_robot_msgs) StdoutLine: {'line': b'[ 30%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/ugv_robot_msgs/msg/detail/stm_command__type_support.c.o\x1b[0m\n'}
+[14.971787] (-) TimerEvent: {}
+[15.046170] (ugv_robot_msgs) StdoutLine: {'line': b'[ 32%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/ugv_robot_msgs/msg/lrf_status__type_support.cpp.o\x1b[0m\n'}
+[15.071995] (-) TimerEvent: {}
+[15.079140] (ugv_robot_msgs) StdoutLine: {'line': b'[ 34%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/gcs_relay__type_support.cpp.o\x1b[0m\n'}
+[15.080229] (ugv_robot_msgs) StdoutLine: {'line': b'[ 36%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/ugv_robot_msgs/msg/detail/gcs_relay__type_support.c.o\x1b[0m\n'}
+[15.172326] (-) TimerEvent: {}
+[15.220367] (ugv_robot_msgs) StdoutLine: {'line': b'[ 38%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/ugv_robot_msgs/msg/detail/lrf_status__type_support.c.o\x1b[0m\n'}
+[15.272510] (-) TimerEvent: {}
+[15.373954] (ugv_robot_msgs) StdoutLine: {'line': b'[ 40%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/ugv_robot_msgs/msg/detail/lrf_status__type_support.cpp.o\x1b[0m\n'}
+[15.375498] (-) TimerEvent: {}
+[15.391581] (ugv_robot_msgs) StdoutLine: {'line': b'[ 41%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/ugv_robot_msgs/msg/detail/health__type_support.c.o\x1b[0m\n'}
+[15.476237] (-) TimerEvent: {}
+[15.565138] (ugv_robot_msgs) StdoutLine: {'line': b'[ 43%] \x1b[32m\x1b[1mLinking C shared library libugv_robot_msgs__rosidl_typesupport_introspection_c.so\x1b[0m\n'}
+[15.576446] (-) TimerEvent: {}
+[15.679419] (-) TimerEvent: {}
+[15.698555] (ugv_robot_msgs) StdoutLine: {'line': b'[ 43%] Built target ugv_robot_msgs__rosidl_typesupport_introspection_c\n'}
+[15.710952] (ugv_robot_msgs) StdoutLine: {'line': b'[ 45%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/ugv_robot_msgs/msg/detail/health__type_support.cpp.o\x1b[0m\n'}
+[15.779797] (-) TimerEvent: {}
+[15.882651] (-) TimerEvent: {}
+[15.991729] (-) TimerEvent: {}
+[16.094155] (-) TimerEvent: {}
+[16.147613] (ugv_robot_msgs) StdoutLine: {'line': b'[ 47%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/ugv_robot_msgs/msg/health__type_support.cpp.o\x1b[0m\n'}
+[16.197102] (-) TimerEvent: {}
+[16.299264] (-) TimerEvent: {}
+[16.400107] (-) TimerEvent: {}
+[16.500975] (-) TimerEvent: {}
+[16.604503] (-) TimerEvent: {}
+[16.705544] (-) TimerEvent: {}
+[16.808489] (-) TimerEvent: {}
+[16.842803] (ugv_robot_msgs) StdoutLine: {'line': b'[ 49%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/lrf_status__type_support.cpp.o\x1b[0m\n'}
+[16.879664] (ugv_robot_msgs) StdoutLine: {'line': b'[ 50%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/health__type_support.cpp.o\x1b[0m\n'}
+[16.908714] (-) TimerEvent: {}
+[16.990185] (ugv_robot_msgs) StdoutLine: {'line': b'[ 52%] \x1b[32m\x1b[1mLinking CXX shared library libugv_robot_msgs__rosidl_typesupport_introspection_cpp.so\x1b[0m\n'}
+[17.009182] (-) TimerEvent: {}
+[17.113545] (-) TimerEvent: {}
+[17.214445] (-) TimerEvent: {}
+[17.312114] (ugv_robot_msgs) StdoutLine: {'line': b'[ 52%] Built target ugv_robot_msgs__rosidl_typesupport_introspection_cpp\n'}
+[17.316499] (-) TimerEvent: {}
+[17.360263] (ugv_robot_msgs) StdoutLine: {'line': b'[ 54%] \x1b[34m\x1b[1mGenerating C type support dispatch for ROS interfaces\x1b[0m\n'}
+[17.416650] (-) TimerEvent: {}
+[17.487138] (ugv_robot_msgs) StdoutLine: {'line': b'[ 56%] \x1b[32m\x1b[1mLinking CXX shared library libugv_robot_msgs__rosidl_typesupport_cpp.so\x1b[0m\n'}
+[17.516847] (-) TimerEvent: {}
+[17.618288] (-) TimerEvent: {}
+[17.701509] (ugv_robot_msgs) StdoutLine: {'line': b'[ 56%] Built target ugv_robot_msgs__rosidl_typesupport_cpp\n'}
+[17.718079] (-) TimerEvent: {}
+[17.827847] (-) TimerEvent: {}
+[17.929275] (-) TimerEvent: {}
+[18.030072] (-) TimerEvent: {}
+[18.131784] (-) TimerEvent: {}
+[18.232605] (-) TimerEvent: {}
+[18.333450] (-) TimerEvent: {}
+[18.435200] (-) TimerEvent: {}
+[18.536423] (-) TimerEvent: {}
+[18.629998] (ugv_robot_msgs) StdoutLine: {'line': b'[ 58%] \x1b[32m\x1b[1mLinking CXX shared library libugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.so\x1b[0m\n'}
+[18.636602] (-) TimerEvent: {}
+[18.737375] (-) TimerEvent: {}
+[18.838187] (-) TimerEvent: {}
+[18.938986] (-) TimerEvent: {}
+[18.984510] (ugv_robot_msgs) StdoutLine: {'line': b'[ 58%] Built target ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp\n'}
+[18.999981] (ugv_robot_msgs) StdoutLine: {'line': b'[ 60%] \x1b[34m\x1b[1mGenerating C type support for eProsima Fast-RTPS\x1b[0m\n'}
+[19.039169] (-) TimerEvent: {}
+[19.139984] (-) TimerEvent: {}
+[19.240709] (-) TimerEvent: {}
+[19.341494] (-) TimerEvent: {}
+[19.442229] (-) TimerEvent: {}
+[19.542967] (-) TimerEvent: {}
+[19.645706] (-) TimerEvent: {}
+[19.690738] (ugv_robot_msgs) StdoutLine: {'line': b'[ 63%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/ugv_robot_msgs/msg/gcs_relay__type_support.cpp.o\x1b[0m\n'}
+[19.693291] (ugv_robot_msgs) StdoutLine: {'line': b'[ 63%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/ugv_robot_msgs/msg/lrf_status__type_support.cpp.o\x1b[0m\n'}
+[19.695787] (ugv_robot_msgs) StdoutLine: {'line': b'[ 65%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/ugv_robot_msgs/msg/stm_command__type_support.cpp.o\x1b[0m\n'}
+[19.745907] (-) TimerEvent: {}
+[19.828553] (ugv_robot_msgs) StdoutLine: {'line': b'[ 67%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/ugv_robot_msgs/msg/health__type_support.cpp.o\x1b[0m\n'}
+[19.846144] (-) TimerEvent: {}
+[19.928188] (ugv_robot_msgs) StdoutLine: {'line': b'[ 69%] \x1b[32m\x1b[1mLinking CXX shared library libugv_robot_msgs__rosidl_typesupport_c.so\x1b[0m\n'}
+[19.946343] (-) TimerEvent: {}
+[20.034191] (ugv_robot_msgs) StdoutLine: {'line': b'[ 69%] Built target ugv_robot_msgs__rosidl_typesupport_c\n'}
+[20.046593] (-) TimerEvent: {}
+[20.147444] (-) TimerEvent: {}
+[20.248196] (-) TimerEvent: {}
+[20.348965] (-) TimerEvent: {}
+[20.449800] (-) TimerEvent: {}
+[20.550620] (-) TimerEvent: {}
+[20.651559] (-) TimerEvent: {}
+[20.752480] (-) TimerEvent: {}
+[20.853369] (-) TimerEvent: {}
+[20.954111] (-) TimerEvent: {}
+[21.054830] (-) TimerEvent: {}
+[21.155551] (-) TimerEvent: {}
+[21.256289] (-) TimerEvent: {}
+[21.357053] (-) TimerEvent: {}
+[21.457742] (-) TimerEvent: {}
+[21.558688] (-) TimerEvent: {}
+[21.659419] (-) TimerEvent: {}
+[21.760212] (-) TimerEvent: {}
+[21.853341] (ugv_robot_msgs) StdoutLine: {'line': b'[ 72%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/ugv_robot_msgs/msg/detail/stm_command__type_support_c.cpp.o\x1b[0m\n'}
+[21.854410] (ugv_robot_msgs) StdoutLine: {'line': b'[ 76%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/ugv_robot_msgs/msg/detail/lrf_status__type_support_c.cpp.o\x1b[0m\n'}
+[21.855424] (ugv_robot_msgs) StdoutLine: {'line': b'[ 76%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/ugv_robot_msgs/msg/detail/health__type_support_c.cpp.o\x1b[0m\n'}
+[21.856413] (ugv_robot_msgs) StdoutLine: {'line': b'[ 72%] \x1b[32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/ugv_robot_msgs/msg/detail/gcs_relay__type_support_c.cpp.o\x1b[0m\n'}
+[21.860396] (-) TimerEvent: {}
+[21.962466] (-) TimerEvent: {}
+[22.063306] (-) TimerEvent: {}
+[22.165698] (-) TimerEvent: {}
+[22.268600] (-) TimerEvent: {}
+[22.371472] (-) TimerEvent: {}
+[22.475104] (-) TimerEvent: {}
+[22.577029] (-) TimerEvent: {}
+[22.679323] (-) TimerEvent: {}
+[22.781795] (-) TimerEvent: {}
+[22.884018] (-) TimerEvent: {}
+[22.984951] (-) TimerEvent: {}
+[23.087730] (-) TimerEvent: {}
+[23.190213] (-) TimerEvent: {}
+[23.293645] (-) TimerEvent: {}
+[23.396100] (-) TimerEvent: {}
+[23.503432] (-) TimerEvent: {}
+[23.511451] (ugv_robot_msgs) StdoutLine: {'line': b'[ 78%] \x1b[32m\x1b[1mLinking CXX shared library libugv_robot_msgs__rosidl_typesupport_fastrtps_c.so\x1b[0m\n'}
+[23.604057] (-) TimerEvent: {}
+[23.704957] (-) TimerEvent: {}
+[23.794636] (ugv_robot_msgs) StdoutLine: {'line': b'[ 78%] Built target ugv_robot_msgs__rosidl_typesupport_fastrtps_c\n'}
+[23.805089] (-) TimerEvent: {}
+[23.822828] (ugv_robot_msgs) StdoutLine: {'line': b'[ 78%] Built target ugv_robot_msgs\n'}
+[23.853584] (ugv_robot_msgs) StdoutLine: {'line': b'[ 80%] \x1b[34m\x1b[1mGenerating Python code for ROS interfaces\x1b[0m\n'}
+[23.905252] (-) TimerEvent: {}
+[24.005948] (-) TimerEvent: {}
+[24.106704] (-) TimerEvent: {}
+[24.207456] (-) TimerEvent: {}
+[24.308187] (-) TimerEvent: {}
+[24.409012] (-) TimerEvent: {}
+[24.509822] (-) TimerEvent: {}
+[24.610590] (-) TimerEvent: {}
+[24.711290] (-) TimerEvent: {}
+[24.812045] (-) TimerEvent: {}
+[24.912744] (-) TimerEvent: {}
+[25.013654] (-) TimerEvent: {}
+[25.114414] (-) TimerEvent: {}
+[25.215158] (-) TimerEvent: {}
+[25.318060] (-) TimerEvent: {}
+[25.418904] (-) TimerEvent: {}
+[25.519611] (-) TimerEvent: {}
+[25.620369] (-) TimerEvent: {}
+[25.721074] (-) TimerEvent: {}
+[25.821782] (-) TimerEvent: {}
+[25.922555] (-) TimerEvent: {}
+[26.023289] (-) TimerEvent: {}
+[26.124006] (-) TimerEvent: {}
+[26.224732] (-) TimerEvent: {}
+[26.325535] (-) TimerEvent: {}
+[26.426315] (-) TimerEvent: {}
+[26.527066] (-) TimerEvent: {}
+[26.627764] (-) TimerEvent: {}
+[26.728493] (-) TimerEvent: {}
+[26.829292] (-) TimerEvent: {}
+[26.930036] (-) TimerEvent: {}
+[27.030798] (-) TimerEvent: {}
+[27.131517] (-) TimerEvent: {}
+[27.232269] (-) TimerEvent: {}
+[27.333013] (-) TimerEvent: {}
+[27.433721] (-) TimerEvent: {}
+[27.534464] (-) TimerEvent: {}
+[27.635188] (-) TimerEvent: {}
+[27.735908] (-) TimerEvent: {}
+[27.836621] (-) TimerEvent: {}
+[27.937605] (-) TimerEvent: {}
+[28.038329] (-) TimerEvent: {}
+[28.139083] (-) TimerEvent: {}
+[28.239796] (-) TimerEvent: {}
+[28.340503] (-) TimerEvent: {}
+[28.441438] (-) TimerEvent: {}
+[28.542250] (-) TimerEvent: {}
+[28.643022] (-) TimerEvent: {}
+[28.743853] (-) TimerEvent: {}
+[28.844562] (-) TimerEvent: {}
+[28.945372] (-) TimerEvent: {}
+[29.046175] (-) TimerEvent: {}
+[29.135315] (ugv_robot_msgs) StdoutLine: {'line': b'[ 80%] Built target ugv_robot_msgs__py\n'}
+[29.146384] (-) TimerEvent: {}
+[29.166683] (ugv_robot_msgs) StdoutLine: {'line': b'[ 81%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__python.dir/rosidl_generator_py/ugv_robot_msgs/msg/_stm_command_s.c.o\x1b[0m\n'}
+[29.167688] (ugv_robot_msgs) StdoutLine: {'line': b'[ 83%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__python.dir/rosidl_generator_py/ugv_robot_msgs/msg/_gcs_relay_s.c.o\x1b[0m\n'}
+[29.168590] (ugv_robot_msgs) StdoutLine: {'line': b'[ 85%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__python.dir/rosidl_generator_py/ugv_robot_msgs/msg/_lrf_status_s.c.o\x1b[0m\n'}
+[29.171455] (ugv_robot_msgs) StdoutLine: {'line': b'[ 87%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__python.dir/rosidl_generator_py/ugv_robot_msgs/msg/_health_s.c.o\x1b[0m\n'}
+[29.246594] (-) TimerEvent: {}
+[29.348735] (-) TimerEvent: {}
+[29.452661] (-) TimerEvent: {}
+[29.554781] (-) TimerEvent: {}
+[29.655603] (-) TimerEvent: {}
+[29.711888] (ugv_robot_msgs) StdoutLine: {'line': b'[ 89%] \x1b[32m\x1b[1mLinking C shared library rosidl_generator_py/ugv_robot_msgs/libugv_robot_msgs__python.so\x1b[0m\n'}
+[29.755807] (-) TimerEvent: {}
+[29.809772] (ugv_robot_msgs) StdoutLine: {'line': b'[ 89%] Built target ugv_robot_msgs__python\n'}
+[29.842371] (ugv_robot_msgs) StdoutLine: {'line': b'[ 94%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_c__pyext.dir/rosidl_generator_py/ugv_robot_msgs/_ugv_robot_msgs_s.ep.rosidl_typesupport_fastrtps_c.c.o\x1b[0m\n'}
+[29.843204] (ugv_robot_msgs) StdoutLine: {'line': b'[ 94%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_c__pyext.dir/rosidl_generator_py/ugv_robot_msgs/_ugv_robot_msgs_s.ep.rosidl_typesupport_c.c.o\x1b[0m\n'}
+[29.843889] (ugv_robot_msgs) StdoutLine: {'line': b'[ 94%] \x1b[32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_c__pyext.dir/rosidl_generator_py/ugv_robot_msgs/_ugv_robot_msgs_s.ep.rosidl_typesupport_introspection_c.c.o\x1b[0m\n'}
+[29.856002] (-) TimerEvent: {}
+[29.959624] (-) TimerEvent: {}
+[30.060411] (-) TimerEvent: {}
+[30.165379] (-) TimerEvent: {}
+[30.201309] (ugv_robot_msgs) StdoutLine: {'line': b'[ 96%] \x1b[32m\x1b[1mLinking C shared library rosidl_generator_py/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_introspection_c.cpython-36m-aarch64-linux-gnu.so\x1b[0m\n'}
+[30.221144] (ugv_robot_msgs) StdoutLine: {'line': b'[ 98%] \x1b[32m\x1b[1mLinking C shared library rosidl_generator_py/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_c.cpython-36m-aarch64-linux-gnu.so\x1b[0m\n'}
+[30.224293] (ugv_robot_msgs) StdoutLine: {'line': b'[100%] \x1b[32m\x1b[1mLinking CXX shared library rosidl_generator_py/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_fastrtps_c.cpython-36m-aarch64-linux-gnu.so\x1b[0m\n'}
+[30.266506] (-) TimerEvent: {}
+[30.292835] (ugv_robot_msgs) StdoutLine: {'line': b'[100%] Built target ugv_robot_msgs__rosidl_typesupport_introspection_c__pyext\n'}
+[30.319729] (ugv_robot_msgs) StdoutLine: {'line': b'[100%] Built target ugv_robot_msgs__rosidl_typesupport_c__pyext\n'}
+[30.366761] (-) TimerEvent: {}
+[30.422982] (ugv_robot_msgs) StdoutLine: {'line': b'[100%] Built target ugv_robot_msgs__rosidl_typesupport_fastrtps_c__pyext\n'}
+[30.461461] (ugv_robot_msgs) CommandEnded: {'returncode': 0}
+[30.467431] (-) TimerEvent: {}
+[30.569061] (-) TimerEvent: {}
+[30.669846] (-) TimerEvent: {}
+[30.771167] (-) TimerEvent: {}
+[30.871921] (-) TimerEvent: {}
+[30.939983] (ugv_robot_msgs) JobProgress: {'identifier': 'ugv_robot_msgs', 'progress': 'install'}
+[30.972215] (-) TimerEvent: {}
+[31.073312] (-) TimerEvent: {}
+[31.099599] (ugv_robot_msgs) Command: {'cmd': ['/usr/local/bin/cmake', '--install', '/workspace/build/ugv_robot_msgs'], 'cwd': '/workspace/build/ugv_robot_msgs', 'env': OrderedDict([('OPENBLAS_CORETYPE', 'ARMV8'), ('PYTHONIOENCODING', 'utf-8'), ('HOSTNAME', 'respatijetson-desktop'), ('LD_LIBRARY_PATH', '/opt/ros/foxy/install/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/install/lib:/usr/local/cuda-10.2/targets/aarch64-linux/lib:'), ('SHLVL', '1'), ('HOME', '/root'), ('OLDPWD', '/workspace/src/ugv_robot'), ('ROS_PYTHON_VERSION', '3'), ('COLCON_PREFIX_PATH', '/opt/ros/foxy/install'), ('ROS_DISTRO', 'foxy'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('NVIDIA_DRIVER_CAPABILITIES', 'all'), ('PKG_CONFIG_PATH', '/opt/ros/foxy/install/lib/aarch64-linux-gnu/pkgconfig:/opt/ros/foxy/install/lib/pkgconfig'), ('TERM', 'xterm'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/opt/ros/foxy/install/bin:/usr/local/cuda-10.2/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'), ('LANG', 'en_US.UTF-8'), ('RMW_IMPLEMENTATION', 'rmw_cyclonedds_cpp'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('ROS_ROOT', '/opt/ros/foxy'), ('AMENT_PREFIX_PATH', '/opt/ros/foxy/install'), ('DEBIAN_FRONTEND', 'noninteractive'), ('SHELL', '/bin/bash'), ('PWD', '/workspace/build/ugv_robot_msgs'), ('PYTHONPATH', '/opt/ros/foxy/install/lib/python3.6/site-packages'), ('NVIDIA_VISIBLE_DEVICES', 'all'), ('COLCON', '1'), ('CMAKE_PREFIX_PATH', '/opt/ros/foxy/install')]), 'shell': False}
+[31.173889] (-) TimerEvent: {}
+[31.239466] (ugv_robot_msgs) StdoutLine: {'line': b'-- Install configuration: ""\n'}
+[31.241882] (ugv_robot_msgs) StdoutLine: {'line': b'-- Execute custom install script\n'}
+[31.243154] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ament_index/resource_index/rosidl_interfaces/ugv_robot_msgs\n'}
+[31.255493] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__functions.h\n'}
+[31.265017] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__struct.h\n'}
+[31.274056] (-) TimerEvent: {}
+[31.274936] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__type_support.h\n'}
+[31.284657] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__functions.h\n'}
+[31.293340] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__struct.h\n'}
+[31.303421] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__type_support.h\n'}
+[31.311845] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__functions.h\n'}
+[31.320222] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__struct.h\n'}
+[31.328833] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__type_support.h\n'}
+[31.337911] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__functions.h\n'}
+[31.346831] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__struct.h\n'}
+[31.355819] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__type_support.h\n'}
+[31.364629] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/gcs_relay.h\n'}
+[31.373790] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/health.h\n'}
+[31.374589] (-) TimerEvent: {}
+[31.382493] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/lrf_status.h\n'}
+[31.391682] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/rosidl_generator_c__visibility_control.h\n'}
+[31.400269] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/stm_command.h\n'}
+[31.410672] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/library_path.sh\n'}
+[31.419697] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/library_path.dsv\n'}
+[31.431229] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__rosidl_typesupport_fastrtps_c.h\n'}
+[31.440175] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__rosidl_typesupport_fastrtps_c.h\n'}
+[31.449096] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__rosidl_typesupport_fastrtps_c.h\n'}
+[31.457639] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__rosidl_typesupport_fastrtps_c.h\n'}
+[31.467736] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/rosidl_typesupport_fastrtps_c__visibility_control.h\n'}
+[31.474807] (-) TimerEvent: {}
+[31.477236] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_fastrtps_c.so\n'}
+[31.487971] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[31.497177] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[31.506237] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[31.514689] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[31.523525] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h\n'}
+[31.532716] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.so\n'}
+[31.543586] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__rosidl_typesupport_introspection_c.h\n'}
+[31.552038] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__rosidl_typesupport_introspection_c.h\n'}
+[31.561647] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__rosidl_typesupport_introspection_c.h\n'}
+[31.570577] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__rosidl_typesupport_introspection_c.h\n'}
+[31.574969] (-) TimerEvent: {}
+[31.579075] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/rosidl_typesupport_introspection_c__visibility_control.h\n'}
+[31.589578] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__builder.hpp\n'}
+[31.597928] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__struct.hpp\n'}
+[31.607203] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__traits.hpp\n'}
+[31.616400] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__type_support.hpp\n'}
+[31.625691] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__builder.hpp\n'}
+[31.634481] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__struct.hpp\n'}
+[31.642812] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__traits.hpp\n'}
+[31.651187] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__type_support.hpp\n'}
+[31.660779] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__builder.hpp\n'}
+[31.669317] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__struct.hpp\n'}
+[31.675151] (-) TimerEvent: {}
+[31.678104] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__traits.hpp\n'}
+[31.687089] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__type_support.hpp\n'}
+[31.696275] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__builder.hpp\n'}
+[31.704713] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__struct.hpp\n'}
+[31.713939] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__traits.hpp\n'}
+[31.723011] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__type_support.hpp\n'}
+[31.732320] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/gcs_relay.hpp\n'}
+[31.740844] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/health.hpp\n'}
+[31.750142] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/lrf_status.hpp\n'}
+[31.759909] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/rosidl_generator_cpp__visibility_control.hpp\n'}
+[31.768059] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/stm_command.hpp\n'}
+[31.775333] (-) TimerEvent: {}
+[31.778275] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__rosidl_typesupport_introspection_cpp.hpp\n'}
+[31.787143] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__rosidl_typesupport_introspection_cpp.hpp\n'}
+[31.796345] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__rosidl_typesupport_introspection_cpp.hpp\n'}
+[31.806039] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__rosidl_typesupport_introspection_cpp.hpp\n'}
+[31.815854] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/pythonpath.sh\n'}
+[31.825245] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/pythonpath.dsv\n'}
+[31.834398] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/__init__.py\n'}
+[31.844749] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/msg/__init__.py\n'}
+[31.853996] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/msg/_gcs_relay.py\n'}
+[31.863267] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/msg/_health.py\n'}
+[31.871916] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/msg/_lrf_status.py\n'}
+[31.875623] (-) TimerEvent: {}
+[31.881279] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/msg/_stm_command.py\n'}
+[31.891138] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_fastrtps_c.cpython-36m-aarch64-linux-gnu.so\n'}
+[31.900360] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_introspection_c.cpython-36m-aarch64-linux-gnu.so\n'}
+[31.910202] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_c.cpython-36m-aarch64-linux-gnu.so\n'}
+[31.920146] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__python.so\n'}
+[31.930665] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/StmCommand.idl\n'}
+[31.954250] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/GcsRelay.idl\n'}
+[31.962958] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/LrfStatus.idl\n'}
+[31.972013] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/Health.idl\n'}
+[31.975769] (-) TimerEvent: {}
+[31.980392] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/StmCommand.msg\n'}
+[31.989276] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/GcsRelay.msg\n'}
+[32.000035] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/LrfStatus.msg\n'}
+[32.009373] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/Health.msg\n'}
+[32.018668] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ament_index/resource_index/package_run_dependencies/ugv_robot_msgs\n'}
+[32.028129] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ament_index/resource_index/parent_prefix_path/ugv_robot_msgs\n'}
+[32.038988] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/ament_prefix_path.sh\n'}
+[32.047277] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/ament_prefix_path.dsv\n'}
+[32.056697] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/path.sh\n'}
+[32.065680] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/path.dsv\n'}
+[32.075142] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/local_setup.bash\n'}
+[32.076100] (-) TimerEvent: {}
+[32.084684] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/local_setup.sh\n'}
+[32.093872] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/local_setup.zsh\n'}
+[32.103077] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/local_setup.dsv\n'}
+[32.112850] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.dsv\n'}
+[32.121853] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ament_index/resource_index/packages/ugv_robot_msgs\n'}
+[32.131254] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/rosidl_cmake-extras.cmake\n'}
+[32.141198] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ament_cmake_export_dependencies-extras.cmake\n'}
+[32.150180] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ament_cmake_export_libraries-extras.cmake\n'}
+[32.159095] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ament_cmake_export_targets-extras.cmake\n'}
+[32.168303] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ament_cmake_export_include_directories-extras.cmake\n'}
+[32.176305] (-) TimerEvent: {}
+[32.177719] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake\n'}
+[32.186812] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake\n'}
+[32.195697] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgsConfig.cmake\n'}
+[32.204223] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgsConfig-version.cmake\n'}
+[32.213988] (ugv_robot_msgs) StdoutLine: {'line': b'-- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.xml\n'}
+[32.223272] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_generator_c.so\n'}
+[32.225494] (ugv_robot_msgs) StdoutLine: {'line': b'-- Set runtime path of "/workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_generator_c.so" to ""\n'}
+[32.226559] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_introspection_c.so\n'}
+[32.229660] (ugv_robot_msgs) StdoutLine: {'line': b'-- Set runtime path of "/workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_introspection_c.so" to ""\n'}
+[32.230549] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_c.so\n'}
+[32.231436] (ugv_robot_msgs) StdoutLine: {'line': b'-- Set runtime path of "/workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_c.so" to ""\n'}
+[32.232128] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_introspection_cpp.so\n'}
+[32.233279] (ugv_robot_msgs) StdoutLine: {'line': b'-- Set runtime path of "/workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_introspection_cpp.so" to ""\n'}
+[32.233862] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_cpp.so\n'}
+[32.234775] (ugv_robot_msgs) StdoutLine: {'line': b'-- Set runtime path of "/workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_cpp.so" to ""\n'}
+[32.276566] (-) TimerEvent: {}
+[32.377515] (-) TimerEvent: {}
+[32.392259] (ugv_robot_msgs) StdoutLine: {'line': b"Compiling '/workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/__init__.py'...\n"}
+[32.416072] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_generator_cExport.cmake\n'}
+[32.416876] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_generator_cExport-noconfig.cmake\n'}
+[32.417679] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_introspection_cExport.cmake\n'}
+[32.418579] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_introspection_cExport-noconfig.cmake\n'}
+[32.419656] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_cExport.cmake\n'}
+[32.420610] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_cExport-noconfig.cmake\n'}
+[32.422547] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_generator_cppExport.cmake\n'}
+[32.423489] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_introspection_cppExport.cmake\n'}
+[32.424594] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_introspection_cppExport-noconfig.cmake\n'}
+[32.425788] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_cppExport.cmake\n'}
+[32.426757] (ugv_robot_msgs) StdoutLine: {'line': b'-- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_cppExport-noconfig.cmake\n'}
+[32.452161] (ugv_robot_msgs) CommandEnded: {'returncode': 0}
+[32.481195] (-) TimerEvent: {}
+[32.583642] (-) TimerEvent: {}
+[32.684548] (-) TimerEvent: {}
+[32.785345] (-) TimerEvent: {}
+[32.886051] (-) TimerEvent: {}
+[32.987211] (-) TimerEvent: {}
+[33.091528] (ugv_robot_msgs) JobEnded: {'identifier': 'ugv_robot_msgs', 'rc': 0}
+[33.096808] (-) TimerEvent: {}
+[33.098053] (ugv_robot) JobStarted: {'identifier': 'ugv_robot'}
+[33.197288] (-) TimerEvent: {}
+[33.298288] (-) TimerEvent: {}
+[33.398990] (-) TimerEvent: {}
+[33.499765] (-) TimerEvent: {}
+[33.600457] (-) TimerEvent: {}
+[33.701271] (-) TimerEvent: {}
+[33.802017] (-) TimerEvent: {}
+[33.902702] (-) TimerEvent: {}
+[34.003460] (-) TimerEvent: {}
+[34.104175] (-) TimerEvent: {}
+[34.204879] (-) TimerEvent: {}
+[34.305683] (-) TimerEvent: {}
+[34.406488] (-) TimerEvent: {}
+[34.507346] (-) TimerEvent: {}
+[34.608089] (-) TimerEvent: {}
+[34.709153] (-) TimerEvent: {}
+[34.809907] (-) TimerEvent: {}
+[34.910818] (-) TimerEvent: {}
+[35.011576] (-) TimerEvent: {}
+[35.112355] (-) TimerEvent: {}
+[35.213136] (-) TimerEvent: {}
+[35.313877] (-) TimerEvent: {}
+[35.414606] (-) TimerEvent: {}
+[35.515303] (-) TimerEvent: {}
+[35.616005] (-) TimerEvent: {}
+[35.716728] (-) TimerEvent: {}
+[35.817551] (-) TimerEvent: {}
+[35.918342] (-) TimerEvent: {}
+[36.019394] (-) TimerEvent: {}
+[36.120132] (-) TimerEvent: {}
+[36.220832] (-) TimerEvent: {}
+[36.321619] (-) TimerEvent: {}
+[36.422537] (-) TimerEvent: {}
+[36.523327] (-) TimerEvent: {}
+[36.624088] (-) TimerEvent: {}
+[36.724827] (-) TimerEvent: {}
+[36.825664] (-) TimerEvent: {}
+[36.926411] (-) TimerEvent: {}
+[37.027109] (-) TimerEvent: {}
+[37.127835] (-) TimerEvent: {}
+[37.228686] (-) TimerEvent: {}
+[37.263548] (ugv_robot) Command: {'cmd': ['/usr/bin/python3', 'setup.py', 'develop', '--editable', '--build-directory', '/workspace/build/ugv_robot/build', '--no-deps', 'install_data'], 'cwd': '/workspace/build/ugv_robot', 'env': {'OPENBLAS_CORETYPE': 'ARMV8', 'PYTHONIOENCODING': 'utf-8', 'HOSTNAME': 'respatijetson-desktop', 'LD_LIBRARY_PATH': '/workspace/install/ugv_robot_msgs/lib:/opt/ros/foxy/install/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/install/lib:/usr/local/cuda-10.2/targets/aarch64-linux/lib', 'SHLVL': '1', 'HOME': '/root', 'OLDPWD': '/workspace/src/ugv_robot', 'ROS_PYTHON_VERSION': '3', 'COLCON_PREFIX_PATH': '/opt/ros/foxy/install', 'ROS_DISTRO': 'foxy', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'NVIDIA_DRIVER_CAPABILITIES': 'all', 'PKG_CONFIG_PATH': '/opt/ros/foxy/install/lib/aarch64-linux-gnu/pkgconfig:/opt/ros/foxy/install/lib/pkgconfig', 'TERM': 'xterm', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/opt/ros/foxy/install/bin:/usr/local/cuda-10.2/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'LANG': 'en_US.UTF-8', 'RMW_IMPLEMENTATION': 'rmw_cyclonedds_cpp', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'ROS_ROOT': '/opt/ros/foxy', 'AMENT_PREFIX_PATH': '/workspace/install/ugv_robot_msgs:/opt/ros/foxy/install', 'DEBIAN_FRONTEND': 'noninteractive', 'SHELL': '/bin/bash', 'PWD': '/workspace/build/ugv_robot', 'PYTHONPATH': '/workspace/build/ugv_robot/prefix_override:/workspace/install/ugv_robot/lib/python3.6/site-packages:/workspace/install/ugv_robot_msgs/lib/python3.6/site-packages:/opt/ros/foxy/install/lib/python3.6/site-packages', 'NVIDIA_VISIBLE_DEVICES': 'all', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/workspace/install/ugv_robot_msgs:/opt/ros/foxy/install'}, 'shell': False}
+[37.328953] (-) TimerEvent: {}
+[37.429747] (-) TimerEvent: {}
+[37.530508] (-) TimerEvent: {}
+[37.631186] (-) TimerEvent: {}
+[37.731879] (-) TimerEvent: {}
+[37.832597] (-) TimerEvent: {}
+[37.933577] (-) TimerEvent: {}
+[38.034297] (-) TimerEvent: {}
+[38.135006] (-) TimerEvent: {}
+[38.235974] (-) TimerEvent: {}
+[38.336644] (-) TimerEvent: {}
+[38.437370] (-) TimerEvent: {}
+[38.464236] (ugv_robot) StderrLine: {'line': b"/usr/local/lib/python3.6/dist-packages/setuptools/dist.py:726: UserWarning: Usage of dash-separated 'script-dir' will not be supported in future versions. Please use the underscore name 'script_dir' instead\n"}
+[38.465282] (ugv_robot) StderrLine: {'line': b'  % (opt, underscore_opt)\n'}
+[38.537556] (-) TimerEvent: {}
+[38.638387] (-) TimerEvent: {}
+[38.732467] (ugv_robot) StdoutLine: {'line': b'running develop\n'}
+[38.736880] (ugv_robot) StderrLine: {'line': b'/usr/local/lib/python3.6/dist-packages/setuptools/command/easy_install.py:159: EasyInstallDeprecationWarning: easy_install command is deprecated. Use build and pip and other standards-based tools.\n'}
+[38.737804] (ugv_robot) StderrLine: {'line': b'  EasyInstallDeprecationWarning,\n'}
+[38.738485] (-) TimerEvent: {}
+[38.743805] (ugv_robot) StderrLine: {'line': b'/usr/local/lib/python3.6/dist-packages/setuptools/command/install.py:37: SetuptoolsDeprecationWarning: setup.py install is deprecated. Use build and pip and other standards-based tools.\n'}
+[38.744510] (ugv_robot) StderrLine: {'line': b'  setuptools.SetuptoolsDeprecationWarning,\n'}
+[38.838716] (-) TimerEvent: {}
+[38.939457] (-) TimerEvent: {}
+[39.040143] (-) TimerEvent: {}
+[39.140855] (-) TimerEvent: {}
+[39.241724] (-) TimerEvent: {}
+[39.304553] (ugv_robot) StdoutLine: {'line': b'running egg_info\n'}
+[39.305409] (ugv_robot) StdoutLine: {'line': b'creating ugv_robot.egg-info\n'}
+[39.305924] (ugv_robot) StdoutLine: {'line': b'writing ugv_robot.egg-info/PKG-INFO\n'}
+[39.306522] (ugv_robot) StdoutLine: {'line': b'writing dependency_links to ugv_robot.egg-info/dependency_links.txt\n'}
+[39.307171] (ugv_robot) StdoutLine: {'line': b'writing entry points to ugv_robot.egg-info/entry_points.txt\n'}
+[39.307771] (ugv_robot) StdoutLine: {'line': b'writing requirements to ugv_robot.egg-info/requires.txt\n'}
+[39.308231] (ugv_robot) StdoutLine: {'line': b'writing top-level names to ugv_robot.egg-info/top_level.txt\n'}
+[39.320702] (ugv_robot) StdoutLine: {'line': b"writing manifest file 'ugv_robot.egg-info/SOURCES.txt'\n"}
+[39.327732] (ugv_robot) StdoutLine: {'line': b"reading manifest file 'ugv_robot.egg-info/SOURCES.txt'\n"}
+[39.332366] (ugv_robot) StdoutLine: {'line': b"writing manifest file 'ugv_robot.egg-info/SOURCES.txt'\n"}
+[39.341899] (-) TimerEvent: {}
+[39.442598] (-) TimerEvent: {}
+[39.543294] (-) TimerEvent: {}
+[39.565239] (ugv_robot) StdoutLine: {'line': b'running build_ext\n'}
+[39.566132] (ugv_robot) StdoutLine: {'line': b'Creating /workspace/install/ugv_robot/lib/python3.6/site-packages/ugv-robot.egg-link (link to .)\n'}
+[39.570596] (ugv_robot) StdoutLine: {'line': b'Installing core_node script to /workspace/install/ugv_robot/lib/ugv_robot\n'}
+[39.571436] (ugv_robot) StdoutLine: {'line': b'Installing stm32_interface_node script to /workspace/install/ugv_robot/lib/ugv_robot\n'}
+[39.572518] (ugv_robot) StdoutLine: {'line': b'\n'}
+[39.573198] (ugv_robot) StdoutLine: {'line': b'Installed /workspace/build/ugv_robot\n'}
+[39.573953] (ugv_robot) StdoutLine: {'line': b'running install_data\n'}
+[39.574491] (ugv_robot) StdoutLine: {'line': b'creating /workspace/install/ugv_robot/share/ament_index\n'}
+[39.574983] (ugv_robot) StdoutLine: {'line': b'creating /workspace/install/ugv_robot/share/ament_index/resource_index\n'}
+[39.575544] (ugv_robot) StdoutLine: {'line': b'creating /workspace/install/ugv_robot/share/ament_index/resource_index/packages\n'}
+[39.576088] (ugv_robot) StdoutLine: {'line': b'copying resource/ugv_robot -> /workspace/install/ugv_robot/share/ament_index/resource_index/packages\n'}
+[39.576628] (ugv_robot) StdoutLine: {'line': b'copying package.xml -> /workspace/install/ugv_robot/share/ugv_robot\n'}
+[39.643500] (-) TimerEvent: {}
+[39.717289] (ugv_robot) CommandEnded: {'returncode': 0}
+[39.744448] (-) TimerEvent: {}
+[39.762158] (ugv_robot) JobEnded: {'identifier': 'ugv_robot', 'rc': 0}
+[39.767055] (-) EventReactorShutdown: {}

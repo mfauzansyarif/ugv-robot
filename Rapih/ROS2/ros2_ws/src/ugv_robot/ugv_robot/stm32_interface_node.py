@@ -1,0 +1,242 @@
+"""
+STM32 Interface Node
+======================
+Translator byte <-> topic MURNI. GAK ADA logic/keputusan di sini sama
+sekali - semua keputusan ada di Core Node.
+
+Pola komunikasi SYNCHRONOUS, Jetson yang inisiatif tiap siklus (~10Hz):
+  1. Kirim 27 byte down-frame (26 data + 1 checksum XOR), command final
+     dari Core Node, dari cache
+  2. LANGSUNG tunggu balik 20 byte up-frame (19 data + 1 checksum XOR,
+     STM32 balas seketika tiap terima 1 down-frame valid & checksum-nya benar)
+  3. Validasi checksum, pecah up-frame, publish ke 3 topic terpisah
+
+Karena STM32 CUMA ngomong setelah ditanya (bukan kirim bebas kapan aja),
+node ini gak butuh thread terpisah - 1 timer callback sudah cukup.
+"""
+
+import struct
+import time
+
+import serial
+import rclpy
+from rclpy.node import Node
+
+from ugv_robot_msgs.msg import StmCommand, GcsRelay, LrfStatus, Health
+
+# Down-frame: Jetson -> STM32, 26 byte DATA + 1 byte checksum = 27 byte total
+# speed(1) + act[8](8) + fLamp,bLamp,bLampMode(3) + pantiltH,pantiltV,zoom(3)
+# + slipRing,lrfTrigger(2) + gcsReply x4(4) + gcsReplyBox x5(5) = 26
+FORMAT_DOWN = "=b8bBBBbbbBBBBBBBbbBB"
+
+# Up-frame: STM32 -> Jetson, 19 byte DATA + 1 byte checksum = 20 byte total
+# 15 byte relay GCS mentah (termasuk mode) + lrf_lsb,lrf_msb,lrf_status,
+# stm32_status(4) = 19
+FORMAT_UP = "=BbbbbbBBBBbBbBBBBBB"
+
+SIZE_DOWN_DATA = struct.calcsize(FORMAT_DOWN)  # harus = 26
+SIZE_UP_DATA = struct.calcsize(FORMAT_UP)      # harus = 19
+SIZE_DOWN = SIZE_DOWN_DATA + 1  # + 1 byte checksum = 27
+SIZE_UP = SIZE_UP_DATA + 1      # + 1 byte checksum = 20
+
+
+def _checksum_xor(data: bytes) -> int:
+    """XOR semua byte - pola sama kayak checksum di firmware STM32
+    (JetsonChecksum di main.c). Dipakai DUA ARAH: nempel checksum pas
+    kirim down-frame, validasi checksum pas terima up-frame."""
+    hasil = 0
+    for b in data:
+        hasil ^= b
+    return hasil
+
+
+class Stm32InterfaceNode(Node):
+    def __init__(self):
+        super().__init__('stm32_interface_node')
+
+        self.declare_parameter('serial_port', '/dev/ttyTHS1')
+        self.declare_parameter('baudrate', 115200)
+        self.declare_parameter('timer_period_sec', 0.1)  # 10Hz
+        # Watchdog: kalau udah selama ini gak dapat up-frame lengkap,
+        # anggap link putus, publish Health(stm32_status=0) - biar Core
+        # Node (dan akhirnya GCS) tau link mati, bukan cuma diam beku.
+        # Default samain sama LINK_TIMEOUT_MS di firmware STM32 (500ms).
+        self.declare_parameter('link_timeout_sec', 0.5)
+
+        port = self.get_parameter('serial_port').value
+        baud = self.get_parameter('baudrate').value
+        period = self.get_parameter('timer_period_sec').value
+        self.link_timeout_sec = self.get_parameter('link_timeout_sec').value
+
+        # --- Publisher: 3 topic hasil pecahan up-frame ---
+        self.pub_gcs_relay = self.create_publisher(GcsRelay, '/stm32/gcs_relay', 10)
+        self.pub_lrf_status = self.create_publisher(LrfStatus, '/stm32/lrf_status', 10)
+        self.pub_health = self.create_publisher(Health, '/stm32/health', 10)
+
+        # --- Subscriber: command final dari Core Node, cuma di-cache ---
+        # Default aman: semua netral (motor diam, lampu mati, pantilt stop,
+        # lrfTrigger=3 pointer OFF) kalau Core Node belum pernah publish.
+        self._command_cache = StmCommand()
+        self._command_cache.act = [0] * 8
+        self._command_cache.lrf_trigger = 3
+        self._command_cache.gcs_reply_stm32_status = 1
+
+        self.sub_command = self.create_subscription(
+            StmCommand, '/stm32/command', self._callback_command, 10)
+
+        # --- Buka serial ke STM32 ---
+        try:
+            self.serial_conn = serial.Serial(port, baud, timeout=0.05)
+            self.get_logger().info(f'Serial terbuka di {port} @ {baud} baud')
+        except serial.SerialException as e:
+            self.get_logger().error(f'Gagal buka serial {port}: {e}')
+            raise
+
+        self._waktu_sukses_terakhir = time.time()
+        self._link_sehat = True
+
+        self.timer = self.create_timer(period, self._siklus_komunikasi)
+
+    # ------------------------------------------------------------------
+    # Dipanggil otomatis tiap Core Node publish command baru -> cuma cache
+    # ------------------------------------------------------------------
+    def _callback_command(self, msg: StmCommand):
+        self._command_cache = msg
+
+    # ------------------------------------------------------------------
+    # 1 siklus: pack+checksum 27 byte -> kirim -> tunggu 20 byte -> validasi
+    # checksum -> pecah -> publish
+    # ------------------------------------------------------------------
+    def _siklus_komunikasi(self):
+        cmd = self._command_cache
+
+        # Buang sisa byte lama di buffer SEBELUM kirim, biar read() setelah
+        # ini dijamin mulai dari awal balasan frame yang BARU kita kirim -
+        # bukan nyambung dari sisa byte siklus sebelumnya (bikin field
+        # kebaca "geser"/desync, gejalanya nilai kelihatan acak).
+        self.serial_conn.reset_input_buffer()
+
+        try:
+            frame_data = struct.pack(
+                FORMAT_DOWN,
+                cmd.speed,
+                *cmd.act,                    # unpack 8 nilai act[0..7]
+                cmd.f_lamp,
+                cmd.b_lamp,
+                cmd.b_lamp_mode,
+                cmd.pantilt_horizontal,
+                cmd.pantilt_vertical,
+                cmd.kamera_zoom,
+                cmd.slip_ring,
+                cmd.lrf_trigger,
+                cmd.gcs_reply_stm32_status,
+                cmd.gcs_reply_lrf_status,
+                cmd.gcs_reply_lrf_lsb,
+                cmd.gcs_reply_lrf_msb,
+                cmd.gcs_reply_box_terdeteksi,
+                cmd.gcs_reply_box_pusat_x,
+                cmd.gcs_reply_box_pusat_y,
+                cmd.gcs_reply_box_lebar,
+                cmd.gcs_reply_box_tinggi,
+            )
+        except struct.error as e:
+            self.get_logger().error(f'Gagal bangun down-frame: {e}')
+            return
+
+        frame_keluar = frame_data + bytes([_checksum_xor(frame_data)])
+
+        try:
+            self.serial_conn.write(frame_keluar)
+            frame_masuk = self.serial_conn.read(SIZE_UP)
+        except serial.SerialException as e:
+            # Ini yang dulu bikin node CRASH TOTAL (exception gak ketangkep,
+            # nembus sampai ke rclpy.spin() dan proses mati). Sekarang
+            # ditangkep di sini: cuma log warning + cek watchdog, skip
+            # siklus ini, node TETAP HIDUP nyoba lagi siklus berikutnya.
+            self.get_logger().warn(f'SerialException: {e}')
+            self._cek_watchdog()
+            return
+
+        if len(frame_masuk) != SIZE_UP:
+            # Timeout / STM32 gak balas lengkap -> skip siklus ini, coba lagi
+            # siklus berikutnya. NORMAL kalau STM32 restart/link putus -
+            # tapi kalau udah KELAMAAN gitu terus, itu watchdog buat detect.
+            self.get_logger().warn(
+                f'Up-frame gak lengkap: dapat {len(frame_masuk)}/{SIZE_UP} byte')
+            self._cek_watchdog()
+            return
+
+        data_bytes, checksum_diterima = frame_masuk[:-1], frame_masuk[-1]
+        if _checksum_xor(data_bytes) != checksum_diterima:
+            self.get_logger().warn('Up-frame checksum salah, dibuang')
+            self._cek_watchdog()
+            return
+
+        try:
+            f = struct.unpack(FORMAT_UP, data_bytes)
+        except struct.error as e:
+            self.get_logger().warn(f'Up-frame korup, dibuang: {e}')
+            self._cek_watchdog()
+            return
+
+        # Sukses baca lengkap -> link sehat, update timestamp
+        self._waktu_sukses_terakhir = time.time()
+        if not self._link_sehat:
+            self.get_logger().info('Link STM32 pulih kembali')
+            self._link_sehat = True
+
+        # --- Offset 0-14: relay GCS mentah ---
+        relay = GcsRelay()
+        (relay.estop, relay.x_joy1, relay.y_joy1, relay.x_joy2, relay.y_joy2,
+         relay.zoom, relay.lrf, relay.f_lamp, relay.b_lamp, relay.slip_ring,
+         relay.body_up_down, relay.motor_individual_id,
+         relay.motor_individual_arah, relay.kalibrasi, relay.mode) = f[0:15]
+
+        # --- Offset 15-17: status LRF ---
+        lrf = LrfStatus()
+        (lrf.jarak_lsb, lrf.jarak_msb, lrf.status) = f[15:18]
+
+        # --- Offset 18: kesehatan STM32 ---
+        health = Health()
+        health.stm32_status = f[18]
+
+        self.pub_gcs_relay.publish(relay)
+        self.pub_lrf_status.publish(lrf)
+        self.pub_health.publish(health)
+
+    # ------------------------------------------------------------------
+    # Dipanggil tiap kali gagal baca up-frame. Kalau udah kelamaan (lebih
+    # dari link_timeout_sec) sejak sukses TERAKHIR, anggap link putus:
+    # publish Health(stm32_status=0) SEKALI SAJA (pas transisi sehat->mati),
+    # biar Core Node & GCS tau link mati, bukan cuma diam beku terus.
+    # ------------------------------------------------------------------
+    def _cek_watchdog(self):
+        selang = time.time() - self._waktu_sukses_terakhir
+        if selang >= self.link_timeout_sec and self._link_sehat:
+            self.get_logger().warn(
+                f'Link STM32 putus (gak ada up-frame valid {selang:.1f}s)')
+            self._link_sehat = False
+            health = Health()
+            health.stm32_status = 0
+            self.pub_health.publish(health)
+
+    def destroy_node(self):
+        if hasattr(self, 'serial_conn'):
+            self.serial_conn.close()
+        super().destroy_node()
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = Stm32InterfaceNode()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

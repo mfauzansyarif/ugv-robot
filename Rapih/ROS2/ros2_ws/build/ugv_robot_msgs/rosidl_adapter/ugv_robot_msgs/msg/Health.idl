@@ -1,0 +1,12 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from ugv_robot_msgs/msg/Health.msg
+// generated code does not contain a copyright notice
+
+
+module ugv_robot_msgs {
+  module msg {
+    struct Health {
+      uint8 stm32_status;
+    };
+  };
+};

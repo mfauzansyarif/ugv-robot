@@ -1,0 +1,5 @@
+/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs:msg/StmCommand.idl
+/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs:msg/GcsRelay.idl
+/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs:msg/LrfStatus.idl
+/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs:msg/Health.idl
+/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs:msg/PersonDetection.idl

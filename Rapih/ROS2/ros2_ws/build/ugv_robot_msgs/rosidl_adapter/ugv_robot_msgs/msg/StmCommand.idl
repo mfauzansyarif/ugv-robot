@@ -1,0 +1,49 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from ugv_robot_msgs/msg/StmCommand.msg
+// generated code does not contain a copyright notice
+
+
+module ugv_robot_msgs {
+  module msg {
+    typedef int8 int8__8[8];
+    struct StmCommand {
+      int8 speed;
+
+      int8__8 act;
+
+      uint8 f_lamp;
+
+      uint8 b_lamp;
+
+      uint8 b_lamp_mode;
+
+      int8 pantilt_horizontal;
+
+      int8 pantilt_vertical;
+
+      int8 kamera_zoom;
+
+      uint8 slip_ring;
+
+      uint8 lrf_trigger;
+
+      uint8 gcs_reply_stm32_status;
+
+      uint8 gcs_reply_lrf_status;
+
+      uint8 gcs_reply_lrf_lsb;
+
+      uint8 gcs_reply_lrf_msb;
+
+      uint8 gcs_reply_box_terdeteksi;
+
+      int8 gcs_reply_box_pusat_x;
+
+      int8 gcs_reply_box_pusat_y;
+
+      uint8 gcs_reply_box_lebar;
+
+      uint8 gcs_reply_box_tinggi;
+    };
+  };
+};

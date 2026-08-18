@@ -1,0 +1,32 @@
+{
+  "package_name": "ugv_robot_msgs",
+  "output_dir": "/workspace/build/ugv_robot_msgs/rosidl_generator_c/ugv_robot_msgs",
+  "template_dir": "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource",
+  "idl_tuples": [
+    "/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs:msg/StmCommand.idl",
+    "/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs:msg/GcsRelay.idl",
+    "/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs:msg/LrfStatus.idl",
+    "/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs:msg/Health.idl",
+    "/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs:msg/PersonDetection.idl"
+  ],
+  "target_dependencies": [
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../../../lib/rosidl_generator_c/rosidl_generator_c",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../../../lib/python3.6/site-packages/rosidl_generator_c/__init__.py",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource/action__type_support.h.em",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource/idl.h.em",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource/idl__functions.c.em",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource/idl__functions.h.em",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource/idl__struct.h.em",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource/idl__type_support.h.em",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource/msg__functions.c.em",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource/msg__functions.h.em",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource/msg__struct.h.em",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource/msg__type_support.h.em",
+    "/opt/ros/foxy/install/share/rosidl_generator_c/cmake/../resource/srv__type_support.h.em",
+    "/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs/msg/StmCommand.idl",
+    "/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs/msg/GcsRelay.idl",
+    "/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs/msg/LrfStatus.idl",
+    "/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs/msg/Health.idl",
+    "/workspace/build/ugv_robot_msgs/rosidl_adapter/ugv_robot_msgs/msg/PersonDetection.idl"
+  ]
+}

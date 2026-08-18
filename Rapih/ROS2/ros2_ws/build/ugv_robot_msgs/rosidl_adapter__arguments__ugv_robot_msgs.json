@@ -1,0 +1,10 @@
+{
+  "package_name": "ugv_robot_msgs",
+  "non_idl_tuples": [
+    "/workspace/src/ugv_robot_msgs:msg/StmCommand.msg",
+    "/workspace/src/ugv_robot_msgs:msg/GcsRelay.msg",
+    "/workspace/src/ugv_robot_msgs:msg/LrfStatus.msg",
+    "/workspace/src/ugv_robot_msgs:msg/Health.msg",
+    "/workspace/src/ugv_robot_msgs:msg/PersonDetection.msg"
+  ]
+}

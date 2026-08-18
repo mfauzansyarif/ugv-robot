@@ -1,0 +1,4 @@
+[0.000000] (-) TimerEvent: {}
+[0.001026] (-) JobUnselected: {'identifier': 'ugv_robot'}
+[0.001766] (-) JobUnselected: {'identifier': 'ugv_robot_msgs'}
+[0.002818] (-) EventReactorShutdown: {}

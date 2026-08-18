@@ -1,0 +1,10 @@
+msg/GcsRelay.idl
+msg/GcsRelay.msg
+msg/Health.idl
+msg/Health.msg
+msg/LrfStatus.idl
+msg/LrfStatus.msg
+msg/PersonDetection.idl
+msg/PersonDetection.msg
+msg/StmCommand.idl
+msg/StmCommand.msg

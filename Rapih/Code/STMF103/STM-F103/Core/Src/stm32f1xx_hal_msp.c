@@ -71,9 +71,10 @@ void HAL_MspInit(void)
 
   /* System interrupt init*/
 
-  /** DISABLE: JTAG-DP Disabled and SW-DP Disabled
+  /** JTAG-DP Disabled, SW-DP Enabled (Serial Wire debug tetap jalan lewat
+   *  PA13/PA14, cuma JTAG yang dimatiin buat bebasin PA15/PB3/PB4)
   */
-  __HAL_AFIO_REMAP_SWJ_DISABLE();
+  __HAL_AFIO_REMAP_SWJ_NOJTAG();
 
   /* USER CODE BEGIN MspInit 1 */
 

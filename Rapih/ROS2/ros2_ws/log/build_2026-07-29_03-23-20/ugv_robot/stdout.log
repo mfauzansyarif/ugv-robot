@@ -1,0 +1,23 @@
+running develop
+running egg_info
+creating ugv_robot.egg-info
+writing ugv_robot.egg-info/PKG-INFO
+writing dependency_links to ugv_robot.egg-info/dependency_links.txt
+writing entry points to ugv_robot.egg-info/entry_points.txt
+writing requirements to ugv_robot.egg-info/requires.txt
+writing top-level names to ugv_robot.egg-info/top_level.txt
+writing manifest file 'ugv_robot.egg-info/SOURCES.txt'
+reading manifest file 'ugv_robot.egg-info/SOURCES.txt'
+writing manifest file 'ugv_robot.egg-info/SOURCES.txt'
+running build_ext
+Creating /workspace/install/ugv_robot/lib/python3.6/site-packages/ugv-robot.egg-link (link to .)
+Installing core_node script to /workspace/install/ugv_robot/lib/ugv_robot
+Installing stm32_interface_node script to /workspace/install/ugv_robot/lib/ugv_robot
+
+Installed /workspace/build/ugv_robot
+running install_data
+creating /workspace/install/ugv_robot/share/ament_index
+creating /workspace/install/ugv_robot/share/ament_index/resource_index
+creating /workspace/install/ugv_robot/share/ament_index/resource_index/packages
+copying resource/ugv_robot -> /workspace/install/ugv_robot/share/ament_index/resource_index/packages
+copying package.xml -> /workspace/install/ugv_robot/share/ugv_robot

@@ -1,0 +1,1 @@
+uint8 stm32_status

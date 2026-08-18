@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/workspace/build/ugv_robot_msgs/rosidl_generator_py/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_introspection_c.cpython-36m-aarch64-linux-gnu.so" "TARGETS" "ugv_robot_msgs__rosidl_typesupport_introspection_c__pyext" "DESTINATION" "lib/python3.6/site-packages/ugv_robot_msgs")

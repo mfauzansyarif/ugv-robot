@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/workspace/build/ugv_robot_msgs/rosidl_generator_py/ugv_robot_msgs/libugv_robot_msgs__python.so" "TARGETS" "ugv_robot_msgs__python" "ARCHIVE_DESTINATION" "lib" "LIBRARY_DESTINATION" "lib" "RUNTIME_DESTINATION" "bin")

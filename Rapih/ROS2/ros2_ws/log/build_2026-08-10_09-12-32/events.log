@@ -1,0 +1,117 @@
+[0.000000] (-) TimerEvent: {}
+[0.001763] (-) JobUnselected: {'identifier': 'ugv_robot_msgs'}
+[0.002747] (ugv_robot) JobQueued: {'identifier': 'ugv_robot', 'dependencies': OrderedDict([('ugv_robot_msgs', '/workspace/install/ugv_robot_msgs')])}
+[0.004723] (ugv_robot) JobStarted: {'identifier': 'ugv_robot'}
+[0.098892] (-) TimerEvent: {}
+[0.201452] (-) TimerEvent: {}
+[0.302754] (-) TimerEvent: {}
+[0.403781] (-) TimerEvent: {}
+[0.504614] (-) TimerEvent: {}
+[0.605431] (-) TimerEvent: {}
+[0.706411] (-) TimerEvent: {}
+[0.807322] (-) TimerEvent: {}
+[0.909339] (-) TimerEvent: {}
+[1.010868] (-) TimerEvent: {}
+[1.111647] (-) TimerEvent: {}
+[1.212400] (-) TimerEvent: {}
+[1.313344] (-) TimerEvent: {}
+[1.414537] (-) TimerEvent: {}
+[1.515486] (-) TimerEvent: {}
+[1.617321] (-) TimerEvent: {}
+[1.718083] (-) TimerEvent: {}
+[1.818837] (-) TimerEvent: {}
+[1.919663] (-) TimerEvent: {}
+[2.020394] (-) TimerEvent: {}
+[2.121224] (-) TimerEvent: {}
+[2.223788] (-) TimerEvent: {}
+[2.324756] (-) TimerEvent: {}
+[2.425562] (-) TimerEvent: {}
+[2.526324] (-) TimerEvent: {}
+[2.627084] (-) TimerEvent: {}
+[2.727866] (-) TimerEvent: {}
+[2.828628] (-) TimerEvent: {}
+[2.929396] (-) TimerEvent: {}
+[3.030206] (-) TimerEvent: {}
+[3.130991] (-) TimerEvent: {}
+[3.231784] (-) TimerEvent: {}
+[3.332537] (-) TimerEvent: {}
+[3.433579] (-) TimerEvent: {}
+[3.535464] (-) TimerEvent: {}
+[3.637830] (-) TimerEvent: {}
+[3.741333] (-) TimerEvent: {}
+[3.842102] (-) TimerEvent: {}
+[3.943030] (-) TimerEvent: {}
+[4.043763] (-) TimerEvent: {}
+[4.145361] (-) TimerEvent: {}
+[4.246189] (-) TimerEvent: {}
+[4.346970] (-) TimerEvent: {}
+[4.447761] (-) TimerEvent: {}
+[4.549320] (-) TimerEvent: {}
+[4.650101] (-) TimerEvent: {}
+[4.751458] (-) TimerEvent: {}
+[4.852385] (-) TimerEvent: {}
+[4.953612] (-) TimerEvent: {}
+[5.054452] (-) TimerEvent: {}
+[5.155184] (-) TimerEvent: {}
+[5.256292] (-) TimerEvent: {}
+[5.357092] (-) TimerEvent: {}
+[5.457960] (-) TimerEvent: {}
+[5.564511] (-) TimerEvent: {}
+[5.623747] (ugv_robot) Command: {'cmd': ['/usr/bin/python3', 'setup.py', 'develop', '--editable', '--build-directory', '/workspace/build/ugv_robot/build', '--no-deps', 'install_data'], 'cwd': '/workspace/build/ugv_robot', 'env': {'OPENBLAS_CORETYPE': 'ARMV8', 'PYTHONIOENCODING': 'utf-8', 'HOSTNAME': 'respatijetson-desktop', 'LD_LIBRARY_PATH': '/workspace/install/ugv_robot_msgs/lib:/opt/ros/foxy/install/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/install/lib:/usr/local/cuda-10.2/targets/aarch64-linux/lib', 'SHLVL': '1', 'OLDPWD': '/', 'HOME': '/root', 'ROS_PYTHON_VERSION': '3', 'COLCON_PREFIX_PATH': '/workspace/install:/opt/ros/foxy/install', 'ROS_DISTRO': 'foxy', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'NVIDIA_DRIVER_CAPABILITIES': 'all', 'PKG_CONFIG_PATH': '/opt/ros/foxy/install/lib/aarch64-linux-gnu/pkgconfig:/opt/ros/foxy/install/lib/pkgconfig', 'TERM': 'xterm', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/opt/ros/foxy/install/bin:/usr/local/cuda-10.2/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'LANG': 'en_US.UTF-8', 'RMW_IMPLEMENTATION': 'rmw_cyclonedds_cpp', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'ROS_ROOT': '/opt/ros/foxy', 'AMENT_PREFIX_PATH': '/workspace/install/ugv_robot:/workspace/install/ugv_robot_msgs:/opt/ros/foxy/install', 'DEBIAN_FRONTEND': 'noninteractive', 'SHELL': '/bin/bash', 'PWD': '/workspace/build/ugv_robot', 'PYTHONPATH': '/workspace/build/ugv_robot/prefix_override:/workspace/install/ugv_robot/lib/python3.6/site-packages:/workspace/install/ugv_robot_msgs/lib/python3.6/site-packages:/workspace/build/ugv_robot:/workspace/install/ugv_robot/lib/python3.6/site-packages:/opt/ros/foxy/install/lib/python3.6/site-packages', 'NVIDIA_VISIBLE_DEVICES': 'all', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/workspace/install/ugv_robot_msgs:/opt/ros/foxy/install'}, 'shell': False}
+[5.664832] (-) TimerEvent: {}
+[5.769414] (-) TimerEvent: {}
+[5.870744] (-) TimerEvent: {}
+[5.973422] (-) TimerEvent: {}
+[6.074816] (-) TimerEvent: {}
+[6.176428] (-) TimerEvent: {}
+[6.277562] (-) TimerEvent: {}
+[6.379393] (-) TimerEvent: {}
+[6.480415] (-) TimerEvent: {}
+[6.581321] (-) TimerEvent: {}
+[6.682110] (-) TimerEvent: {}
+[6.783480] (-) TimerEvent: {}
+[6.884196] (-) TimerEvent: {}
+[6.984916] (-) TimerEvent: {}
+[7.085716] (-) TimerEvent: {}
+[7.129723] (ugv_robot) StderrLine: {'line': b"/usr/local/lib/python3.6/dist-packages/setuptools/dist.py:726: UserWarning: Usage of dash-separated 'script-dir' will not be supported in future versions. Please use the underscore name 'script_dir' instead\n"}
+[7.130817] (ugv_robot) StderrLine: {'line': b'  % (opt, underscore_opt)\n'}
+[7.185914] (-) TimerEvent: {}
+[7.287072] (-) TimerEvent: {}
+[7.387855] (-) TimerEvent: {}
+[7.450025] (ugv_robot) StdoutLine: {'line': b'running develop\n'}
+[7.488126] (-) TimerEvent: {}
+[7.488972] (ugv_robot) StderrLine: {'line': b'/usr/local/lib/python3.6/dist-packages/setuptools/command/easy_install.py:159: EasyInstallDeprecationWarning: easy_install command is deprecated. Use build and pip and other standards-based tools.\n'}
+[7.489819] (ugv_robot) StderrLine: {'line': b'  EasyInstallDeprecationWarning,\n'}
+[7.500165] (ugv_robot) StderrLine: {'line': b'/usr/local/lib/python3.6/dist-packages/setuptools/command/install.py:37: SetuptoolsDeprecationWarning: setup.py install is deprecated. Use build and pip and other standards-based tools.\n'}
+[7.500959] (ugv_robot) StderrLine: {'line': b'  setuptools.SetuptoolsDeprecationWarning,\n'}
+[7.588318] (-) TimerEvent: {}
+[7.689097] (-) TimerEvent: {}
+[7.789899] (-) TimerEvent: {}
+[7.890594] (-) TimerEvent: {}
+[7.991319] (-) TimerEvent: {}
+[8.092111] (-) TimerEvent: {}
+[8.157705] (ugv_robot) StdoutLine: {'line': b'running egg_info\n'}
+[8.158614] (ugv_robot) StdoutLine: {'line': b'writing ugv_robot.egg-info/PKG-INFO\n'}
+[8.160555] (ugv_robot) StdoutLine: {'line': b'writing dependency_links to ugv_robot.egg-info/dependency_links.txt\n'}
+[8.161761] (ugv_robot) StdoutLine: {'line': b'writing entry points to ugv_robot.egg-info/entry_points.txt\n'}
+[8.162593] (ugv_robot) StdoutLine: {'line': b'writing requirements to ugv_robot.egg-info/requires.txt\n'}
+[8.166879] (ugv_robot) StdoutLine: {'line': b'writing top-level names to ugv_robot.egg-info/top_level.txt\n'}
+[8.184466] (ugv_robot) StdoutLine: {'line': b"reading manifest file 'ugv_robot.egg-info/SOURCES.txt'\n"}
+[8.192019] (ugv_robot) StdoutLine: {'line': b"writing manifest file 'ugv_robot.egg-info/SOURCES.txt'\n"}
+[8.192795] (-) TimerEvent: {}
+[8.293489] (-) TimerEvent: {}
+[8.394315] (-) TimerEvent: {}
+[8.444099] (ugv_robot) StdoutLine: {'line': b'running build_ext\n'}
+[8.445027] (ugv_robot) StdoutLine: {'line': b'Creating /workspace/install/ugv_robot/lib/python3.6/site-packages/ugv-robot.egg-link (link to .)\n'}
+[8.449676] (ugv_robot) StdoutLine: {'line': b'Installing core_node script to /workspace/install/ugv_robot/lib/ugv_robot\n'}
+[8.450643] (ugv_robot) StdoutLine: {'line': b'Installing cv_node script to /workspace/install/ugv_robot/lib/ugv_robot\n'}
+[8.451564] (ugv_robot) StdoutLine: {'line': b'Installing stm32_interface_node script to /workspace/install/ugv_robot/lib/ugv_robot\n'}
+[8.456848] (ugv_robot) StdoutLine: {'line': b'\n'}
+[8.457823] (ugv_robot) StdoutLine: {'line': b'Installed /workspace/build/ugv_robot\n'}
+[8.458558] (ugv_robot) StdoutLine: {'line': b'running install_data\n'}
+[8.494537] (-) TimerEvent: {}
+[8.595389] (-) TimerEvent: {}
+[8.604336] (ugv_robot) CommandEnded: {'returncode': 0}
+[8.695583] (-) TimerEvent: {}
+[8.713191] (ugv_robot) JobEnded: {'identifier': 'ugv_robot', 'rc': 0}
+[8.718615] (-) EventReactorShutdown: {}

@@ -1,0 +1,299 @@
+[0.078s] Invoking command in '/workspace/build/ugv_robot_msgs': /usr/local/bin/cmake /workspace/src/ugv_robot_msgs -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/workspace/install/ugv_robot_msgs
+[0.405s] -- The C compiler identification is GNU 7.5.0
+[0.612s] -- The CXX compiler identification is GNU 7.5.0
+[0.679s] -- Detecting C compiler ABI info
+[0.907s] -- Detecting C compiler ABI info - done
+[0.959s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.960s] -- Detecting C compile features
+[0.962s] -- Detecting C compile features - done
+[1.006s] -- Detecting CXX compiler ABI info
+[1.266s] -- Detecting CXX compiler ABI info - done
+[1.322s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[1.323s] -- Detecting CXX compile features
+[1.325s] -- Detecting CXX compile features - done
+[1.339s] -- Found ament_cmake: 0.9.12 (/opt/ros/foxy/install/share/ament_cmake/cmake)
+[1.360s] [33mCMake Warning (dev) at /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/python.cmake:22 (find_package):
+[1.361s]   Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules
+[1.361s]   are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use
+[1.362s]   the cmake_policy command to set the policy and suppress this warning.
+[1.362s] 
+[1.363s] Call Stack (most recent call first):
+[1.363s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/all.cmake:53 (include)
+[1.364s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_core-extras.cmake:17 (include)
+[1.365s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_coreConfig.cmake:41 (include)
+[1.365s]   /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmake_export_dependencies-extras.cmake:15 (find_package)
+[1.366s]   /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmakeConfig.cmake:41 (include)
+[1.366s]   CMakeLists.txt:4 (find_package)
+[1.367s] This warning is for project developers.  Use -Wno-dev to suppress it.
+[1.367s] [0m
+[1.438s] -- Found PythonInterp: /usr/bin/python3 (found suitable version "3.6.9", minimum required is "3") 
+[1.439s] -- Using PYTHON_EXECUTABLE: /usr/bin/python3
+[2.470s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[2.597s] -- Found rosidl_default_generators: 1.0.1 (/opt/ros/foxy/install/share/rosidl_default_generators/cmake)
+[2.613s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[2.652s] -- Found rosidl_adapter: 1.3.1 (/opt/ros/foxy/install/share/rosidl_adapter/cmake)
+[2.981s] -- Found OpenSSL: /usr/lib/aarch64-linux-gnu/libcrypto.so (found version "1.1.1")  
+[3.071s] -- Found FastRTPS: /opt/ros/foxy/install/include  
+[3.438s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[3.593s] [33mCMake Warning (dev) at /opt/ros/foxy/install/share/rosidl_adapter/cmake/rosidl_adapt_interfaces.cmake:40 (find_package):
+[3.594s]   Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules
+[3.594s]   are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use
+[3.595s]   the cmake_policy command to set the policy and suppress this warning.
+[3.596s] 
+[3.596s] Call Stack (most recent call first):
+[3.597s]   /opt/ros/foxy/install/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:130 (rosidl_adapt_interfaces)
+[3.597s]   CMakeLists.txt:7 (rosidl_generate_interfaces)
+[3.597s] This warning is for project developers.  Use -Wno-dev to suppress it.
+[3.598s] [0m
+[3.670s] -- Found PythonInterp: /usr/bin/python3 (found version "3.6.9") 
+[4.683s] -- Found ament_cmake_ros: 0.9.2 (/opt/ros/foxy/install/share/ament_cmake_ros/cmake)
+[5.077s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[5.118s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[5.129s] [33mCMake Warning (dev) at /opt/ros/foxy/install/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:20 (find_package):
+[5.130s]   Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules
+[5.131s]   are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use
+[5.131s]   the cmake_policy command to set the policy and suppress this warning.
+[5.132s] 
+[5.132s] Call Stack (most recent call first):
+[5.133s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)
+[5.133s]   /opt/ros/foxy/install/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)
+[5.134s]   CMakeLists.txt:7 (rosidl_generate_interfaces)
+[5.134s] This warning is for project developers.  Use -Wno-dev to suppress it.
+[5.135s] [0m
+[5.208s] -- Found PythonInterp: /usr/bin/python3 (found suitable version "3.6.9", minimum required is "3.5") 
+[5.217s] -- Found python_cmake_module: 0.8.1 (/opt/ros/foxy/install/share/python_cmake_module/cmake)
+[5.219s] [33mCMake Warning (dev) at /opt/ros/foxy/install/share/python_cmake_module/cmake/Modules/FindPythonExtra.cmake:45 (find_package):
+[5.220s]   Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules
+[5.220s]   are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use
+[5.221s]   the cmake_policy command to set the policy and suppress this warning.
+[5.221s] 
+[5.222s] Call Stack (most recent call first):
+[5.222s]   /opt/ros/foxy/install/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:23 (find_package)
+[5.223s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)
+[5.223s]   /opt/ros/foxy/install/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)
+[5.224s]   CMakeLists.txt:7 (rosidl_generate_interfaces)
+[5.226s] This warning is for project developers.  Use -Wno-dev to suppress it.
+[5.226s] [0m
+[5.299s] [33mCMake Warning (dev) at /opt/ros/foxy/install/share/python_cmake_module/cmake/Modules/FindPythonExtra.cmake:133 (find_package):
+[5.300s]   Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules
+[5.300s]   are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use
+[5.301s]   the cmake_policy command to set the policy and suppress this warning.
+[5.301s] 
+[5.302s] Call Stack (most recent call first):
+[5.302s]   /opt/ros/foxy/install/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:23 (find_package)
+[5.302s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)
+[5.303s]   /opt/ros/foxy/install/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)
+[5.303s]   CMakeLists.txt:7 (rosidl_generate_interfaces)
+[5.304s] This warning is for project developers.  Use -Wno-dev to suppress it.
+[5.304s] [0m
+[5.314s] -- Found PythonLibs: /usr/lib/aarch64-linux-gnu/libpython3.6m.so (found suitable version "3.6.9", minimum required is "3.5") 
+[5.315s] -- Using PYTHON_EXECUTABLE: /usr/bin/python3
+[5.316s] -- Using PYTHON_INCLUDE_DIRS: /usr/include/python3.6m
+[5.317s] -- Using PYTHON_LIBRARIES: /usr/lib/aarch64-linux-gnu/libpython3.6m.so
+[5.392s] -- Found PythonExtra: .so  
+[6.203s] -- Using numpy include directory: /usr/local/lib/python3.6/dist-packages/numpy/core/include
+[6.299s] -- Configuring done (6.1s)
+[6.479s] -- Generating done (0.1s)
+[6.492s] -- Build files have been written to: /workspace/build/ugv_robot_msgs
+[6.542s] Invoked command in '/workspace/build/ugv_robot_msgs' returned '0': /usr/local/bin/cmake /workspace/src/ugv_robot_msgs -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/workspace/install/ugv_robot_msgs
+[6.553s] Invoking command in '/workspace/build/ugv_robot_msgs': /usr/local/bin/cmake --build /workspace/build/ugv_robot_msgs -- -j4 -l4
+[6.750s] [  1%] [34m[1mGenerating C code for ROS interfaces[0m
+[6.767s] [  3%] [34m[1mGenerating C++ code for ROS interfaces[0m
+[9.685s] [  3%] Built target ugv_robot_msgs__cpp
+[9.704s] [  5%] [34m[1mGenerating C++ type support dispatch for ROS interfaces[0m
+[9.713s] [  7%] [34m[1mGenerating C++ type support for eProsima Fast-RTPS[0m
+[9.719s] [  9%] [34m[1mGenerating C++ introspection for ROS interfaces[0m
+[10.350s] [ 10%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_generator_c.dir/rosidl_generator_c/ugv_robot_msgs/msg/detail/stm_command__functions.c.o[0m
+[10.751s] [ 12%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_generator_c.dir/rosidl_generator_c/ugv_robot_msgs/msg/detail/gcs_relay__functions.c.o[0m
+[11.021s] [ 14%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_generator_c.dir/rosidl_generator_c/ugv_robot_msgs/msg/detail/lrf_status__functions.c.o[0m
+[11.271s] [ 16%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_generator_c.dir/rosidl_generator_c/ugv_robot_msgs/msg/detail/health__functions.c.o[0m
+[11.478s] [ 18%] [32m[1mLinking C shared library libugv_robot_msgs__rosidl_generator_c.so[0m
+[11.634s] [ 18%] Built target ugv_robot_msgs__rosidl_generator_c
+[11.671s] [ 20%] [34m[1mGenerating C introspection for ROS interfaces[0m
+[12.371s] [ 21%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/ugv_robot_msgs/msg/stm_command__type_support.cpp.o[0m
+[12.452s] [ 23%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/ugv_robot_msgs/msg/detail/stm_command__type_support.cpp.o[0m
+[13.119s] [ 25%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/stm_command__type_support.cpp.o[0m
+[13.706s] [ 27%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/ugv_robot_msgs/msg/gcs_relay__type_support.cpp.o[0m
+[13.860s] [ 29%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/ugv_robot_msgs/msg/detail/gcs_relay__type_support.cpp.o[0m
+[14.915s] [ 30%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/ugv_robot_msgs/msg/detail/stm_command__type_support.c.o[0m
+[15.045s] [ 32%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/ugv_robot_msgs/msg/lrf_status__type_support.cpp.o[0m
+[15.078s] [ 34%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/gcs_relay__type_support.cpp.o[0m
+[15.079s] [ 36%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/ugv_robot_msgs/msg/detail/gcs_relay__type_support.c.o[0m
+[15.219s] [ 38%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/ugv_robot_msgs/msg/detail/lrf_status__type_support.c.o[0m
+[15.373s] [ 40%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/ugv_robot_msgs/msg/detail/lrf_status__type_support.cpp.o[0m
+[15.392s] [ 41%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/ugv_robot_msgs/msg/detail/health__type_support.c.o[0m
+[15.564s] [ 43%] [32m[1mLinking C shared library libugv_robot_msgs__rosidl_typesupport_introspection_c.so[0m
+[15.697s] [ 43%] Built target ugv_robot_msgs__rosidl_typesupport_introspection_c
+[15.710s] [ 45%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/ugv_robot_msgs/msg/detail/health__type_support.cpp.o[0m
+[16.147s] [ 47%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/ugv_robot_msgs/msg/health__type_support.cpp.o[0m
+[16.842s] [ 49%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/lrf_status__type_support.cpp.o[0m
+[16.879s] [ 50%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/ugv_robot_msgs/msg/detail/dds_fastrtps/health__type_support.cpp.o[0m
+[16.989s] [ 52%] [32m[1mLinking CXX shared library libugv_robot_msgs__rosidl_typesupport_introspection_cpp.so[0m
+[17.311s] [ 52%] Built target ugv_robot_msgs__rosidl_typesupport_introspection_cpp
+[17.359s] [ 54%] [34m[1mGenerating C type support dispatch for ROS interfaces[0m
+[17.486s] [ 56%] [32m[1mLinking CXX shared library libugv_robot_msgs__rosidl_typesupport_cpp.so[0m
+[17.703s] [ 56%] Built target ugv_robot_msgs__rosidl_typesupport_cpp
+[18.629s] [ 58%] [32m[1mLinking CXX shared library libugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.so[0m
+[18.983s] [ 58%] Built target ugv_robot_msgs__rosidl_typesupport_fastrtps_cpp
+[18.999s] [ 60%] [34m[1mGenerating C type support for eProsima Fast-RTPS[0m
+[19.690s] [ 63%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/ugv_robot_msgs/msg/gcs_relay__type_support.cpp.o[0m
+[19.692s] [ 63%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/ugv_robot_msgs/msg/lrf_status__type_support.cpp.o[0m
+[19.695s] [ 65%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/ugv_robot_msgs/msg/stm_command__type_support.cpp.o[0m
+[19.828s] [ 67%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/ugv_robot_msgs/msg/health__type_support.cpp.o[0m
+[19.927s] [ 69%] [32m[1mLinking CXX shared library libugv_robot_msgs__rosidl_typesupport_c.so[0m
+[20.033s] [ 69%] Built target ugv_robot_msgs__rosidl_typesupport_c
+[21.852s] [ 72%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/ugv_robot_msgs/msg/detail/stm_command__type_support_c.cpp.o[0m
+[21.853s] [ 76%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/ugv_robot_msgs/msg/detail/lrf_status__type_support_c.cpp.o[0m
+[21.854s] [ 76%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/ugv_robot_msgs/msg/detail/health__type_support_c.cpp.o[0m
+[21.855s] [ 72%] [32mBuilding CXX object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/ugv_robot_msgs/msg/detail/gcs_relay__type_support_c.cpp.o[0m
+[23.510s] [ 78%] [32m[1mLinking CXX shared library libugv_robot_msgs__rosidl_typesupport_fastrtps_c.so[0m
+[23.794s] [ 78%] Built target ugv_robot_msgs__rosidl_typesupport_fastrtps_c
+[23.822s] [ 78%] Built target ugv_robot_msgs
+[23.852s] [ 80%] [34m[1mGenerating Python code for ROS interfaces[0m
+[29.134s] [ 80%] Built target ugv_robot_msgs__py
+[29.166s] [ 81%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__python.dir/rosidl_generator_py/ugv_robot_msgs/msg/_stm_command_s.c.o[0m
+[29.166s] [ 83%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__python.dir/rosidl_generator_py/ugv_robot_msgs/msg/_gcs_relay_s.c.o[0m
+[29.167s] [ 85%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__python.dir/rosidl_generator_py/ugv_robot_msgs/msg/_lrf_status_s.c.o[0m
+[29.170s] [ 87%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__python.dir/rosidl_generator_py/ugv_robot_msgs/msg/_health_s.c.o[0m
+[29.711s] [ 89%] [32m[1mLinking C shared library rosidl_generator_py/ugv_robot_msgs/libugv_robot_msgs__python.so[0m
+[29.809s] [ 89%] Built target ugv_robot_msgs__python
+[29.841s] [ 94%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_fastrtps_c__pyext.dir/rosidl_generator_py/ugv_robot_msgs/_ugv_robot_msgs_s.ep.rosidl_typesupport_fastrtps_c.c.o[0m
+[29.842s] [ 94%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_c__pyext.dir/rosidl_generator_py/ugv_robot_msgs/_ugv_robot_msgs_s.ep.rosidl_typesupport_c.c.o[0m
+[29.844s] [ 94%] [32mBuilding C object CMakeFiles/ugv_robot_msgs__rosidl_typesupport_introspection_c__pyext.dir/rosidl_generator_py/ugv_robot_msgs/_ugv_robot_msgs_s.ep.rosidl_typesupport_introspection_c.c.o[0m
+[30.200s] [ 96%] [32m[1mLinking C shared library rosidl_generator_py/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_introspection_c.cpython-36m-aarch64-linux-gnu.so[0m
+[30.220s] [ 98%] [32m[1mLinking C shared library rosidl_generator_py/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_c.cpython-36m-aarch64-linux-gnu.so[0m
+[30.223s] [100%] [32m[1mLinking CXX shared library rosidl_generator_py/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_fastrtps_c.cpython-36m-aarch64-linux-gnu.so[0m
+[30.292s] [100%] Built target ugv_robot_msgs__rosidl_typesupport_introspection_c__pyext
+[30.319s] [100%] Built target ugv_robot_msgs__rosidl_typesupport_c__pyext
+[30.422s] [100%] Built target ugv_robot_msgs__rosidl_typesupport_fastrtps_c__pyext
+[30.461s] Invoked command in '/workspace/build/ugv_robot_msgs' returned '0': /usr/local/bin/cmake --build /workspace/build/ugv_robot_msgs -- -j4 -l4
+[31.100s] Invoking command in '/workspace/build/ugv_robot_msgs': /usr/local/bin/cmake --install /workspace/build/ugv_robot_msgs
+[31.238s] -- Install configuration: ""
+[31.241s] -- Execute custom install script
+[31.242s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ament_index/resource_index/rosidl_interfaces/ugv_robot_msgs
+[31.254s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__functions.h
+[31.264s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__struct.h
+[31.274s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__type_support.h
+[31.284s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__functions.h
+[31.292s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__struct.h
+[31.302s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__type_support.h
+[31.311s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__functions.h
+[31.319s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__struct.h
+[31.328s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__type_support.h
+[31.337s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__functions.h
+[31.346s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__struct.h
+[31.355s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__type_support.h
+[31.364s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/gcs_relay.h
+[31.373s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/health.h
+[31.381s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/lrf_status.h
+[31.390s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/rosidl_generator_c__visibility_control.h
+[31.399s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/stm_command.h
+[31.409s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/library_path.sh
+[31.418s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/library_path.dsv
+[31.430s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__rosidl_typesupport_fastrtps_c.h
+[31.439s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__rosidl_typesupport_fastrtps_c.h
+[31.448s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__rosidl_typesupport_fastrtps_c.h
+[31.456s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__rosidl_typesupport_fastrtps_c.h
+[31.468s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
+[31.476s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_fastrtps_c.so
+[31.487s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__rosidl_typesupport_fastrtps_cpp.hpp
+[31.496s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__rosidl_typesupport_fastrtps_cpp.hpp
+[31.505s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__rosidl_typesupport_fastrtps_cpp.hpp
+[31.514s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__rosidl_typesupport_fastrtps_cpp.hpp
+[31.522s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h
+[31.532s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_fastrtps_cpp.so
+[31.542s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__rosidl_typesupport_introspection_c.h
+[31.551s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__rosidl_typesupport_introspection_c.h
+[31.560s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__rosidl_typesupport_introspection_c.h
+[31.569s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__rosidl_typesupport_introspection_c.h
+[31.578s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/rosidl_typesupport_introspection_c__visibility_control.h
+[31.588s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__builder.hpp
+[31.597s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__struct.hpp
+[31.606s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__traits.hpp
+[31.615s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__type_support.hpp
+[31.625s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__builder.hpp
+[31.633s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__struct.hpp
+[31.642s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__traits.hpp
+[31.650s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__type_support.hpp
+[31.660s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__builder.hpp
+[31.668s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__struct.hpp
+[31.677s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__traits.hpp
+[31.686s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__type_support.hpp
+[31.695s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__builder.hpp
+[31.704s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__struct.hpp
+[31.713s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__traits.hpp
+[31.722s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__type_support.hpp
+[31.731s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/gcs_relay.hpp
+[31.740s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/health.hpp
+[31.749s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/lrf_status.hpp
+[31.759s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/rosidl_generator_cpp__visibility_control.hpp
+[31.767s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/stm_command.hpp
+[31.778s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/gcs_relay__rosidl_typesupport_introspection_cpp.hpp
+[31.786s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/health__rosidl_typesupport_introspection_cpp.hpp
+[31.795s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/lrf_status__rosidl_typesupport_introspection_cpp.hpp
+[31.805s] -- Symlinking: /workspace/install/ugv_robot_msgs/include/ugv_robot_msgs/msg/detail/stm_command__rosidl_typesupport_introspection_cpp.hpp
+[31.815s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/pythonpath.sh
+[31.824s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/pythonpath.dsv
+[31.833s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/__init__.py
+[31.844s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/msg/__init__.py
+[31.853s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/msg/_gcs_relay.py
+[31.862s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/msg/_health.py
+[31.871s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/msg/_lrf_status.py
+[31.880s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/msg/_stm_command.py
+[31.890s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_fastrtps_c.cpython-36m-aarch64-linux-gnu.so
+[31.899s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_introspection_c.cpython-36m-aarch64-linux-gnu.so
+[31.909s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/ugv_robot_msgs_s__rosidl_typesupport_c.cpython-36m-aarch64-linux-gnu.so
+[31.919s] -- Symlinking: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__python.so
+[31.945s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/StmCommand.idl
+[31.953s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/GcsRelay.idl
+[31.962s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/LrfStatus.idl
+[31.971s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/Health.idl
+[31.979s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/StmCommand.msg
+[31.988s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/GcsRelay.msg
+[31.999s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/LrfStatus.msg
+[32.008s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/msg/Health.msg
+[32.018s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ament_index/resource_index/package_run_dependencies/ugv_robot_msgs
+[32.027s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ament_index/resource_index/parent_prefix_path/ugv_robot_msgs
+[32.038s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/ament_prefix_path.sh
+[32.046s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/ament_prefix_path.dsv
+[32.056s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/path.sh
+[32.065s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/environment/path.dsv
+[32.074s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/local_setup.bash
+[32.084s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/local_setup.sh
+[32.093s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/local_setup.zsh
+[32.102s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/local_setup.dsv
+[32.112s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.dsv
+[32.121s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ament_index/resource_index/packages/ugv_robot_msgs
+[32.130s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/rosidl_cmake-extras.cmake
+[32.140s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ament_cmake_export_dependencies-extras.cmake
+[32.149s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ament_cmake_export_libraries-extras.cmake
+[32.158s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ament_cmake_export_targets-extras.cmake
+[32.167s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ament_cmake_export_include_directories-extras.cmake
+[32.177s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake
+[32.186s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake
+[32.195s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgsConfig.cmake
+[32.204s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgsConfig-version.cmake
+[32.213s] -- Symlinking: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/package.xml
+[32.222s] -- Installing: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_generator_c.so
+[32.224s] -- Set runtime path of "/workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_generator_c.so" to ""
+[32.225s] -- Installing: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_introspection_c.so
+[32.229s] -- Set runtime path of "/workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_introspection_c.so" to ""
+[32.229s] -- Installing: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_c.so
+[32.230s] -- Set runtime path of "/workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_c.so" to ""
+[32.231s] -- Installing: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_introspection_cpp.so
+[32.232s] -- Set runtime path of "/workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_introspection_cpp.so" to ""
+[32.233s] -- Installing: /workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_cpp.so
+[32.233s] -- Set runtime path of "/workspace/install/ugv_robot_msgs/lib/libugv_robot_msgs__rosidl_typesupport_cpp.so" to ""
+[32.391s] Compiling '/workspace/install/ugv_robot_msgs/lib/python3.6/site-packages/ugv_robot_msgs/__init__.py'...
+[32.415s] -- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_generator_cExport.cmake
+[32.416s] -- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_generator_cExport-noconfig.cmake
+[32.416s] -- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_introspection_cExport.cmake
+[32.417s] -- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_introspection_cExport-noconfig.cmake
+[32.419s] -- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_cExport.cmake
+[32.420s] -- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_cExport-noconfig.cmake
+[32.421s] -- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_generator_cppExport.cmake
+[32.422s] -- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_introspection_cppExport.cmake
+[32.423s] -- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_introspection_cppExport-noconfig.cmake
+[32.425s] -- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_cppExport.cmake
+[32.426s] -- Installing: /workspace/install/ugv_robot_msgs/share/ugv_robot_msgs/cmake/ugv_robot_msgs__rosidl_typesupport_cppExport-noconfig.cmake
+[32.453s] Invoked command in '/workspace/build/ugv_robot_msgs' returned '0': /usr/local/bin/cmake --install /workspace/build/ugv_robot_msgs

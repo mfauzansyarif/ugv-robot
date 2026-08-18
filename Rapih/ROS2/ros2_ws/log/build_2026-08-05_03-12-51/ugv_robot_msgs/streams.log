@@ -1,0 +1,38 @@
+[0.061s] Invoking command in '/workspace/build/ugv_robot_msgs': /usr/local/bin/cmake --build /workspace/build/ugv_robot_msgs -- -j4 -l4
+[0.677s] -- Found ament_cmake: 0.9.12 (/opt/ros/foxy/install/share/ament_cmake/cmake)
+[0.695s] [33mCMake Warning (dev) at /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/python.cmake:22 (find_package):
+[0.696s]   Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules
+[0.696s]   are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use
+[0.697s]   the cmake_policy command to set the policy and suppress this warning.
+[0.697s] 
+[0.698s] Call Stack (most recent call first):
+[0.699s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/core/all.cmake:53 (include)
+[0.699s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_core-extras.cmake:17 (include)
+[0.700s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_coreConfig.cmake:41 (include)
+[0.701s]   /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmake_export_dependencies-extras.cmake:15 (find_package)
+[0.701s]   /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmakeConfig.cmake:41 (include)
+[0.702s]   CMakeLists.txt:4 (find_package)
+[0.703s] This warning is for project developers.  Use -Wno-dev to suppress it.
+[0.703s] [0m
+[0.768s] -- Found PythonInterp: /usr/bin/python3 (found suitable version "3.6.9", minimum required is "3") 
+[0.769s] -- Using PYTHON_EXECUTABLE: /usr/bin/python3
+[0.888s] Traceback (most recent call last):
+[0.889s]   File "/opt/ros/foxy/install/share/ament_cmake_core/cmake/package_templates/templates_2_cmake.py", line 21, in <module>
+[0.889s]     from ament_package.templates import get_environment_hook_template_path
+[0.890s] ModuleNotFoundError: No module named 'ament_package'
+[0.903s] [31mCMake Error at /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_package_templates-extras.cmake:41 (message):
+[0.904s]   execute_process(/usr/bin/python3
+[0.904s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/package_templates/templates_2_cmake.py
+[0.906s]   /workspace/build/ugv_robot_msgs/ament_cmake_package_templates/templates.cmake)
+[0.907s]   returned error code 1
+[0.907s] Call Stack (most recent call first):
+[0.908s]   /opt/ros/foxy/install/share/ament_cmake_core/cmake/ament_cmake_coreConfig.cmake:41 (include)
+[0.909s]   /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmake_export_dependencies-extras.cmake:15 (find_package)
+[0.909s]   /opt/ros/foxy/install/share/ament_cmake/cmake/ament_cmakeConfig.cmake:41 (include)
+[0.910s]   CMakeLists.txt:4 (find_package)
+[0.910s] 
+[0.911s] [0m
+[0.911s] -- Configuring incomplete, errors occurred!
+[0.913s] Makefile:1367: recipe for target 'cmake_check_build_system' failed
+[0.913s] make: *** [cmake_check_build_system] Error 1
+[0.936s] Invoked command in '/workspace/build/ugv_robot_msgs' returned '2': /usr/local/bin/cmake --build /workspace/build/ugv_robot_msgs -- -j4 -l4
