@@ -95,6 +95,19 @@ typedef struct {
  * SELALU timeout gara-gara nilainya balik ke yang lama. */
 #define RS485_TIMEOUT_MS    2300U
 
+/* Kamera (lewat modul joystick+RS485-nya) kedeteksi ganggu SELURUH bus
+ * RS485 (pantilt/kamera/bridge LRF) sesaat pas PERTAMA dapet power dari
+ * slip ring - dugaan: transceiver RS485-nya belum settle ke mode
+ * diam/nunggu selama proses boot-nya sendiri. Selama SLIPRING_GRACE_MS
+ * abis slip ring baru dinyalain (0->1), STM32 SENGAJA gak kirim command
+ * RS485 apapun (pantilt/kamera/LRF) - command yang masuk dari operator
+ * selama grace period ini DIABAIKAN (bukan di-antri), begitu grace
+ * period lewat baru command TERBARU yang diterapin. Ini CUMA nyegah
+ * STM32 ikut kirim command pas bus lagi kacau, BUKAN nunggu kamera-nya
+ * sendiri siap sepenuhnya (itu bisa lebih lama, ~40 detik dari observasi
+ * lapangan) - angka di sini boleh dituning kalau ternyata masih kurang. */
+#define SLIPRING_GRACE_MS   2000U
+
 /* Batas waktu "anggap link mati total" - dipakai LED status link dan
  * failsafe (paksa stop motor/actuator kalau kelewat). DIPISAH per link,
  * BUKAN 1 angka buat semua - Jetson lewat kabel langsung (USART3), harus
@@ -225,6 +238,18 @@ static volatile uint32_t waktuByteJetsonTerakhir = 0;
 static uint16_t lrfJarakTerakhir = 0;
 static uint8_t  lrfStatusTerakhir = 0;
 
+/* ---- Baca jarak LRF ASYNC (non-blocking) - DULU blocking
+ * (HAL_UART_Receive sampai RS485_TIMEOUT_MS=2300ms) bikin SELURUH main
+ * loop beku pas operator minta jarak - STM32 berhenti total balas
+ * GCS/Jetson selama itu, jadi Telemetry & Controller ke-declare
+ * disconnect PADAHAL cuma lagi nunggu bridge LRF. Sekarang kirim request
+ * lalu LANJUT proses loop kayak biasa, balasannya dicek belakangan lewat
+ * interrupt (lihat HAL_UART_RxCpltCallback USART1 + CekBalasanLrf). */
+static uint8_t  lrfMenungguRespons = 0U;
+static uint8_t  lrfRespFrame[7];
+static volatile uint8_t lrfRespSiap = 0U;
+static uint32_t waktuKirimLrfTerakhir = 0;
+
 /* ---- LED indikator (heartbeat + status link) ---- */
 static uint32_t waktuFrameJetsonTerakhir = 0;
 static uint32_t waktuFrameGcsTerakhir = 0;
@@ -242,6 +267,7 @@ static int8_t  pantiltVerticalTerakhir = 127;
 static int8_t  kameraZoomTerakhir = 127;
 static uint8_t slipRingTerakhir = 0xFFU;
 static uint8_t lrfPointerTerakhir = 0xFFU;
+static uint32_t waktuSlipRingNyala = 0;
 
 /* ---- Anti-glitch motor: setPulseFreq() nulis ulang prescaler/ARR timer +
  * HAL_TIM_OC_Start() tiap dipanggil - kalau dipanggil tiap frame Jetson
@@ -282,6 +308,7 @@ static uint8_t Pantilt_Checksum(const uint8_t *payload5);
 static void Pantilt_Kirim(const uint8_t *payload5);
 static void Pantilt_Gerak(int8_t horizontal, int8_t vertical);
 static void Pantilt_PowerSlipRing(uint8_t nyala);
+static uint8_t SlipRingMasihGrace(void);
 
 static uint8_t Pelco_Checksum(uint8_t alamat, uint8_t cmd1, uint8_t cmd2, uint8_t data1, uint8_t data2);
 static void Pelco_Kirim(uint8_t alamat, uint8_t cmd1, uint8_t cmd2, uint8_t data1, uint8_t data2);
@@ -290,9 +317,9 @@ static void Kamera_ZoomOut(void);
 static void Kamera_ZoomStop(void);
 
 static void BridgeLrf_Kirim(uint8_t cmd2, uint8_t data1, uint8_t data2);
-static uint8_t BridgeLrf_BacaRespons(uint8_t *cmd1Out, uint8_t *cmd2Out, uint8_t *data1Out, uint8_t *data2Out);
-static uint8_t BridgeLrf_BacaJarak(uint16_t *jarakDesimeterOut, uint8_t *hasilLrfOut);
-static uint8_t BridgeLrf_Pointer(uint8_t nyala);
+static void BridgeLrf_MulaiBacaJarak(void);
+static void CekBalasanLrf(void);
+static void BridgeLrf_Pointer(uint8_t nyala);
 
 static void GcsParseFrame(const uint8_t *frame14, GcsCommand_t *out);
 static uint8_t JetsonChecksum(const uint8_t *data, uint8_t panjang);
@@ -478,6 +505,13 @@ static void Pantilt_PowerSlipRing(uint8_t nyala) {
     Pantilt_Kirim(payload5);
 }
 
+/* true selama SLIPRING_GRACE_MS abis slip ring BARU dinyalain (0->1) -
+ * lihat komentar SLIPRING_GRACE_MS soal alasannya (kamera ganggu bus RS485
+ * sesaat pas awal boot). */
+static uint8_t SlipRingMasihGrace(void) {
+    return slipRingTerakhir && (HAL_GetTick() - waktuSlipRingNyala < SLIPRING_GRACE_MS);
+}
+
 /* BELUM DIIMPLEMENTASI - pantilt BISA dibaca sudutnya, beda dari command
  * gerak/slip ring yang gak pernah balas. Referensi:
  * Testcode/test_bus_pantilt_kamera_lrf.py -> pantilt_baca_sudut().
@@ -518,46 +552,62 @@ static void BridgeLrf_Kirim(uint8_t cmd2, uint8_t data1, uint8_t data2) {
     Pelco_Kirim(ALAMAT_BRIDGE_LRF, 0x00, cmd2, data1, data2);
 }
 
-/* cmd1Out dititipin bridge buat kode hasil LRF: 0=OK (ada target valid),
- * 1=NT (No Targets), 2=ERR/TTE - lihat LRF_HASIL_* di firmware bridge-nya
- * (Rapih/Code/NucleoG431KB). Byte ini SEBELUMNYA selalu 0x00/gak dipakai. */
-static uint8_t BridgeLrf_BacaRespons(uint8_t *cmd1Out, uint8_t *cmd2Out, uint8_t *data1Out, uint8_t *data2Out) {
-    uint8_t frame[7];
-    HAL_StatusTypeDef status = HAL_UART_Receive(&huart1, frame, 7U, RS485_TIMEOUT_MS);
-    if (status != HAL_OK) {
-        DebugPrint("[RS485] TIMEOUT nunggu respons bridge LRF (status HAL=%d)\r\n", (int)status);
-        return 0U;
-    }
-    if (Pelco_Checksum(frame[1], frame[2], frame[3], frame[4], frame[5]) != frame[6]) {
-        DebugPrint("[RS485] checksum salah dari bridge: %02X %02X %02X %02X %02X %02X %02X\r\n",
-                   frame[0], frame[1], frame[2], frame[3], frame[4], frame[5], frame[6]);
-        return 0U;
-    }
-    *cmd1Out  = frame[2];
-    *cmd2Out  = frame[3];
-    *data1Out = frame[4];
-    *data2Out = frame[5];
-    DebugPrint("[RS485] respons OK dari addr=0x%02X cmd1=0x%02X cmd2=0x%02X data1=%02X data2=%02X\r\n",
-               frame[1], frame[2], frame[3], frame[4], frame[5]);
-    return 1U;
-}
-
-/* hasilLrfOut diisi cmd1 dari bridge (0=OK/1=NT/2=ERR) kalau return 1 -
- * INDEPENDEN dari return value (return 1 cuma berarti komunikasi sukses,
- * belum tentu LRF nemu target). */
-static uint8_t BridgeLrf_BacaJarak(uint16_t *jarakDesimeterOut, uint8_t *hasilLrfOut) {
-    uint8_t cmd1, cmd2, data1, data2;
+/* Query, SENGAJA gak di-anti-spam kalau LAGI GAK NUNGGU balasan (boleh
+ * di-request berkali-kali - misal Core Node kirim ini 1 frame doang pas
+ * tombol LRF dilepas) - tapi kalau MASIH nunggu balasan request
+ * SEBELUMNYA, request baru diabaikan (jangan restart IT reception di
+ * tengah jalan, bisa bikin balasan lama ke-anggap punya request baru). */
+static void BridgeLrf_MulaiBacaJarak(void) {
+    if (lrfMenungguRespons) return;
     BridgeLrf_Kirim(CMD2_BACA_JARAK, 0x00, 0x00);
-    if (!BridgeLrf_BacaRespons(&cmd1, &cmd2, &data1, &data2)) return 0U;
-    *jarakDesimeterOut = (uint16_t)data1 | ((uint16_t)data2 << 8);
-    *hasilLrfOut = cmd1;
-    return 1U;
+    HAL_UART_Receive_IT(&huart1, lrfRespFrame, 7U);
+    lrfMenungguRespons = 1U;
+    waktuKirimLrfTerakhir = HAL_GetTick();
 }
 
-static uint8_t BridgeLrf_Pointer(uint8_t nyala) {
-    uint8_t cmd1, cmd2, data1, data2;
+/* Dipanggil tiap loop utama (pola sama kayak CekResyncJetson) - cek apa
+ * balasan bridge LRF udah nyampe (lrfRespSiap, di-set ISR USART1 di
+ * HAL_UART_RxCpltCallback) atau udah TIMEOUT (RS485_TIMEOUT_MS) tanpa
+ * balasan sama sekali. cmd1 dititipin bridge buat kode hasil LRF: 0=OK
+ * (ada target valid), 1=NT (No Targets), 2=ERR/TTE - lihat LRF_HASIL_* di
+ * firmware bridge-nya (Rapih/Code/NucleoG431KB). */
+static void CekBalasanLrf(void) {
+    if (!lrfMenungguRespons) return;
+
+    if (lrfRespSiap) {
+        lrfRespSiap = 0U;
+        lrfMenungguRespons = 0U;
+        if (Pelco_Checksum(lrfRespFrame[1], lrfRespFrame[2], lrfRespFrame[3],
+                            lrfRespFrame[4], lrfRespFrame[5]) != lrfRespFrame[6]) {
+            DebugPrint("[RS485] checksum salah dari bridge: %02X %02X %02X %02X %02X %02X %02X\r\n",
+                       lrfRespFrame[0], lrfRespFrame[1], lrfRespFrame[2],
+                       lrfRespFrame[3], lrfRespFrame[4], lrfRespFrame[5], lrfRespFrame[6]);
+            lrfStatusTerakhir = LRF_STATUS_GAGAL_KOMUNIKASI;
+            return;
+        }
+        uint8_t hasilLrf = lrfRespFrame[2];
+        lrfJarakTerakhir = (uint16_t)lrfRespFrame[4] | ((uint16_t)lrfRespFrame[5] << 8);
+        /* hasilLrf dari bridge: 0=OK/1=NT/2=ERR -> lrfStatusTerakhir:
+         * 1=OK/2=NO_TARGET/3=ERROR (0 direservasi buat gagal komunikasi
+         * total, gak pernah dikirim balik dari sini). */
+        lrfStatusTerakhir = (uint8_t)(LRF_STATUS_OK + hasilLrf);
+        DebugPrint("[RS485] respons OK dari addr=0x%02X cmd1=0x%02X cmd2=0x%02X data1=%02X data2=%02X\r\n",
+                   lrfRespFrame[1], lrfRespFrame[2], lrfRespFrame[3], lrfRespFrame[4], lrfRespFrame[5]);
+    } else if (HAL_GetTick() - waktuKirimLrfTerakhir >= RS485_TIMEOUT_MS) {
+        HAL_UART_AbortReceive_IT(&huart1);
+        lrfMenungguRespons = 0U;
+        lrfStatusTerakhir = LRF_STATUS_GAGAL_KOMUNIKASI;
+        DebugPrint("[RS485] TIMEOUT nunggu respons bridge LRF (async)\r\n");
+    }
+}
+
+/* Fire-and-forget - DULU nunggu balasan blocking, TAPI hasil baca
+ * balasannya emang gak pernah dipakai caller (lihat JetsonApplyCommand,
+ * cuma lrfPointerTerakhir yang di-update, gak peduli sukses/gagal
+ * komunikasinya) - jadi amannya dihilangin aja daripada nge-block loop
+ * tanpa manfaat sama sekali. */
+static void BridgeLrf_Pointer(uint8_t nyala) {
     BridgeLrf_Kirim(CMD2_POINTER, (uint8_t)(nyala ? 1U : 0U), 0x00);
-    return BridgeLrf_BacaRespons(&cmd1, &cmd2, &data1, &data2);
 }
 
 /* ============================================================================
@@ -666,56 +716,53 @@ static void JetsonApplyCommand(const JetsonCommand_t *cmd) {
     Lamp_SetBrightness(&htim1, TIM_CHANNEL_1, cmd->fLamp);
     setLampuBelakang(cmd->bLamp, cmd->bLampMode);
 
-    /* RS485 cuma dikirim kalau nilainya BERUBAH, bukan tiap frame Jetson
-     * masuk (~10-20Hz) - tanpa ini bus digempur command identik terus. */
-    if (cmd->pantiltHorizontal != pantiltHorizontalTerakhir
-            || cmd->pantiltVertical != pantiltVerticalTerakhir) {
-        Pantilt_Gerak(cmd->pantiltHorizontal, cmd->pantiltVertical);
-        pantiltHorizontalTerakhir = cmd->pantiltHorizontal;
-        pantiltVerticalTerakhir = cmd->pantiltVertical;
-    }
-
-    if (cmd->kameraZoom != kameraZoomTerakhir) {
-        if (cmd->kameraZoom > 0) {
-            Kamera_ZoomIn();
-        } else if (cmd->kameraZoom < 0) {
-            Kamera_ZoomOut();
-        } else {
-            Kamera_ZoomStop();
-        }
-        kameraZoomTerakhir = cmd->kameraZoom;
-    }
-
     if (cmd->slipRing != slipRingTerakhir) {
         Pantilt_PowerSlipRing(cmd->slipRing);
+        if (cmd->slipRing && !slipRingTerakhir) {
+            /* transisi OFF->ON - mulai grace period, lihat SLIPRING_GRACE_MS */
+            waktuSlipRingNyala = HAL_GetTick();
+        }
         slipRingTerakhir = cmd->slipRing;
     }
 
-    if (cmd->lrfTrigger == LRF_TRIGGER_BACA_JARAK) {
-        /* Query, SENGAJA gak di-anti-spam - boleh di-request berkali-kali
-         * (misal Core Node kirim ini 1 frame doang pas tombol LRF dilepas). */
-        uint16_t jarak;
-        uint8_t hasilLrf;
-        if (BridgeLrf_BacaJarak(&jarak, &hasilLrf)) {
-            lrfJarakTerakhir = jarak;
-            /* hasilLrf dari bridge: 0=OK/1=NT/2=ERR -> lrfStatusTerakhir:
-             * 1=OK/2=NO_TARGET/3=ERROR (0 direservasi buat gagal komunikasi
-             * total, gak pernah dikirim balik dari fungsi ini). */
-            lrfStatusTerakhir = (uint8_t)(LRF_STATUS_OK + hasilLrf);
-        } else {
-            lrfStatusTerakhir = LRF_STATUS_GAGAL_KOMUNIKASI;
+    /* RS485 cuma dikirim kalau nilainya BERUBAH, bukan tiap frame Jetson
+     * masuk (~10-20Hz) - tanpa ini bus digempur command identik terus.
+     * SELAMA grace period slip ring, command pantilt/kamera/LRF SENGAJA
+     * diabaikan total (gak update *Terakhir juga) - begitu grace period
+     * lewat, command TERBARU otomatis kekirim karena kebaca "berubah". */
+    if (!SlipRingMasihGrace()) {
+        if (cmd->pantiltHorizontal != pantiltHorizontalTerakhir
+                || cmd->pantiltVertical != pantiltVerticalTerakhir) {
+            Pantilt_Gerak(cmd->pantiltHorizontal, cmd->pantiltVertical);
+            pantiltHorizontalTerakhir = cmd->pantiltHorizontal;
+            pantiltVerticalTerakhir = cmd->pantiltVertical;
         }
-    } else if (cmd->lrfTrigger == LRF_TRIGGER_POINTER_ON) {
-        /* State (laser nyala sampai dimatiin) - DI-ANTI-SPAM beda dari baca
-         * jarak, biar RS485 gak digempur "nyalain laser" tiap frame. */
-        if (lrfPointerTerakhir != 1U) {
-            BridgeLrf_Pointer(1U);
-            lrfPointerTerakhir = 1U;
+
+        if (cmd->kameraZoom != kameraZoomTerakhir) {
+            if (cmd->kameraZoom > 0) {
+                Kamera_ZoomIn();
+            } else if (cmd->kameraZoom < 0) {
+                Kamera_ZoomOut();
+            } else {
+                Kamera_ZoomStop();
+            }
+            kameraZoomTerakhir = cmd->kameraZoom;
         }
-    } else if (cmd->lrfTrigger == LRF_TRIGGER_POINTER_OFF) {
-        if (lrfPointerTerakhir != 0U) {
-            BridgeLrf_Pointer(0U);
-            lrfPointerTerakhir = 0U;
+
+        if (cmd->lrfTrigger == LRF_TRIGGER_BACA_JARAK) {
+            BridgeLrf_MulaiBacaJarak();
+        } else if (cmd->lrfTrigger == LRF_TRIGGER_POINTER_ON) {
+            /* State (laser nyala sampai dimatiin) - DI-ANTI-SPAM beda dari
+             * baca jarak, biar RS485 gak digempur "nyalain laser" tiap frame. */
+            if (lrfPointerTerakhir != 1U) {
+                BridgeLrf_Pointer(1U);
+                lrfPointerTerakhir = 1U;
+            }
+        } else if (cmd->lrfTrigger == LRF_TRIGGER_POINTER_OFF) {
+            if (lrfPointerTerakhir != 0U) {
+                BridgeLrf_Pointer(0U);
+                lrfPointerTerakhir = 0U;
+            }
         }
     }
 
@@ -764,7 +811,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 }
 
 /* USART3 (Jetson) - hitung-byte-manual, lihat komentar panjang di
- * deklarasi jetsonRxBuf soal kenapa BUKAN ReceiveToIdle di link ini. */
+ * deklarasi jetsonRxBuf soal kenapa BUKAN ReceiveToIdle di link ini.
+ * USART1 (RS485/bridge LRF) - balasan async 7 byte, lihat CekBalasanLrf. */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART3) {
         waktuByteJetsonTerakhir = HAL_GetTick();
@@ -778,6 +826,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
             jetsonRxIndex = 0;
         }
         HAL_UART_Receive_IT(&huart3, &jetsonRxByte, 1U);
+    } else if (huart->Instance == USART1) {
+        lrfRespSiap = 1U;
     }
 }
 
@@ -788,6 +838,9 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
         __HAL_UART_CLEAR_OREFLAG(huart);
         jetsonRxIndex = 0U; /* buang akumulasi frame yang mungkin lagi setengah jalan */
         HAL_UART_Receive_IT(&huart3, &jetsonRxByte, 1U);
+    } else if (huart->Instance == USART1) {
+        __HAL_UART_CLEAR_OREFLAG(huart);
+        lrfMenungguRespons = 0U; /* buang request yang lagi nunggu, balasannya udah gak valid */
     }
 }
 
@@ -870,6 +923,7 @@ int main(void)
   while (1)
   {
     CekResyncJetson();
+    CekBalasanLrf();
 
     if (statusLampuBelakang == LAMPU_KEDIP) {
         if (HAL_GetTick() - waktuBlinkTerakhir >= BLINK_INTERVAL_MS) {

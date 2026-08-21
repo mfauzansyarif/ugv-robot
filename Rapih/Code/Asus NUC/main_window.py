@@ -598,9 +598,27 @@ class MainWindow(QMainWindow):
         self.console_log.info("Telemetry Connected")
 
     def _on_jetson_terputus(self):
+        """Dipanggil RFLink pas 10x berturut-turut GAK DAPAT BALASAN dari
+        STM32 (~1 detik) - TAPI thread RFLink SENDIRI TETAP JALAN, tetap
+        ngirim frame tiap 50ms pakai joystick LIVE. Kalau yang putus cuma
+        arah BALASAN (STM32->GCS) sementara arah PERINTAH (GCS->STM32)
+        masih nyampe, STM32 gak akan pernah kena failsafe-nya sendiri
+        (itu didesain buat KEHENINGAN total, bukan buat "balasan doang
+        yang ilang") - mobil tetap "dikontrol" beneran walau GCS udah
+        gak bisa lihat konfirmasinya. Makanya di sini WAJIB paksa ESTOP
+        juga dari sisi GCS (sama pola kayak closeEvent) - begitu app
+        sendiri gak yakin link-nya sehat, STOP DULU, jangan nunggu STM32
+        yang notice (dia mungkin gak akan pernah notice kalau perintah
+        tetap nyampe). STICKY - gak auto-clear pas _on_jetson_terhubung,
+        operator HARUS lepas E-STOP manual (safety-nya sengaja gitu)."""
         self.label_status_rf.setText("Disconnected")
         self.label_status_stm32.setText("Disconnected")
-        self.console_log.warning("Telemetry not responding - check RF link or vehicle power")
+        self._estop_aktif = True
+        if hasattr(self, "btn_estop"):
+            self.btn_estop.setChecked(True)
+        self.console_log.error(
+            "E-STOP ACTIVE (otomatis, telemetry gak respons - "
+            "cek RF link, mobil TETAP bisa dikontrol sampai E-STOP dilepas manual)")
     # -------------------------------------------------------------- close
 
     def closeEvent(self, event):
