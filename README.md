@@ -97,7 +97,6 @@ Repo sudah dirapikan jadi struktur flat tunggal - semua yang ada di root INI yan
 ugv-robot/
 ├── Code/
 │   ├── NucleoG474RE/           # Firmware STM32 G474RE (MASTER/HUB) - STM32CubeIDE project
-│   ├── NucleoG474RE - Copy/    # Duplikat buat bench-test isolasi (lihat catatan di bawah)
 │   ├── NucleoG431KB/           # Firmware STM32 G431KB (BRIDGE LRF) - STM32CubeIDE project
 │   ├── ArduinoMegaPro/         # Firmware panel GCS fisik (joystick+tombol -> serial)
 │   ├── Asus NUC/               # GCS App (PySide6, Python) - jalan di laptop/NUC
@@ -112,8 +111,6 @@ ugv-robot/
 ├── Schematic/                  # Skematik KiCad/EasyEDA board custom STM32G474
 └── Test Code/                  # Kumpulan skrip tes Python/Arduino (satu lokasi, histori lengkap)
 ```
-
-> **Catatan `NucleoG474RE - Copy`**: ini bukan firmware produksi - project duplikat yang dipakai buat isolasi bug (bench-test pulsa motor AC tanpa RS485/failsafe/dll). Jangan di-flash ke robot asli.
 
 ---
 
