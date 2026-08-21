@@ -23,7 +23,6 @@ const int PIN_LAMPU_INDIKATOR = 13;  // OUTPUT
 const unsigned long KIRIM_INTERVAL_MS = 50;  // 20Hz
 unsigned long waktuKirimTerakhir = 0;
 
-/* Filter + kalibrasi joystick */
 const int RAW_MIN         = 100; //Range Mentah min
 const int RAW_MAX         = 900; //Range Mentah max
 const int RAW_TENGAH      = (RAW_MIN + RAW_MAX) / 2;  // Deadzone
@@ -34,8 +33,6 @@ const float ALPHA_SMOOTH  = 0.3f;   // Makin kecil makin smooth tapi makin lamba
 float vrxSmooth = RAW_TENGAH;
 float vrySmooth = RAW_TENGAH;
 
-/* Baca 1 axis: averaging -> exponential smoothing -> deadzone (skala RAW)
- * -> map ke 0-1000 (500 = netral). */
 int bacaAxis0_1000(int pin, float *nilaiSmooth) {
     long total = 0;
     for (int i = 0; i < JUMLAH_SAMPLE; i++) {
