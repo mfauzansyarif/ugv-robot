@@ -100,8 +100,7 @@ ugv-robot/
 │   ├── NucleoG431KB/           # Firmware STM32 G431KB (BRIDGE LRF) - STM32CubeIDE project
 │   ├── ArduinoMegaPro/         # Firmware panel GCS fisik (joystick+tombol -> serial)
 │   ├── Asus NUC/               # GCS App (PySide6, Python) - jalan di laptop/NUC
-│   ├── Jetson Nano/            # (kosong - node ROS2 ada di ROS2/ros2_ws, bukan di sini)
-│   └── STMF103/                # Firmware lama (referensi, sebelum migrasi ke G474RE)
+│   └── Jetson Nano/            # (kosong - node ROS2 ada di ROS2/ros2_ws, bukan di sini)
 ├── Datasheet/                  # Datasheet semua komponen (LRF127, servo driver, actuator, dst)
 ├── Dokumentasi/                # Block diagram + dokumentasi lama
 ├── Hardware/                   # Layout panel GCS, gambar rangka
