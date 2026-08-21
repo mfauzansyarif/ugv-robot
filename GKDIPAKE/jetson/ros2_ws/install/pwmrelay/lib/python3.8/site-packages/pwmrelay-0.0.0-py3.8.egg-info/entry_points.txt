@@ -1,3 +1,0 @@
-[console_scripts]
-pwmrelay = pwmrelay.pwmrelay:main
-

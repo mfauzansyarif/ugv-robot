@@ -29,11 +29,11 @@ Dokumentasi ini mencakup arsitektur, protokol komunikasi, cara build/flash/jalan
 - Kendali gerak (drive + steering) lewat joystick analog di panel GCS
 - 8 actuator linear individual (steering depan/belakang kiri-kanan, body depan/belakang kiri-kanan) - bisa dikalibrasi satu-satu, atau digerakkan berpasangan per-axle buat kenyamanan
 - Pan-tilt kamera + zoom (Sony FCB-EV7520 lewat modul joystick/RS485)
-- Laser Range Finder (Noptel LRF127) - baca jarak on-demand + pointer ON/OFF
+- Laser Range Finder (Noptel LRF127) - baca jarak on-demand + pointer ON/OFF - ⚠️ **masih develop, lihat [Isu & Catatan Penting](#isu--catatan-penting)**
 - Lampu depan (dimmable) + lampu belakang (mati/nyala/kedip, otomatis kedip pas mundur)
-- Slip ring power switch (buat pantilt+kamera+LRF yang duduk di dudukan berputar)
-- Mode kalibrasi actuator (Fully Extend + Fully Left, dengan safety timeout)
-- Deteksi orang otomatis (YOLO/TensorRT) buat overlay video, mode manual/auto
+- Slip ring power switch (buat pantilt+kamera+LRF yang duduk di dudukan berputar) - ⚠️ **butuh jeda tunggu setelah dinyalain, lihat [Isu & Catatan Penting](#isu--catatan-penting)**
+- Mode kalibrasi actuator (Fully Extend + Fully Left) - ⚠️ **durasi timeout-nya belum di-set, lihat [Isu & Catatan Penting](#isu--catatan-penting)**
+- Deteksi orang otomatis (YOLO/TensorRT) buat overlay video, mode manual/auto - ⚠️ **masih develop, belum diimplementasi (butuh spek Jetson lebih tinggi)**
 - E-STOP manual + beberapa lapis failsafe otomatis (link timeout, auto-estop kalau telemetry putus, dll - lihat [Isu & Catatan Penting](#isu--catatan-penting))
 
 ---
@@ -63,9 +63,7 @@ flowchart LR
         direction TB
         SIN["stm32_interface_node<br/>(translator byte<->topic)"]
         CN["core_node<br/>(SATU-SATUNYA logic)"]
-        CV["cv_node<br/>(YOLO person detection)"]
         SIN <-. topics .-> CN
-        CV -. "/vision/deteksi" .-> CN
     end
 
     STM == "RS485 bus<br/>USART1 @ 9600<br/>Pelco-D style, 7B/frame" ==> RS485
@@ -85,42 +83,35 @@ flowchart LR
 
 **Kenapa arsitektur ini:** desain awal sempat coba SPI dan I2C langsung ke Jetson, gagal secara elektrik. Mentor minta USB Jetson jangan dipakai buat link real-time (cuma boleh buat flashing sesekali) - jadi semua link fisik (RF, RS485) dipegang STM32, Jetson cuma dapat 1 link UART biasa ke STM32.
 
-Diagram block versi visual (drawio) juga ada di [`Rapih/Dokumentasi/Block Diagram.png`](Rapih/Dokumentasi/Block%20Diagram.png).
+Node `cv_node` (deteksi orang YOLO/TensorRT) direncanakan tapi **belum diimplementasi** - lihat [Isu & Catatan Penting](#isu--catatan-penting).
+
+Diagram block versi visual (drawio) juga ada di [`Dokumentasi/Block Diagram.png`](Dokumentasi/Block%20Diagram.png).
 
 ---
 
 ## Struktur Repository
 
-Project ini punya folder legacy dari iterasi-iterasi sebelumnya. **`Rapih/`** (+ folder root `ROS2/` dan `Testcode/`) adalah struktur yang AKTIF dipakai sekarang - selain itu dianggap arsip/referensi lama.
+Repo sudah dirapikan jadi struktur flat tunggal - semua yang ada di root INI yang aktif dipakai, gak ada lagi folder arsip/duplikat legacy.
 
 ```
 ugv-robot/
-├── Rapih/                          # <-- SUMBER UTAMA (kode yang aktif dipakai)
-│   ├── Code/
-│   │   ├── NucleoG474RE/           # Firmware STM32 G474RE (MASTER/HUB) - STM32CubeIDE project
-│   │   ├── NucleoG474RE - Copy/    # Duplikat buat bench-test isolasi (lihat catatan di bawah)
-│   │   ├── NucleoG431KB/           # Firmware STM32 G431KB (BRIDGE LRF) - STM32CubeIDE project
-│   │   ├── ArduinoMegaPro/         # Firmware panel GCS fisik (joystick+tombol -> serial)
-│   │   ├── Asus NUC/               # GCS App (PySide6, Python) - jalan di laptop/NUC
-│   │   └── STMF103/                # Firmware lama (referensi, sebelum migrasi ke G474RE)
-│   ├── Datasheet/                  # Datasheet semua komponen (LRF127, servo driver, actuator, dst)
-│   ├── Dokumentasi/                # Block diagram, dokumentasi lama
-│   ├── Hardware/                   # Layout panel GCS, gambar rangka
-│   ├── ROS2/ros2_ws/               # ROS2 workspace TERBANGUN (build/install/log + src)
-│   ├── Schematic/                  # Skematik KiCad/EasyEDA board custom STM32G474
-│   └── Test Code/                  # Kumpulan skrip tes Python/Arduino (histori lengkap, banyak versi lama)
-├── ROS2/                           # Salinan KERJA node ROS2 (yang paling sering diedit) - lihat catatan sinkronisasi
-│   ├── core_node.py                # SATU-SATUNYA tempat logic/keputusan
-│   ├── stm32_interface_node.py     # Translator byte<->topic ke/dari STM32
-│   ├── cv_node.py                  # Deteksi orang (YOLO/TensorRT)
-│   └── *.msg                       # Definisi message ROS2 custom
-├── Testcode/                       # Skrip test/loopback terbaru (RS485, USB-TTL, dsb)
-├── dokumentasi/                    # Brief arsitektur (ROS2_BRIEF.md) + panduan setup ROS2 di Jetson
-└── (GKDIPAKE/, codeModeROS/, gcs_app/, jetson/, lidikzi_2/, reference/,
-     serialControlApp/, wiring/, KiCad/, STM32Cube/, dokumentasi/Finished/…)  # ARSIP/legacy, gak dipakai lagi
+├── Code/
+│   ├── NucleoG474RE/           # Firmware STM32 G474RE (MASTER/HUB) - STM32CubeIDE project
+│   ├── NucleoG474RE - Copy/    # Duplikat buat bench-test isolasi (lihat catatan di bawah)
+│   ├── NucleoG431KB/           # Firmware STM32 G431KB (BRIDGE LRF) - STM32CubeIDE project
+│   ├── ArduinoMegaPro/         # Firmware panel GCS fisik (joystick+tombol -> serial)
+│   ├── Asus NUC/               # GCS App (PySide6, Python) - jalan di laptop/NUC
+│   ├── Jetson Nano/            # (kosong - node ROS2 ada di ROS2/ros2_ws, bukan di sini)
+│   └── STMF103/                # Firmware lama (referensi, sebelum migrasi ke G474RE)
+├── Datasheet/                  # Datasheet semua komponen (LRF127, servo driver, actuator, dst)
+├── Dokumentasi/                # Block diagram + dokumentasi lama
+├── Hardware/                   # Layout panel GCS, gambar rangka
+├── ROS2/
+│   ├── PANDUAN_JALANKAN_ROS2.txt
+│   └── ros2_ws/                # Workspace ROS2 (src/ + build/install/log kalau sudah di-colcon build)
+├── Schematic/                  # Skematik KiCad/EasyEDA board custom STM32G474
+└── Test Code/                  # Kumpulan skrip tes Python/Arduino (satu lokasi, histori lengkap)
 ```
-
-> **Catatan sinkronisasi ROS2**: folder `ROS2/` di root itu salinan kerja yang paling sering diedit (termasuk fix-fix terbaru), sedangkan `Rapih/ROS2/ros2_ws/src/ugv_robot/ugv_robot/` adalah workspace yang beneran di-`colcon build`. **Keduanya bisa GAK SINKRON** - sebelum deploy ke Jetson, pastikan file di `ros2_ws/src` udah disalin dari `ROS2/` root yang terbaru.
 
 > **Catatan `NucleoG474RE - Copy`**: ini bukan firmware produksi - project duplikat yang dipakai buat isolasi bug (bench-test pulsa motor AC tanpa RS485/failsafe/dll). Jangan di-flash ke robot asli.
 
@@ -131,7 +122,7 @@ ugv-robot/
 | Komponen | Model | Peran |
 |---|---|---|
 | MCU Hub | STM32G474RE (custom board berbasis Nucleo) | Master - kendaliin motor, actuator, lampu, relay semua link |
-| MCU Bridge LRF | STM32G431KB (Nucleo) | Translator LRF127 <-> bus RS485 |
+| MCU Bridge LRF | STM32G431KB (Nucleo) | Translator LRF127 <-> bus RS485 - ⚠️ board fisik lagi rusak |
 | Compute utama | NVIDIA Jetson Nano 4GB (JetPack 4.x) | Jalanin ROS2 (logic + computer vision) |
 | Panel GCS | Arduino Mega 2560 Pro | Baca joystick analog + tombol panel fisik |
 | Laptop/GCS | Asus NUC / laptop Windows | Jalanin GCS App (PySide6) |
@@ -143,7 +134,7 @@ ugv-robot/
 | Video link | RC832 Video Receiver | Terima video analog di sisi GCS |
 | Radio | Modul RF custom (57600 baud) | Link GCS <-> STM32 |
 
-Semua datasheet ada di [`Rapih/Datasheet/`](Rapih/Datasheet/).
+Semua datasheet ada di [`Datasheet/`](Datasheet/).
 
 ---
 
@@ -170,7 +161,7 @@ Request-response, GCS yang mulai duluan (~20Hz).
 | `motorIndividualId` | uint8 | 0=normal, 1-10=override individual/berpasangan (lihat `motor_linear_dialog.py`) |
 | `motorIndividualArah` | int8 | -1/0/1 |
 | `kalibrasi` | uint8 | 0/1 |
-| `mode` | uint8 | 0=manual, 1=auto (gerbang CV) |
+| `mode` | uint8 | 0=manual, 1=auto (gerbang CV - belum fungsional, `cv_node` belum diimplementasi) |
 
 **STM32 → GCS, 11 byte**: `[0xA5][stm32_status][lrf_status][lrf_lsb][lrf_msb][box_terdeteksi][box_x][box_y][box_w][box_h][checksum XOR]`
 
@@ -192,7 +183,7 @@ Baca jarak LRF & set pointer **non-blocking (async)** di firmware - request diki
 
 ### 4. Bridge (G431KB) ↔ LRF127
 
-Protokol native LRF127 (lihat [`Rapih/Datasheet/LRF127 Interface Control.pdf`](Rapih/Datasheet/LRF127%20Interface%20Control.pdf)), mode SMM (~1.3 detik nominal, +300ms kemungkinan cuaca buruk). Bridge translate hasilnya jadi frame Pelco-D-style 7-byte buat dikirim balik ke bus.
+Protokol native LRF127 (lihat [`Datasheet/LRF127 Interface Control.pdf`](Datasheet/LRF127%20Interface%20Control.pdf)), mode SMM (~1.3 detik nominal, +300ms kemungkinan cuaca buruk). Bridge translate hasilnya jadi frame Pelco-D-style 7-byte buat dikirim balik ke bus.
 
 ### Sequence: baca jarak LRF (async)
 
@@ -220,7 +211,7 @@ sequenceDiagram
 
 ## Firmware STM32
 
-### G474RE (`Rapih/Code/NucleoG474RE/Core/Src/main.c`) - Master/Hub
+### G474RE (`Code/NucleoG474RE/Core/Src/main.c`) - Master/Hub
 
 - Pegang LANGSUNG: radio GCS (USART2), bus RS485 (USART1), semua motor/actuator/lampu, link Jetson (USART3), debug (LPUART1 @ 209700, numpang ST-LINK VCP di PA2/PA3).
 - **2 failsafe independen**: `JETSON_LINK_TIMEOUT_MS` (500ms) dan `GCS_LINK_TIMEOUT_MS` (1500ms, sengaja lebih longgar - radio RF normalnya miss ~75-80% per percobaan) - kalau salah satu link mati total, paksa stop motor/actuator.
@@ -228,13 +219,13 @@ sequenceDiagram
 - Motor AC: `setMotor()` -> Timer Output-Compare Toggle mode (`TIM3/TIM4/TIM8/TIM15`), `freqHz = |speed| * FREQ_PER_RPM(50)`, clock 170MHz.
 - Actuator: `SetActuator()` - 2 pin digital (RPWM/LPWM) per actuator, gak ada feedback posisi (jog control murni).
 
-### G431KB (`Rapih/Code/NucleoG431KB/Core/Src/main.c`) - Bridge LRF
+### G431KB (`Code/NucleoG431KB/Core/Src/main.c`) - Bridge LRF
 
 - Address 2 di bus RS485 bersama.
 - Translate command Pelco-D-style dari bus -> protokol native LRF127 (USART2-nya sendiri, terpisah dari bus) -> bungkus hasil balik jadi Pelco-D-style.
 - `LRF_FlushRx()` sebelum tiap command - cegah bug "sekali gagal, gagal selamanya" dari byte basi nyangkut di buffer.
 
-### Arduino Mega Pro (`Rapih/Code/ArduinoMegaPro/ArduinoMegaPro.ino`) - Panel GCS
+### Arduino Mega Pro (`Code/ArduinoMegaPro/ArduinoMegaPro.ino`) - Panel GCS
 
 Baca joystick analog (averaging + exponential smoothing + deadzone) dan tombol panel, kirim frame mentah 20Hz ke GCS App lewat USB serial.
 
@@ -242,22 +233,22 @@ Baca joystick analog (averaging + exponential smoothing + deadzone) dan tombol p
 
 ## ROS2 (Jetson Nano)
 
-3 node, pembagian tugas TEGAS - **cuma `core_node` yang boleh punya logic/keputusan**.
+2 node aktif sekarang, pembagian tugas TEGAS - **cuma `core_node` yang boleh punya logic/keputusan**.
 
 ```mermaid
 flowchart LR
     STM32I["stm32_interface_node<br/>(translator murni)"] -- "/stm32/gcs_relay<br/>/stm32/lrf_status<br/>/stm32/health" --> Core
-    CVNode["cv_node<br/>(YOLO/TensorRT)"] -- "/vision/deteksi" --> Core
     Core["core_node<br/>(SATU-SATUNYA logic)"] -- "/stm32/command" --> STM32I
 ```
 
 | Node | Boleh logic? | Tugas |
 |---|---|---|
 | `stm32_interface_node.py` | Tidak | Baca/tulis serial ke STM32, publish data mentah, subscribe command final |
-| `cv_node.py` | Tidak | Deteksi YOLO dari kamera RTSP, publish posisi box "person" paling confident |
 | `core_node.py` | **Ya** | Olah semua data mentah jadi command final |
 
-Detail lengkap mapping field-per-field ada di [`dokumentasi/ROS2_BRIEF.md`](dokumentasi/ROS2_BRIEF.md) - baca ini dulu sebelum ubah node manapun.
+> ⚠️ **`cv_node` (deteksi orang YOLO/TensorRT) belum diimplementasi** - direncanakan sebagai node ke-3, publish ke `core_node` lewat topic `/vision/deteksi`, tapi masih tahap develop dan butuh spek Jetson lebih tinggi dari yang sekarang (Nano 4GB) biar YOLO+video gak nge-lag decision loop utama. Field `mode` (manual/auto) di protokol GCS↔STM32 sudah disiapkan buat fitur ini, belum ada consumer-nya.
+
+Detail lengkap mapping field-per-field ada di komentar/docstring tiap node (`ROS2/ros2_ws/src/`) dan di [`ROS2/PANDUAN_JALANKAN_ROS2.txt`](ROS2/PANDUAN_JALANKAN_ROS2.txt) - baca ini dulu sebelum ubah node manapun.
 
 **Jetson Nano 4GB, bukan Orin Nano** - JetPack 4.x = Ubuntu 18.04, jadi ROS2 yang dipakai **Foxy** (bukan Humble, butuh 22.04).
 
@@ -265,7 +256,7 @@ Detail lengkap mapping field-per-field ada di [`dokumentasi/ROS2_BRIEF.md`](doku
 
 ## GCS App (Ground Control Station)
 
-`Rapih/Code/Asus NUC/`, PySide6. Entry point `main.py`.
+`Code/Asus NUC/`, PySide6. Entry point `main.py`.
 
 - `main_window.py` - window utama: panel Connection (GCS Board/Telemetry/Controller), Control Panel (lampu, slip ring, body), Camera Viewer, dialog Motor Linear Individual.
 - `motor_linear_dialog.py` - kontrol per-actuator (Steer/Body, masing-masing Extend/Retract) + mode berpasangan (Steer Together).
@@ -279,7 +270,7 @@ Detail lengkap mapping field-per-field ada di [`dokumentasi/ROS2_BRIEF.md`](doku
 
 Butuh **STM32CubeIDE**.
 
-1. Buka STM32CubeIDE, `File > Open Projects from File System`, arahkan ke `Rapih/Code/NucleoG474RE` (atau `NucleoG431KB` buat bridge LRF).
+1. Buka STM32CubeIDE, `File > Open Projects from File System`, arahkan ke `Code/NucleoG474RE` (atau `NucleoG431KB` buat bridge LRF).
 2. `Project > Build Project` (atau klik ikon palu). Pastikan **0 error**.
 3. Colok board via USB (ST-LINK bawaan Nucleo), klik **Run/Debug** (ikon play/bug) buat flash.
 4. Debug log bisa dipantau lewat micro-USB yang SAMA (numpang ST-LINK Virtual COM Port) - buka terminal serial (PuTTY dkk) di port yang muncul, **baudrate 209700**, 8N1.
@@ -290,40 +281,30 @@ Butuh **STM32CubeIDE**.
 
 ## Cara Jalankan ROS2
 
-Di Jetson Nano (ROS2 Foxy sudah terinstall):
+Jalan di Jetson Nano lewat Docker (ROS2 Foxy di dalam container). Operasional harian **otomatis** - `ugv_robot.service` (systemd) nyalain container + kedua node begitu Jetson boot, gak perlu ngetik apa-apa.
+
+Cek cepat robot udah jalan otomatis apa belum:
 
 ```bash
-# Sinkronkan dulu source terbaru (root ROS2/) ke workspace kalau perlu
-# lihat catatan sinkronisasi di bagian Struktur Repository
-
-cd Rapih/ROS2/ros2_ws
-colcon build
-source install/setup.bash
-
-# Jalankan semua node (kalau ada launch file)
-ros2 launch ugv_robot ugv_robot_launch.py
-
-# Atau satu-satu buat debug
-ros2 run ugv_robot stm32_interface_node
-ros2 run ugv_robot core_node
-ros2 run ugv_robot cv_node
+sudo docker ps                                # harus ada 1 baris "ugv_robot_container"
+sudo journalctl -u ugv_robot.service -n 30    # cari "Core Node siap" & "Serial terbuka di ..."
 ```
 
-Parameter yang bisa dituning tanpa edit kode (lihat `dokumentasi/ROS2_BRIEF.md` buat daftar lengkap), contoh:
+Parameter yang bisa dituning tanpa edit kode (lihat komentar di `core_node.py` buat daftar lengkap), contoh:
 
 ```bash
 ros2 run ugv_robot core_node --ros-args -p steer_threshold:=20
 ```
 
-Diagnostik cepat:
+Diagnostik cepat (dari dalam container - lihat panduan buat cara masuknya):
 
 ```bash
-ros2 node list                 # pastikan ketiga node kedaftar
+ros2 node list                 # pastikan kedua node kedaftar
 ros2 topic hz /stm32/command   # pastikan core_node beneran publish rutin
 ros2 topic echo /stm32/health  # cek status link STM32 real-time
 ```
 
-Panduan lengkap (termasuk setup awal Jetson) ada di [`dokumentasi/panduan ros2 foxy jetson.txt`](dokumentasi/panduan%20ros2%20foxy%20jetson.txt) dan [`ROS2/PANDUAN_JALANKAN_ROS2.txt`](ROS2/PANDUAN_JALANKAN_ROS2.txt).
+Panduan LENGKAP ada di [`ROS2/PANDUAN_JALANKAN_ROS2.txt`](ROS2/PANDUAN_JALANKAN_ROS2.txt) - mulai dari nyalain Jetson dari nol (buat yang belum pernah pegang sama sekali) sampai mode manual/development (`docker run` dari nol, `colcon build`, jalanin node satu-satu, tes manual tanpa `core_node`).
 
 ---
 
@@ -332,7 +313,7 @@ Panduan lengkap (termasuk setup awal Jetson) ada di [`dokumentasi/panduan ros2 f
 Di laptop/NUC Windows:
 
 ```powershell
-cd "Rapih\Code\Asus NUC"
+cd "Code\Asus NUC"
 pip install PySide6 pyserial opencv-python
 python main.py
 ```
@@ -343,7 +324,7 @@ App langsung fullscreen (`Esc` buat keluar fullscreen, `F11` balik lagi). Settin
 
 ## Tools Testing
 
-Dua lokasi skrip test Python (`Testcode/` di root = terbaru, `Rapih/Test Code/` = arsip lengkap termasuk versi lama):
+Semua skrip test Python/Arduino ada di [`Test Code/`](Test%20Code/) (satu lokasi, histori lengkap termasuk versi lama):
 
 | Skrip | Fungsi |
 |---|---|
@@ -362,12 +343,18 @@ Setiap skrip punya docstring lengkap di bagian atas file (wiring, command yang t
 
 ## Isu & Catatan Penting
 
-Hal-hal yang udah ditemukan/diperbaiki sepanjang development, penting buat dipahami sebelum ngoprek lebih lanjut:
+### Belum kelar / masih development
 
-- **Baca LRF dulu BLOCKING** - sempat bikin STM32 "beku" total 1.3-2.3 detik tiap kali diminta jarak (semua link keliatan disconnect). **Sudah diperbaiki** jadi async/non-blocking (lihat `CekBalasanLrf()` di `main.c`).
-- **Slip ring ON bikin bus RS485 error sesaat** - dugaan kuat dari kamera yang baru boot (transceiver RS485-nya belum settle). Mitigasi: `SLIPRING_GRACE_MS` (2 detik default) - STM32 sengaja diam dari RS485 sesaat setelah slip ring dinyalain. **Root cause di hardware kamera/slip ring belum diperbaiki**, ini cuma mitigasi software.
+- **MCU Bridge LRF (G431KB) lagi RUSAK** - board fisiknya bermasalah (bukan soal firmware), LRF non-fungsional total sampai board ini diperbaiki/diganti.
+- **LRF masih tahap develop** - interface komunikasi ke LRF127 yang sekarang (lewat bridge G431KB, Pelco-D-style di bus RS485) perlu dirombak jadi interface baru, belum final.
+- **Slip ring ON butuh jeda tunggu, bisa sampai ~1 menit** - dugaan kuat dari kamera yang baru boot (transceiver RS485-nya belum settle). Mitigasi software `SLIPRING_GRACE_MS` (2 detik default, STM32 sengaja diam dari RS485 sesaat setelah slip ring nyala) **JAUH DARI CUKUP** - dari observasi lapangan operator tetap harus nunggu manual sampai ~1 menit sebelum pakai pantilt/kamera/LRF. Root cause di hardware kamera/slip ring belum diperbaiki.
+- **Deteksi orang otomatis (YOLO/TensorRT) belum diimplementasi** - direncanakan lewat `cv_node`, masih tahap develop, blocked butuh spek Jetson lebih tinggi dari yang sekarang (Nano 4GB) biar YOLO+video gak nge-lag decision loop utama.
+- **Timeout kalibrasi & proteksi stall actuator belum di-set** - mode kalibrasi (Fully Extend + Fully Left) dan proteksi stall umum buat actuator sama-sama butuh durasi timeout yang belum ditentuin. Actuator linear gak punya feedback posisi, jadi kalau macet di ujung stroke bisa overheat/kebakar (pernah nyaris kejadian). Blocked butuh estimasi durasi full-stroke actuator yang terkonfirmasi ke hardware asli (datasheet JP4 kasih estimasi ~6-7 detik, belum divalidasi).
 - **Failsafe GCS vs miss rate RF asli** - `GCS_LINK_TIMEOUT_MS=1500ms` belum terverifikasi langsung ke radio asli (miss rate normalnya 75-80%/percobaan menurut catatan `serial_workers.py`). Perlu tes ulang begitu radio bisa diakses.
-- **Auto E-STOP kalau GCS App gak dapat balasan** - `_on_jetson_terputus()` di `main_window.py` sekarang paksa ESTOP begitu 10x berturut gak dapat balasan (~1 detik), sticky sampai operator lepas manual. Ini nutup celah "STM32 masih nerima command valid, mobil jalan terus, tapi GCS gak bisa lihat konfirmasinya".
-- **Proteksi stall actuator BELUM diimplementasi** - actuator linear gak punya feedback posisi, jadi kalau ada yang macet di ujung stroke bisa overheat/kebakar (pernah nyaris kejadian). Butuh estimasi durasi full-stroke actuator buat set timeout yang aman.
+
+### Sudah diperbaiki (histori, buat konteks)
+
+- **Baca LRF dulu BLOCKING** - sempat bikin STM32 "beku" total 1.3-2.3 detik tiap kali diminta jarak (semua link keliatan disconnect). Diperbaiki jadi async/non-blocking (lihat `CekBalasanLrf()` di `main.c`).
+- **Auto E-STOP kalau GCS App gak dapat balasan** - `_on_jetson_terputus()` di `main_window.py` paksa ESTOP begitu 10x berturut gak dapat balasan (~1 detik), sticky sampai operator lepas manual. Ini nutup celah "STM32 masih nerima command valid, mobil jalan terus, tapi GCS gak bisa lihat konfirmasinya".
 - **Kalibrasi steering per-actuator individual** - motor_id 1-4 (steering) dan 5-8 (body) sekarang semuanya individual (gak berpasangan lagi), plus id 9-10 buat gerak sepasang axle sekaligus (kenyamanan, bukan presisi kalibrasi).
 - **Checksum Jetson↔STM32** ditambahkan (XOR) buat nutup celah data corruption yang sebelumnya gak kedeteksi sama sekali di link itu.

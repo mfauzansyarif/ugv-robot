@@ -1,38 +1,187 @@
 PANDUAN MENJALANKAN ROS2 UGV LIDIKZI DI JETSON NANO
-=====================================================
-Dipakai tiap kali habis nyalain/reboot Jetson.
+====================================================
+
+Robot ini AUTO-START: begitu Jetson nyala, systemd service
+"ugv_robot.service" otomatis nyalain docker container + kedua
+node ROS2 (stm32_interface_node & core_node) sendiri, TANPA
+perlu ngetik command apapun.
+
+Panduan ini ada 2 bagian:
+  BAGIAN 1 - buat orang yang BELUM PERNAH pegang Jetson Nano
+             sama sekali: nyalain, login, buka terminal, cek
+             robot udah jalan otomatis apa belum.
+  BAGIAN 2 - referensi teknis/development: jalanin ulang dari
+             nol secara manual (kalau auto-start gagal), build
+             workspace, jalanin node satu-satu, tes manual.
 
 
-==========================================================
-BAGIAN A - SETUP SETELAH REBOOT (wajib, tiap kali nyala)
-==========================================================
+====================================================
+BAGIAN 1 - DARI NYALAIN JETSON SAMPAI MASUK DOCKER
+====================================================
 
-A1. Matikan serial console yang ngunci /dev/ttyTHS1
----------------------------------------------------------
-Kalau dulu sudah pakai "systemctl disable", ini harusnya OTOMATIS
-mati tiap boot. Cek dulu:
+1A. Kenalan dulu sama perangkatnya
+----------------------------------------------------
 
+Apa itu Jetson Nano?
+  Komputer kecil (seukuran kartu kredit lebih dikit) - fungsinya
+  sama kayak PC/laptop biasa, punya OS Linux (Ubuntu), bisa
+  dicolokin monitor/keyboard/mouse. Bedanya, Jetson punya GPU
+  kecil khusus buat robotika/AI, dan di project ini dia jadi
+  "otak" yang ngontrol robot (UGV) lewat komunikasi ke STM32.
+
+Apa itu Docker?
+  Program di dalam Jetson yang ngejalanin "kotak virtual"
+  terpisah (container). Semua kode ROS2 kita jalannya DI DALAM
+  kotak ini, bukan langsung di Ubuntu Jetson - biar semua
+  software yang dibutuhin (ROS2, library, dst) konsisten, gak
+  keganggu software lain di Jetson.
+
+Apa itu ROS2?
+  Framework buat bikin software robot. Di project ini ada 2
+  node (program kecil) utama:
+    - stm32_interface_node : ngobrol serial ke board STM32
+    - core_node             : otak yang mutusin semua logic/gerak
+
+Cek fisik sebelum nyalain:
+  [ ] Monitor tersambung ke Jetson (kabel HDMI)
+  [ ] Keyboard & mouse tersambung (USB)
+  [ ] Kabel power Jetson (barrel jack) ke stopkontak
+  [ ] Kabel komunikasi ke STM32 tersambung (RX/TX/GND, atau
+      modul USB-to-TTL kalau lagi pakai jalur darurat)
+  [ ] STM32 dapat power (LED indikatornya nyala)
+
+
+1B. Nyalain & login
+----------------------------------------------------
+Colokin kabel power (kalau belum) - Jetson boot otomatis begitu
+dapat listrik, gak ada tombol power fisik wajib di kebanyakan
+model. Tunggu 30-60 detik sampai muncul desktop Ubuntu.
+
+Kalau diminta password, masukin password user Jetson (tanya ke
+yang setup pertama kali kalau belum tau). Kalau di-setting
+auto-login, langsung masuk desktop tanpa ketik apa-apa.
+
+
+1C. Buka terminal
+----------------------------------------------------
+Terminal = jendela buat ngetik command teks, cara utama kita
+"ngomong" ke Jetson buat kerjaan robot ini.
+
+Cari ikon Terminal di sidebar kiri (gambar kotak hitam ">_"),
+klik sekali. Kalau gak ketemu: klik kanan di desktop (area
+kosong) -> "Open Terminal".
+
+Setelah kebuka, muncul teks kayak gini:
+    respatijetson@respatijetson-desktop:~$
+Tanda `$` di ujung itu tempat kamu ngetik.
+
+
+1D. Cek robot udah jalan otomatis apa belum
+----------------------------------------------------
+
+Cek container Docker udah jalan:
+    sudo docker ps
+
+(kalau diminta password, ketik password Jetson - huruf yang
+diketik GAK KELIHATAN di layar, itu normal, tetep diketik terus
+Enter). Kalau berhasil, harus muncul 1 baris berisi nama
+"ugv_robot_container" - itu tandanya program robot LAGI JALAN.
+Kalau tabelnya KOSONG, program belum/gagal jalan - lanjut ke
+BAGIAN 2 buat jalanin manual & cari tau kenapa.
+
+Cek log aktivitasnya:
+    sudo journalctl -u ugv_robot.service -n 30
+
+Nampilin 30 baris catatan terakhir. Yang diperhatiin:
+  - "Core Node siap"        -> BAGUS, core_node jalan normal
+  - "Serial terbuka di ..." -> BAGUS, koneksi ke STM32 berhasil
+  - "Traceback" / "ERROR"   -> ada masalah, screenshot & tanya
+                                yang paham
+
+
+1E. Masuk ke dalam docker secara manual (buat ngintip/tes)
+----------------------------------------------------
+Dipakai kalau mau liat data sensor langsung, kirim command tes
+manual, dst - dari DALAM container yang lagi jalan.
+
+  1. Cari CONTAINER ID:
+       sudo docker ps
+     Lihat kolom paling kiri (contoh: "cc5bb49f78f3"), catat
+     beberapa karakter pertamanya.
+
+  2. Masuk:
+       sudo docker exec -it cc5bb49f78f3 bash
+     (ganti dengan ID kamu - gak perlu ketik semua karakter,
+     beberapa awal biasanya udah cukup)
+     Prompt berubah jadi "root@respatijetson-desktop:/#" -
+     tandanya kamu SEKARANG ada di dalam container.
+
+  3. Siapkan environment ROS2 (WAJIB tiap kali masuk baru):
+       source /opt/ros/foxy/install/setup.bash
+       source /workspace/install/setup.bash
+     Tanpa ini, command `ros2 ...` gak dikenali.
+
+  4. Contoh cek node yang jalan:
+       ros2 node list
+     Harus muncul "/stm32_interface_node" dan "/core_node".
+
+  5. Contoh liat data yang mengalir:
+       ros2 topic echo /stm32/gcs_relay
+     Data terus muncul kalau STM32 nyambung & jalan normal.
+     Ctrl+C buat berhenti.
+
+  6. Keluar:
+       exit
+     Balik ke terminal biasa (di luar docker). Program robot
+     TETAP JALAN TERUS di background walau kamu udah exit -
+     "exit" cuma keluar dari cara ngintipnya, bukan matiin robot.
+
+
+1F. Istilah yang sering muncul
+----------------------------------------------------
+  HOST        = Ubuntu Jetson-nya sendiri (di luar docker)
+  Container   = "kotak" docker tempat program robot jalan
+  Node        = 1 program kecil di ROS2 (contoh: core_node)
+  Topic       = "saluran" data antar node
+  sudo        = jalanin command sebagai admin (perlu password)
+  Terminal    = jendela buat ngetik command teks
+
+
+1G. Kalau ada masalah
+----------------------------------------------------
+  - "docker ps" kosong          -> lihat log (1D), lalu BAGIAN 2
+  - Muncul "Traceback"/"ERROR"  -> screenshot, tanya yang paham
+  - Layar Jetson gak nyala      -> cek kabel power & HDMI
+  - Lupa password               -> tanya yang setup pertama kali
+
+Error merah itu NORMAL bagian dari proses debug, bukan berarti
+Jetson-nya rusak. Catat/screenshot pesannya buat ditanyakan.
+
+
+====================================================
+BAGIAN 2 - REFERENSI TEKNIS / MANUAL / DEVELOPMENT
+====================================================
+Dipakai kalau auto-start gagal (BAGIAN 1D kosong), atau lagi
+develop/debug kode-nya langsung.
+
+2A. Setup host setelah reboot (biasanya udah otomatis)
+----------------------------------------------------
+
+Matikan serial console yang ngunci /dev/ttyTHS1 - kalau dulu
+udah "systemctl disable", ini OTOMATIS mati tiap boot. Cek:
     systemctl is-enabled serial-getty@ttyTHS1.service
+  - "disabled"/"not-found" -> AMAN, lanjut.
+  - "enabled" -> jalankan (cukup SEKALI seumur hidup Jetson):
+        sudo systemctl stop serial-getty@ttyTHS1.service
+        sudo systemctl disable serial-getty@ttyTHS1.service
 
-  - Kalau jawabannya "disabled" atau "not-found" -> AMAN, lanjut A2.
-  - Kalau "enabled", jalankan (cukup SEKALI seumur hidup Jetson):
-
-    sudo systemctl stop serial-getty@ttyTHS1.service
-    sudo systemctl disable serial-getty@ttyTHS1.service
-
-
-A2. Cek device serial ada
----------------------------------------------------------
+Cek device serial ada:
     ls -la /dev/ttyTHS1
+Harus muncul barisnya. Kalau "No such file or directory" -
+masalah di level device tree/hardware, jangan lanjut dulu.
 
-Harus muncul barisnya. Kalau "No such file or directory", berarti
-ada masalah di level device tree/hardware - jangan lanjut, cek dulu.
-
-
-A3. Tes cepat komunikasi ke STM32 (opsional tapi disarankan)
----------------------------------------------------------
-Mastiin kabel + STM32 sehat SEBELUM ngurusin ROS2:
-
+Tes cepat komunikasi ke STM32 (opsional tapi disarankan),
+mastiin kabel + STM32 sehat SEBELUM ngurusin ROS2:
     sudo python3 -c "
     import serial
     ser = serial.Serial('/dev/ttyTHS1', 115200, timeout=2)
@@ -40,123 +189,87 @@ Mastiin kabel + STM32 sehat SEBELUM ngurusin ROS2:
     data = ser.read(18)
     print(f'Diterima: {len(data)} byte -> {data.hex()}')
     "
-
-  - HASIL BAGUS: "Diterima: 18 byte", byte terakhir = 01
-  - Kalau 0 byte: cek kabel TX/RX (harus SILANG) + GND nyambung,
-    dan pastikan STM32 nyala/firmware jalan.
-
-CATATAN: sekarang kirim 21 byte & baca 18 byte (protokol BARU),
-bukan 20/20 kayak versi lama.
+  - BAGUS: "Diterima: 18 byte", byte terakhir = 01
+  - 0 byte: cek kabel TX/RX (harus SILANG) + GND nyambung, dan
+    pastikan STM32 nyala/firmware jalan.
+Protokol SAAT INI: kirim 21 byte, baca 18 byte (bukan 20/20
+versi lama).
 
 
-==========================================================
-BAGIAN B - MASUK CONTAINER DOCKER
-==========================================================
+2B. Jalanin container secara manual (kalau auto-start mati)
+----------------------------------------------------
 
-B1. Jalankan container
----------------------------------------------------------
+Jalankan container:
     sudo docker run -it --rm --network host --device=/dev/ttyTHS1 -v ~/ros2_ws:/workspace dustynv/ros:foxy-ros-base-l4t-r32.7.1
 
-Penjelasan flag:
+Flag:
   --network host          -> node ROS2 bisa saling ketemu
   --device=/dev/ttyTHS1   -> container boleh akses port serial fisik
   -v ~/ros2_ws:/workspace -> folder kerja host ke-mount ke container
+  (--runtime nvidia TIDAK dipakai, node ini gak butuh GPU)
 
-(--runtime nvidia TIDAK dipakai, karena node ini gak butuh GPU)
-
-
-B2. Install pyserial DI DALAM container
----------------------------------------------------------
+Install pyserial DI DALAM container (HILANG tiap container
+ditutup karena pakai --rm, ulangi tiap masuk container baru):
     pip3 install pyserial
+Verifikasi: python3 -c "import serial; print(serial.__version__)"
 
-PENTING: karena container pakai --rm, pyserial HILANG tiap container
-ditutup. Jadi langkah ini harus DIULANG tiap masuk container baru.
-
-Verifikasi:
-    python3 -c "import serial; print(serial.__version__)"
-
-
-B3. Source environment ROS2
----------------------------------------------------------
+Source environment ROS2:
     source /opt/ros/foxy/install/setup.bash
 
 
-==========================================================
-BAGIAN C - BUILD WORKSPACE
-==========================================================
-
-C1. Build (cuma perlu kalau ada perubahan kode/.msg)
----------------------------------------------------------
+2C. Build workspace
+----------------------------------------------------
+Cuma perlu kalau ada perubahan kode/.msg:
     cd /workspace
     colcon build --symlink-install
 
 Urutan yang benar di output: ugv_robot_msgs "Finished" DULUAN,
-baru ugv_robot (karena ugv_robot butuh message dari sana).
-
-Kalau ugv_robot_msgs GAGAL, jangan lanjut - biasanya penyebabnya:
-  - Nama file salah kapital (harus persis "CMakeLists.txt", M & L besar)
-  - package.xml / CMakeLists.txt kesasar ke dalam folder msg/
-  - Cache lama nyangkut, bersihin dulu:
+baru ugv_robot (ugv_robot butuh message dari sana). Kalau
+ugv_robot_msgs GAGAL:
+  - Cek nama file kapital ("CMakeLists.txt", M & L besar)
+  - Cek package.xml / CMakeLists.txt gak kesasar ke folder msg/
+  - Bersihin cache lama, build ulang:
         rm -rf build/ugv_robot_msgs install/ugv_robot_msgs
-    lalu build ulang.
 
-
-C2. Source hasil build
----------------------------------------------------------
+Source hasil build (WAJIB diulang tiap buka terminal/panel baru
+di dalam container):
     source install/setup.bash
 
-WAJIB diulang tiap buka terminal/panel BARU di dalam container.
 
-
-==========================================================
-BAGIAN D - MENJALANKAN NODE
-==========================================================
-Butuh beberapa panel terminal. Paling enak pakai Terminator
-(split: Ctrl+Shift+O horizontal, Ctrl+Shift+E vertical).
-
-Buat panel KEDUA dan seterusnya, masuk ke container yang SAMA:
+2D. Jalanin node manual (beberapa panel terminal)
+----------------------------------------------------
+Paling enak pakai Terminator (split: Ctrl+Shift+O horizontal,
+Ctrl+Shift+E vertical). Panel KEDUA dst, masuk container yang
+SAMA:
     sudo docker ps                          (catat CONTAINER ID)
     sudo docker exec -it <CONTAINER_ID> bash
     source /opt/ros/foxy/install/setup.bash
     source /workspace/install/setup.bash
 
-
-D1. PANEL 1 - STM32 Interface Node
----------------------------------------------------------
+PANEL 1 - STM32 Interface Node:
     ros2 run ugv_robot stm32_interface_node
-
-Kalau port/baudrate beda dari default:
+  Port/baudrate custom:
     ros2 run ugv_robot stm32_interface_node --ros-args -p serial_port:=/dev/ttyTHS1 -p baudrate:=115200
+  TANDA SEHAT: cuma muncul 1 baris "Serial terbuka di ... @
+  115200 baud", lalu DIAM (gak ada WARN "Up-frame gak lengkap"
+  berulang). Diam = normal, bukan hang.
 
-TANDA SEHAT: cuma muncul 1 baris "Serial terbuka di ... @ 115200 baud",
-lalu DIAM (gak ada WARN "Up-frame gak lengkap" berulang-ulang).
-Diam = normal, bukan hang.
-
-
-D2. PANEL 2 - Core Node
----------------------------------------------------------
+PANEL 2 - Core Node:
     ros2 run ugv_robot core_node
+  TANDA SEHAT: muncul "Core Node siap", lalu diam.
 
-TANDA SEHAT: muncul "Core Node siap", lalu diam.
-
-
-D3. PANEL 3 - Pantau data (buat cek/debug)
----------------------------------------------------------
-Pilih salah satu:
-
+PANEL 3 - Pantau data (buat cek/debug), pilih salah satu:
     ros2 topic echo /stm32/gcs_relay     (data mentah dari GCS)
     ros2 topic echo /stm32/lrf_status    (jarak + status LRF)
     ros2 topic echo /stm32/health        (kesehatan STM32)
     ros2 topic echo /stm32/command       (hasil keputusan Core Node)
-
-Cek semua node & topic aktif:
+  Cek semua node & topic aktif:
     ros2 node list
     ros2 topic list
 
 
-==========================================================
-BAGIAN E - TES MANUAL TANPA CORE NODE
-==========================================================
+2E. Tes manual tanpa Core Node
+----------------------------------------------------
 Buat nguji STM32 Interface SENDIRIAN (Core Node dimatikan dulu),
 kirim command manual dari panel lain:
 
@@ -164,32 +277,30 @@ kirim command manual dari panel lain:
 
 Efek yang diharapkan: lampu depan & belakang nyala 80%.
 
-PERINGATAN: jangan jalankan Core Node BARENGAN dengan perintah ini -
-dua-duanya publish ke topic yang sama, nilainya bakal rebutan.
+PERINGATAN: jangan jalankan Core Node BARENGAN dengan perintah
+ini - dua-duanya publish ke topic yang sama, nilainya rebutan.
 
 
-==========================================================
-BAGIAN F - MEMATIKAN
-==========================================================
-  - Stop 1 node          : Ctrl+C di panel node tersebut
-  - Keluar container     : ketik "exit"
-    (container kehapus otomatis karena --rm, TAPI semua file di
-     /workspace tetap aman karena ke-mount ke ~/ros2_ws di host)
+2F. Matiin
+----------------------------------------------------
+  - Stop 1 node       : Ctrl+C di panel node tersebut
+  - Keluar container  : ketik "exit" (container kehapus otomatis
+    karena --rm, tapi semua file di /workspace tetap aman karena
+    ke-mount ke ~/ros2_ws di host)
 
 
-==========================================================
-CATATAN PENTING
-==========================================================
+2G. Catatan teknis penting
+----------------------------------------------------
 1. Estop belum dikonfirmasi. Di core_node.py, estop diperlakukan
-   sebagai override tertinggi (semua gerakan dipaksa 0). Ini ASUMSI
-   demi keamanan, BELUM ada di brief - konfirmasi ke tim.
+   sebagai override tertinggi (semua gerakan dipaksa 0). Ini
+   ASUMSI demi keamanan, BELUM ada di brief - konfirmasi ke tim.
 
-2. steer_threshold default 30 (dari -100..100). Nilai ini juga
-   belum ada di brief, tinggal diubah tanpa edit kode:
+2. steer_threshold default 30 (dari -100..100), belum ada di
+   brief, tinggal diubah tanpa edit kode:
        ros2 run ugv_robot core_node --ros-args -p steer_threshold:=20
 
-3. Ukuran frame protokol SAAT INI: 27 byte turun (26 data + 1 checksum
-   XOR), 20 byte naik (19 data + 1 checksum XOR). Kalau firmware STM32
-   diupdate lagi dan ukurannya berubah, FORMAT_DOWN/FORMAT_UP di
-   stm32_interface_node.py DAN file .msg dua-duanya harus ikut diupdate
-   (rawan out-of-sync).
+3. Ukuran frame protokol SAAT INI: 27 byte turun (26 data + 1
+   checksum XOR), 20 byte naik (19 data + 1 checksum XOR). Kalau
+   firmware STM32 diupdate lagi dan ukurannya berubah,
+   FORMAT_DOWN/FORMAT_UP di stm32_interface_node.py DAN file
+   .msg dua-duanya harus ikut diupdate (rawan out-of-sync).
